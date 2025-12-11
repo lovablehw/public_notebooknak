@@ -1,7 +1,120 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Heart, Users, ChevronRight } from "lucide-react";
+import { 
+  Shield, 
+  Heart, 
+  ClipboardList, 
+  BookOpen, 
+  MessageCircle, 
+  Lock, 
+  UserCheck, 
+  FileCheck, 
+  TrendingUp,
+  Lightbulb,
+  Gift,
+  Users,
+  ChevronRight
+} from "lucide-react";
+
+// ============================================
+// HUNGARIAN COPY - Edit text here
+// ============================================
+const COPY = {
+  header: {
+    brandName: "Jólléti Portál",
+    signIn: "Bejelentkezés",
+  },
+  hero: {
+    headline: "Egy egészségesebb jövő a saját történeteddel kezdődik.",
+    subheadline: "Töltsd ki az életmód- és jólléti felméréseket, ismerd meg saját mintáidat, és járulj hozzá a prevenciós kutatásokhoz – biztonságos, átlátható környezetben.",
+    primaryCta: "Fiók létrehozása",
+    secondaryCta: "Bejelentkezés",
+  },
+  howItWorks: {
+    title: "Hogyan működik?",
+    tiles: [
+      {
+        icon: ClipboardList,
+        title: "Felmérések kitöltése",
+        subtitle: "SurveyStore",
+        description: "Rövid, validált kérdőívek kitöltése – akár hangalapú bevitellel mobiltelefonon.",
+      },
+      {
+        icon: Lightbulb,
+        title: "Eredmények és ajánlások",
+        subtitle: "HealthGuide",
+        description: "Biztonságos, motivációs fókuszú visszajelzések – diagnózis és kezelés nélkül.",
+      },
+      {
+        icon: BookOpen,
+        title: "Saját egészségkönyv",
+        subtitle: "HealthBook",
+        description: "Kérdőív-előzmények és személyes jólléti adatok tárolása egy helyen.",
+      },
+      {
+        icon: MessageCircle,
+        title: "Folyamatos támogatás",
+        subtitle: "HealthPass",
+        description: "Opcionális asszisztens, emlékeztetők és heti reflexiók a fejlődésedhez.",
+      },
+    ],
+  },
+  dataTrust: {
+    title: "Adatkezelés és bizalom",
+    points: [
+      {
+        icon: Lock,
+        text: "Adataid biztonságban vannak, minden használat hozzájáruláson alapul.",
+      },
+      {
+        icon: UserCheck,
+        text: "Nincs diagnózis vagy kezelés – kizárólag jólléti támogatás.",
+      },
+      {
+        icon: FileCheck,
+        text: "GDPR- és EU-AI-Act-megfelelőség.",
+      },
+      {
+        icon: Shield,
+        text: "Anonimizált adatok hozzájárulnak a prevenciós kutatásokhoz.",
+      },
+    ],
+  },
+  whyJoin: {
+    title: "Miért érdemes csatlakozni?",
+    benefits: [
+      {
+        icon: TrendingUp,
+        text: "Életmódod jobb megértése.",
+      },
+      {
+        icon: Heart,
+        text: "Személyre szabható jólléti támogatás idővel.",
+      },
+      {
+        icon: Gift,
+        text: "Pontok gyűjtése felmérések kitöltéséért.",
+      },
+      {
+        icon: Users,
+        text: "Hozzájárulás a prevenciós kutatásokhoz.",
+      },
+    ],
+    cta: "Csatlakozom",
+  },
+  disclaimer: {
+    text: "Fontos: Ez a portál kizárólag kutatási és jólléti célokat szolgál. Nem minősül orvostechnikai eszköznek, és nem nyújt diagnózist, kezelési javaslatot vagy egészségügyi kockázatértékelést. Orvosi tanácsért mindig fordulj szakemberhez.",
+  },
+  footer: {
+    copyright: "© 2024 Jólléti Kutatási Kezdeményezés",
+    links: {
+      privacy: "Adatkezelés",
+      terms: "Felhasználási feltételek",
+      contact: "Kapcsolat",
+    },
+  },
+};
 
 const Landing = () => {
   return (
@@ -10,11 +123,11 @@ const Landing = () => {
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-foreground">Community Wellbeing</span>
+          <span className="font-semibold text-foreground">{COPY.header.brandName}</span>
         </div>
         <Link to="/auth">
           <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-            Sign In
+            {COPY.header.signIn}
           </Button>
         </Link>
       </header>
@@ -22,31 +135,28 @@ const Landing = () => {
       {/* Hero Section */}
       <main className="container mx-auto px-4 pt-16 pb-24">
         <div className="max-w-3xl mx-auto text-center animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-light text-foreground mb-6 text-balance">
-            Your wellbeing journey, <br />
-            <span className="font-medium text-primary">contributing to research</span>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-foreground mb-6 text-balance leading-tight">
+            {COPY.hero.headline}
           </h1>
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto text-balance">
-            Join our community-driven research initiative. Share your experiences through 
-            simple questionnaires, track your progress, and help advance wellbeing research 
-            while earning rewards along the way.
+            {COPY.hero.subheadline}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth?mode=signup">
               <Button size="lg" className="w-full sm:w-auto px-8">
-                Join the Community
+                {COPY.hero.primaryCta}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <a href="#how-it-works">
+            <Link to="/auth">
               <Button variant="outline" size="lg" className="w-full sm:w-auto px-8">
-                Learn More
+                {COPY.hero.secondaryCta}
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
 
-        {/* Abstract illustration placeholder */}
+        {/* Abstract illustration */}
         <div className="max-w-md mx-auto mt-16 opacity-60">
           <svg viewBox="0 0 400 120" className="w-full text-primary">
             <path
@@ -65,65 +175,63 @@ const Landing = () => {
         {/* How It Works */}
         <section id="how-it-works" className="mt-32">
           <h2 className="text-2xl font-medium text-center text-foreground mb-12">
-            How It Works
+            {COPY.howItWorks.title}
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                step: "1",
-                title: "Register",
-                description: "Create your account with basic profile information to get started.",
-              },
-              {
-                step: "2",
-                title: "Consent",
-                description: "Review and provide informed consent for research participation.",
-              },
-              {
-                step: "3",
-                title: "Participate",
-                description: "Complete questionnaires at your own pace and earn points.",
-              },
-            ].map((item) => (
-              <Card key={item.step} className="shadow-card border-0 bg-card">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {COPY.howItWorks.tiles.map((tile) => (
+              <Card key={tile.title} className="shadow-card border-0 bg-card hover:shadow-lg transition-shadow">
                 <CardContent className="pt-6 text-center">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4 font-medium">
-                    {item.step}
+                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                    <tile.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="font-medium text-foreground mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <h3 className="font-medium text-foreground mb-1">{tile.title}</h3>
+                  <p className="text-xs text-primary/70 mb-3">{tile.subtitle}</p>
+                  <p className="text-sm text-muted-foreground">{tile.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Trust Indicators */}
+        {/* Data & Trust */}
         <section className="mt-32">
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              {
-                icon: Shield,
-                title: "GDPR Compliant",
-                description: "Your data is protected under EU regulations with full transparency.",
-              },
-              {
-                icon: Heart,
-                title: "Wellbeing Focused",
-                description: "Non-medical, motivational approach to support your journey.",
-              },
-              {
-                icon: Users,
-                title: "Community Driven",
-                description: "Your contributions help advance research for everyone.",
-              },
-            ].map((item) => (
-              <div key={item.title} className="text-center">
-                <item.icon className="h-8 w-8 text-primary mx-auto mb-4 opacity-80" />
-                <h3 className="font-medium text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+          <h2 className="text-2xl font-medium text-center text-foreground mb-12">
+            {COPY.dataTrust.title}
+          </h2>
+          <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {COPY.dataTrust.points.map((point) => (
+              <div key={point.text} className="flex items-start gap-4 p-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                  <point.icon className="h-5 w-5" />
+                </div>
+                <p className="text-muted-foreground text-sm leading-relaxed pt-2">
+                  {point.text}
+                </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Why Join */}
+        <section className="mt-32">
+          <h2 className="text-2xl font-medium text-center text-foreground mb-12">
+            {COPY.whyJoin.title}
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12">
+            {COPY.whyJoin.benefits.map((benefit) => (
+              <div key={benefit.text} className="text-center">
+                <benefit.icon className="h-8 w-8 text-primary mx-auto mb-4 opacity-80" />
+                <p className="text-sm text-muted-foreground">{benefit.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <Link to="/auth?mode=signup">
+              <Button size="lg" className="px-10">
+                {COPY.whyJoin.cta}
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </section>
 
@@ -132,10 +240,7 @@ const Landing = () => {
           <Card className="shadow-card border border-border/50 bg-accent/30">
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground text-center">
-                <strong className="text-foreground">Important:</strong> This portal is designed for 
-                research and wellbeing purposes only. It is not a medical device and does not provide 
-                diagnosis, treatment recommendations, or health risk assessments. Always consult 
-                healthcare professionals for medical advice.
+                <strong className="text-foreground">Fontos:</strong> {COPY.disclaimer.text.replace("Fontos: ", "")}
               </p>
             </CardContent>
           </Card>
@@ -145,13 +250,16 @@ const Landing = () => {
       {/* Footer */}
       <footer className="container mx-auto px-4 py-8 border-t border-border/50">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© 2024 Community Wellbeing Research Initiative</p>
+          <p>{COPY.footer.copyright}</p>
           <div className="flex gap-6">
-            <Link to="/auth" className="hover:text-foreground transition-colors">
-              Privacy Policy
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
+              {COPY.footer.links.privacy}
             </Link>
-            <Link to="/auth" className="hover:text-foreground transition-colors">
-              Terms of Service
+            <Link to="/terms" className="hover:text-foreground transition-colors">
+              {COPY.footer.links.terms}
+            </Link>
+            <Link to="/contact" className="hover:text-foreground transition-colors">
+              {COPY.footer.links.contact}
             </Link>
           </div>
         </div>
