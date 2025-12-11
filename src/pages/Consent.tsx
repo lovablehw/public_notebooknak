@@ -9,6 +9,39 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, Shield, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const defaultConsentContentHu = `## 1. Miért van szükség hozzájárulásra?
+
+Az oldal életmód- és jólléti felmérések kitöltését teszi lehetővé, valamint segít abban, hogy jobban átlásd a saját szokásaidat és változásaidat.
+
+Adataid kezelése teljes mértékben hozzájárulás-alapú, átlátható, és bármikor visszavonható.
+
+Mit nem csinálunk?
+- Nem adunk orvosi diagnózist.
+- Nem módosítunk kezeléseket.
+- Nem végzünk kockázatszámítást vagy orvosi döntést támogató funkciót.
+
+Ez egy jólléti és önmegismerési célú felület, amely biztonságosan kezeli az adataidat.
+
+## 2. Az adatok felhasználásának célja
+
+A hozzájárulásod alapján a következő adatkezelési célok valósulnak meg:
+
+- Felmérések kitöltése és feldolgozása (SurveyStore): az életmód- és jólléti kérdőívek válaszait feldolgozzuk, és megjelenítjük számodra.
+- Eredmények és ajánlások (HealthGuide): a válaszaid alapján személyre szabott, nem orvosi, motivációs és edukációs jellegű visszajelzéseket kapsz.
+- Személyes egészségkönyv építése (HealthBook): az általad megadott adatokból személyes adatnapló épül (felmérés-történet, megfigyelések, opcionális feltöltések), amely segít követni a változásokat.
+- Kutatási célú, anonimizált feldolgozás: adataid anonimizált és összesített formában hozzájárulnak prevenciós és életmód-kutatásokhoz, valamint a rendszer szolgáltatásainak továbbfejlesztéséhez. Ez semmilyen formában nem teszi lehetővé személyed azonosítását.
+- Kapcsolattartás és asszisztens funkciók (HealthPass): értesítéseket, emlékeztetőket, összefoglalókat küldünk – kizárólag a jólléti támogatás érdekében.
+
+## 3. A te választásaid
+
+Kötelező hozzájárulás a szolgáltatás használatához:
+- Hozzájárulok ahhoz, hogy az általam megadott adatokat a fenti célok szerint kezeljék, és tudomásul veszem, hogy ez nem helyettesíti az orvosi tanácsadást vagy ellátást.
+
+Opcionális hozzájárulás:
+- Engedélyezem, hogy adataimat anonimizált, összesített formában prevenciós kutatási adatbázisokhoz és a rendszer fejlesztéséhez felhasználják. Ennek visszautasítása mellett is használhatom az alapfunkciókat.
+
+A hozzájárulásomat bármikor visszavonhatom a fiókbeállításokban.`;
+
 const Consent = () => {
   const { latestVersion, submitConsent, loading } = useConsent();
   const [consents, setConsents] = useState({
@@ -57,6 +90,8 @@ const Consent = () => {
     );
   }
 
+  const consentContent = latestVersion?.content || defaultConsentContentHu;
+
   return (
     <div className="min-h-screen gradient-hero py-8 px-4">
       <div className="container mx-auto max-w-3xl">
@@ -91,7 +126,7 @@ const Consent = () => {
           <CardContent>
             <ScrollArea className="h-64 rounded-lg border border-border/50 p-4 bg-muted/30">
               <div className="prose prose-sm max-w-none text-foreground/80">
-                {latestVersion?.content?.split("\n\n").map((paragraph, index) => {
+                {consentContent.split("\n\n").map((paragraph, index) => {
                   if (paragraph.startsWith("## ")) {
                     return (
                       <h3 key={index} className="text-base font-medium text-foreground mt-4 mb-2">
@@ -179,11 +214,11 @@ const Consent = () => {
               />
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="communication" className="font-medium cursor-pointer">
-                  Kommunikációs beállítások
+                  Kommunikációs beállítások (opcionális)
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   Szeretnék értesítéseket kapni új kérdőívekről, kutatási eredményekről 
-                  és közösségi hírekről (opcionális).
+                  és közösségi hírekről.
                 </p>
               </div>
             </div>
