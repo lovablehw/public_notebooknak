@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Consent from "./pages/Consent";
 import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
+import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,8 @@ const App = () => (
             <Route path="/consent" element={<Consent />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
+            {/* Development-only route for resetting broken auth state */}
+            <Route path="/reset" element={<ResetSession />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
