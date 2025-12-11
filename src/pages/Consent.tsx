@@ -24,8 +24,8 @@ const Consent = () => {
     if (!consents.research_participation || !consents.health_data_processing) {
       toast({
         variant: "destructive",
-        title: "Required consents",
-        description: "Research participation and health data processing consents are required to continue.",
+        title: "Kötelező hozzájárulások",
+        description: "A kutatásban való részvétel és az egészségügyi adatok kezelése hozzájárulás szükséges a folytatáshoz.",
       });
       return;
     }
@@ -37,13 +37,13 @@ const Consent = () => {
     if (error) {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to save your consent. Please try again.",
+        title: "Hiba",
+        description: "Nem sikerült menteni a hozzájárulást. Kérjük, próbáld újra.",
       });
     } else {
       toast({
-        title: "Thank you!",
-        description: "Your consent has been recorded. Welcome to the community!",
+        title: "Köszönjük!",
+        description: "Hozzájárulásod rögzítettük. Üdvözlünk a közösségben!",
       });
       navigate("/dashboard");
     }
@@ -64,13 +64,13 @@ const Consent = () => {
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Heart className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-foreground">Community Wellbeing</span>
+            <span className="font-semibold text-foreground">Közösségi Jóllét</span>
           </div>
           <h1 className="text-3xl font-medium text-foreground mb-2">
-            Informed Consent
+            Tájékozott beleegyezés
           </h1>
           <p className="text-muted-foreground">
-            Please review the following information carefully before proceeding
+            Kérjük, figyelmesen olvasd el az alábbi információkat a folytatás előtt
           </p>
         </div>
 
@@ -79,13 +79,13 @@ const Consent = () => {
           <CardHeader>
             <div className="flex items-center gap-2 text-primary mb-2">
               <FileText className="h-5 w-5" />
-              <span className="text-sm font-medium">Version {latestVersion?.version || "1.0"}</span>
+              <span className="text-sm font-medium">Verzió: {latestVersion?.version || "1.0"}</span>
             </div>
             <CardTitle className="text-xl">
-              {latestVersion?.title || "Research Participation & Data Processing Consent"}
+              {latestVersion?.title || "Kutatásban való részvétel és adatkezelési hozzájárulás"}
             </CardTitle>
             <CardDescription>
-              This document explains how your data will be used
+              Ez a dokumentum bemutatja, hogyan használjuk fel az adataidat
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -125,9 +125,9 @@ const Consent = () => {
             <div className="flex items-center gap-2 text-primary mb-2">
               <Shield className="h-5 w-5" />
             </div>
-            <CardTitle className="text-xl">Your Consent</CardTitle>
+            <CardTitle className="text-xl">Hozzájárulásod</CardTitle>
             <CardDescription>
-              Please confirm your understanding and agreement
+              Kérjük, erősítsd meg, hogy megértetted és elfogadod az alábbiakat
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -141,11 +141,11 @@ const Consent = () => {
               />
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="research" className="font-medium cursor-pointer">
-                  Research Participation <span className="text-destructive">*</span>
+                  Kutatásban való részvétel <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  I agree to participate in research activities and understand that my 
-                  questionnaire responses will be used for scientific research purposes.
+                  Beleegyezem a kutatási tevékenységekben való részvételbe, és megértem, 
+                  hogy a kérdőívre adott válaszaimat tudományos kutatási célokra használják fel.
                 </p>
               </div>
             </div>
@@ -160,11 +160,11 @@ const Consent = () => {
               />
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="health" className="font-medium cursor-pointer">
-                  Health Data Processing <span className="text-destructive">*</span>
+                  Egészségügyi adatok kezelése <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  I consent to the processing of my health-related information as 
-                  described in the document above, in compliance with GDPR.
+                  Hozzájárulok az egészségügyi adataim kezeléséhez a fenti dokumentumban 
+                  leírtak szerint, a GDPR előírásainak megfelelően.
                 </p>
               </div>
             </div>
@@ -179,11 +179,11 @@ const Consent = () => {
               />
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="communication" className="font-medium cursor-pointer">
-                  Communication Preferences
+                  Kommunikációs beállítások
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  I would like to receive updates about new questionnaires, research 
-                  findings, and community news (optional).
+                  Szeretnék értesítéseket kapni új kérdőívekről, kutatási eredményekről 
+                  és közösségi hírekről (opcionális).
                 </p>
               </div>
             </div>
@@ -199,12 +199,12 @@ const Consent = () => {
             className="px-12"
           >
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            I Agree & Continue
+            Elfogadom és folytatom
           </Button>
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-4">
-          You can withdraw your consent at any time from your account settings.
+          Hozzájárulásodat bármikor visszavonhatod a fiókbeállításokban.
         </p>
       </div>
     </div>
