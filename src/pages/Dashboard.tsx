@@ -85,17 +85,17 @@ const Dashboard = () => {
 
   // Demo function to simulate completing a questionnaire
   const handleDemoComplete = async () => {
-    const { newAchievements } = await addPoints(10, "Completed demo questionnaire", "demo-1");
+    const { newAchievements } = await addPoints(10, "Demó kérdőív kitöltése", "demo-1");
     
     toast({
-      title: "Questionnaire completed!",
-      description: `You earned 10 points.`,
+      title: "Kérdőív kitöltve!",
+      description: `10 pontot szereztél.`,
     });
 
     if (newAchievements && newAchievements.length > 0) {
       setTimeout(() => {
         toast({
-          title: "🎉 Achievement Unlocked!",
+          title: "🎉 Új kitüntetés!",
           description: newAchievements[0].name,
         });
       }, 1000);
@@ -120,7 +120,7 @@ const Dashboard = () => {
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-foreground">Community Wellbeing</span>
+          <span className="font-semibold text-foreground">Közösségi Jóllét</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
@@ -136,10 +136,10 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-3xl font-light text-foreground mb-2">
-            Welcome back, <span className="font-medium">{profile?.display_name || "Friend"}</span>
+            Üdvözlünk újra, <span className="font-medium">{profile?.display_name || "Barátom"}</span>
           </h1>
           <p className="text-muted-foreground">
-            Thank you for contributing to wellbeing research. Your participation matters.
+            Köszönjük, hogy hozzájárulsz a jólléti kutatásokhoz. A részvételed fontos.
           </p>
         </div>
 
@@ -147,22 +147,22 @@ const Dashboard = () => {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card className="shadow-card border-0 animate-fade-in">
             <CardHeader className="pb-2">
-              <CardDescription>Your Points</CardDescription>
+              <CardDescription>Pontjaid</CardDescription>
               <CardTitle className="text-4xl font-light text-primary">{totalPoints}</CardTitle>
             </CardHeader>
             <CardContent>
               {nextMilestone && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Next: {nextMilestone.name}</span>
-                    <span className="text-muted-foreground">{nextMilestone.points_required} pts</span>
+                    <span className="text-muted-foreground">Következő: {nextMilestone.name}</span>
+                    <span className="text-muted-foreground">{nextMilestone.points_required} pont</span>
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
               )}
               {!nextMilestone && (
                 <p className="text-sm text-muted-foreground">
-                  You've unlocked all achievements! 🎉
+                  Az összes kitüntetést feloldottad! 🎉
                 </p>
               )}
             </CardContent>
@@ -170,9 +170,9 @@ const Dashboard = () => {
 
           <Card className="shadow-card border-0 animate-fade-in">
             <CardHeader className="pb-2">
-              <CardDescription>Achievements</CardDescription>
+              <CardDescription>Kitüntetések</CardDescription>
               <CardTitle className="text-lg font-medium">
-                {unlockedAchievements.length} / {achievements.length} Unlocked
+                {unlockedAchievements.length} / {achievements.length} feloldva
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -197,17 +197,17 @@ const Dashboard = () => {
         </div>
 
         {/* Questionnaire Area */}
-        <h2 className="text-xl font-medium text-foreground mb-4">Questionnaires</h2>
+        <h2 className="text-xl font-medium text-foreground mb-4">Kérdőívek</h2>
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Iframe-ready container for external questionnaires */}
           <Card className="shadow-card border-0 animate-fade-in overflow-hidden">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Wellbeing Check-in</CardTitle>
+                <CardTitle className="text-lg">Jólléti felmérés</CardTitle>
               </div>
               <CardDescription>
-                A brief questionnaire about your current wellbeing
+                Egy rövid kérdőív a jelenlegi közérzeted felmérésére
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -215,12 +215,12 @@ const Dashboard = () => {
               <div className="aspect-video bg-muted/50 rounded-lg border border-dashed border-border flex items-center justify-center mb-4">
                 <div className="text-center text-muted-foreground p-4">
                   <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">External questionnaire will load here</p>
-                  <p className="text-xs mt-1">iframe-ready integration area</p>
+                  <p className="text-sm">A külső kérdőív itt fog megjelenni</p>
+                  <p className="text-xs mt-1">iframe-kompatibilis integrációs terület</p>
                 </div>
               </div>
               <Button onClick={handleDemoComplete} className="w-full">
-                Complete Demo (+10 pts)
+                Demó kitöltése (+10 pont)
               </Button>
             </CardContent>
           </Card>
@@ -229,10 +229,10 @@ const Dashboard = () => {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Lifestyle Assessment</CardTitle>
+                <CardTitle className="text-lg">Életmód felmérés</CardTitle>
               </div>
               <CardDescription>
-                Learn about your daily habits and patterns
+                Ismerd meg jobban a napi szokásaidat és mintázataidat
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -240,12 +240,12 @@ const Dashboard = () => {
               <div className="aspect-video bg-muted/50 rounded-lg border border-dashed border-border flex items-center justify-center mb-4">
                 <div className="text-center text-muted-foreground p-4">
                   <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Coming soon</p>
-                  <p className="text-xs mt-1">More questionnaires will be added</p>
+                  <p className="text-sm">Hamarosan</p>
+                  <p className="text-xs mt-1">További kérdőívek érkeznek</p>
                 </div>
               </div>
               <Button variant="secondary" disabled className="w-full">
-                Not Available Yet
+                Még nem elérhető
               </Button>
             </CardContent>
           </Card>
@@ -255,9 +255,9 @@ const Dashboard = () => {
         <Card className="shadow-card border-0 bg-accent/30 animate-fade-in">
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground text-center">
-              <strong className="text-foreground">Reminder:</strong> This platform is for research and 
-              wellbeing purposes only. It does not provide medical advice, diagnosis, or treatment 
-              recommendations. Please consult healthcare professionals for medical concerns.
+              <strong className="text-foreground">Emlékeztető:</strong> Ez a platform kizárólag kutatási és 
+              jólléti célokat szolgál. Nem nyújt orvosi tanácsadást, diagnózist vagy kezelési 
+              javaslatokat. Egészségügyi kérdésekkel fordulj orvoshoz.
             </p>
           </CardContent>
         </Card>

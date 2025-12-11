@@ -10,8 +10,8 @@ import { Heart, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const emailSchema = z.string().trim().email("Please enter a valid email address");
-const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+const emailSchema = z.string().trim().email("Kérjük, adj meg egy érvényes e-mail címet");
+const passwordSchema = z.string().min(6, "A jelszónak legalább 6 karakter hosszúnak kell lennie");
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -51,13 +51,13 @@ const Auth = () => {
 
     if (mode === "signup") {
       if (!displayName.trim()) {
-        newErrors.displayName = "Display name is required";
+        newErrors.displayName = "A megjelenítendő név megadása kötelező";
       }
       if (!ageRange) {
-        newErrors.ageRange = "Please select your age range";
+        newErrors.ageRange = "Kérjük, válaszd ki a korosztályodat";
       }
       if (!smokingStatus) {
-        newErrors.smokingStatus = "Please select your smoking status";
+        newErrors.smokingStatus = "Kérjük, válaszd ki a dohányzási státuszodat";
       }
     }
 
@@ -78,9 +78,9 @@ const Auth = () => {
         if (error) {
           toast({
             variant: "destructive",
-            title: "Sign in failed",
+            title: "Sikertelen bejelentkezés",
             description: error.message === "Invalid login credentials" 
-              ? "Invalid email or password. Please try again."
+              ? "Hibás e-mail cím vagy jelszó. Kérjük, próbáld újra."
               : error.message,
           });
         }
@@ -94,20 +94,20 @@ const Auth = () => {
           if (error.message.includes("already registered")) {
             toast({
               variant: "destructive",
-              title: "Account exists",
-              description: "An account with this email already exists. Please sign in instead.",
+              title: "A fiók már létezik",
+              description: "Ezzel az e-mail címmel már van regisztrált fiók. Kérjük, jelentkezz be.",
             });
           } else {
             toast({
               variant: "destructive",
-              title: "Sign up failed",
+              title: "Sikertelen regisztráció",
               description: error.message,
             });
           }
         } else {
           toast({
-            title: "Welcome!",
-            description: "Your account has been created successfully.",
+            title: "Üdvözlünk!",
+            description: "Fiókod sikeresen létrejött.",
           });
         }
       }
@@ -122,7 +122,7 @@ const Auth = () => {
       <header className="container mx-auto px-4 py-6">
         <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />
-          Back to home
+          Vissza a főoldalra
         </Link>
       </header>
 
@@ -132,25 +132,25 @@ const Auth = () => {
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Heart className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">Community Wellbeing</span>
+              <span className="font-semibold text-foreground">Közösségi Jóllét</span>
             </div>
             <CardTitle className="text-2xl font-medium">
-              {mode === "login" ? "Welcome back" : "Join the community"}
+              {mode === "login" ? "Üdvözlünk újra" : "Csatlakozz a közösséghez"}
             </CardTitle>
             <CardDescription>
               {mode === "login"
-                ? "Sign in to continue your wellbeing journey"
-                : "Create your account to start participating"}
+                ? "Jelentkezz be a jólléti utad folytatásához"
+                : "Hozd létre fiókodat a részvételhez"}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-mail cím</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="te@pelda.hu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={errors.email ? "border-destructive" : ""}
@@ -161,7 +161,7 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Jelszó</Label>
                 <Input
                   id="password"
                   type="password"
@@ -178,11 +178,11 @@ const Auth = () => {
               {mode === "signup" && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="displayName">Display Name</Label>
+                    <Label htmlFor="displayName">Megjelenítendő név</Label>
                     <Input
                       id="displayName"
                       type="text"
-                      placeholder="How should we call you?"
+                      placeholder="Hogyan szólítsunk?"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       className={errors.displayName ? "border-destructive" : ""}
@@ -193,10 +193,10 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ageRange">Age Range</Label>
+                    <Label htmlFor="ageRange">Korosztály</Label>
                     <Select value={ageRange} onValueChange={setAgeRange}>
                       <SelectTrigger className={errors.ageRange ? "border-destructive" : ""}>
-                        <SelectValue placeholder="Select your age range" />
+                        <SelectValue placeholder="Válaszd ki a korosztályodat" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="18-24">18-24</SelectItem>
@@ -213,15 +213,15 @@ const Auth = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="smokingStatus">Smoking Status</Label>
+                    <Label htmlFor="smokingStatus">Dohányzási státusz</Label>
                     <Select value={smokingStatus} onValueChange={setSmokingStatus}>
                       <SelectTrigger className={errors.smokingStatus ? "border-destructive" : ""}>
-                        <SelectValue placeholder="Select your status" />
+                        <SelectValue placeholder="Válaszd ki a státuszodat" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="current-smoker">Current smoker</SelectItem>
-                        <SelectItem value="ex-smoker">Ex-smoker</SelectItem>
-                        <SelectItem value="never-smoked">Never smoked</SelectItem>
+                        <SelectItem value="current-smoker">Jelenleg dohányzom</SelectItem>
+                        <SelectItem value="ex-smoker">Korábban dohányoztam</SelectItem>
+                        <SelectItem value="never-smoked">Soha nem dohányoztam</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.smokingStatus && (
@@ -233,29 +233,29 @@ const Auth = () => {
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {mode === "login" ? "Sign In" : "Create Account"}
+                {mode === "login" ? "Bejelentkezés" : "Fiók létrehozása"}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               {mode === "login" ? (
                 <>
-                  Don't have an account?{" "}
+                  Még nincs fiókod?{" "}
                   <button
                     onClick={() => setMode("signup")}
                     className="text-primary hover:underline font-medium"
                   >
-                    Sign up
+                    Regisztráció
                   </button>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
+                  Már van fiókod?{" "}
                   <button
                     onClick={() => setMode("login")}
                     className="text-primary hover:underline font-medium"
                   >
-                    Sign in
+                    Bejelentkezés
                   </button>
                 </>
               )}
