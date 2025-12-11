@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart, Shield, Loader2, FileText } from "lucide-react";
+import { Heart, Shield, Loader2, FileText, Info, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Hungarian consent content - used as fallback if no version in DB
 const defaultConsentContentHu = `## 1. Miért van szükség hozzájárulásra?
 
 Az oldal életmód- és jólléti felmérések kitöltését teszi lehetővé, valamint segít abban, hogy jobban átlásd a saját szokásaidat és változásaidat.
@@ -20,40 +21,36 @@ Mit nem csinálunk?
 - Nem módosítunk kezeléseket.
 - Nem végzünk kockázatszámítást vagy orvosi döntést támogató funkciót.
 
-Ez egy jólléti és önmegismerési célú felület, amely biztonságosan kezeli az adataidat.
-
-## 2. Az adatok felhasználásának célja
-
-A hozzájárulásod alapján a következő adatkezelési célok valósulnak meg:
-
-- Felmérések kitöltése és feldolgozása (SurveyStore): az életmód- és jólléti kérdőívek válaszait feldolgozzuk, és megjelenítjük számodra.
-- Eredmények és ajánlások (HealthGuide): a válaszaid alapján személyre szabott, nem orvosi, motivációs és edukációs jellegű visszajelzéseket kapsz.
-- Személyes egészségkönyv építése (HealthBook): az általad megadott adatokból személyes adatnapló épül (felmérés-történet, megfigyelések, opcionális feltöltések), amely segít követni a változásokat.
-- Kutatási célú, anonimizált feldolgozás: adataid anonimizált és összesített formában hozzájárulnak prevenciós és életmód-kutatásokhoz, valamint a rendszer szolgáltatásainak továbbfejlesztéséhez. Ez semmilyen formában nem teszi lehetővé személyed azonosítását.
-- Kapcsolattartás és asszisztens funkciók (HealthPass): értesítéseket, emlékeztetőket, összefoglalókat küldünk – kizárólag a jólléti támogatás érdekében.
-
-## 3. A te választásaid
-
-Kötelező hozzájárulás a szolgáltatás használatához:
-- Hozzájárulok ahhoz, hogy az általam megadott adatokat a fenti célok szerint kezeljék, és tudomásul veszem, hogy ez nem helyettesíti az orvosi tanácsadást vagy ellátást.
-
-Opcionális hozzájárulás:
-- Engedélyezem, hogy adataimat anonimizált, összesített formában prevenciós kutatási adatbázisokhoz és a rendszer fejlesztéséhez felhasználják. Ennek visszautasítása mellett is használhatom az alapfunkciókat.
-
-A hozzájárulásomat bármikor visszavonhatom a fiókbeállításokban.`;
+Ez egy jólléti és önmegismerési célú felület, amely biztonságosan kezeli az adataidat.`;
 
 const Consent = () => {
-  const { latestVersion, submitConsent, loading } = useConsent();
+  const { user, loading: authLoading } = useAuth();
+  const { latestVersion, submitConsent, loading, needsConsent } = useConsent();
   const [consents, setConsents] = useState({
     research_participation: false,
     health_data_processing: false,
-    communication_preferences: false,
+    communication_preferences: false, // Repurposed for anonymized data / digital twin consent
   });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Redirect to dashboard if consent already given
+  useEffect(() => {
+    if (!loading && !needsConsent && user) {
+      navigate("/dashboard");
+    }
+  }, [loading, needsConsent, user, navigate]);
+
   const handleSubmit = async () => {
+    // Validate required consents
     if (!consents.research_participation || !consents.health_data_processing) {
       toast({
         variant: "destructive",
@@ -82,7 +79,7 @@ const Consent = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -109,64 +106,121 @@ const Consent = () => {
           </p>
         </div>
 
-        {/* Consent Document */}
+        {/* Block 1: Rövid összefoglaló */}
+        <Card className="shadow-soft border-0 mb-6 animate-fade-in">
+          <CardHeader>
+            <div className="flex items-center gap-2 text-primary mb-2">
+              <Info className="h-5 w-5" />
+              <span className="text-sm font-medium">1. lépés</span>
+            </div>
+            <CardTitle className="text-xl">Rövid összefoglaló</CardTitle>
+            <CardDescription>
+              Mire szolgál ez a portál?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none text-foreground/80">
+            <p className="text-sm leading-relaxed mb-4">
+              Az oldal életmód- és jólléti felmérések kitöltését teszi lehetővé, segít jobban átlátni 
+              a saját szokásaidat, és hozzájárulni a prevenciós kutatásokhoz.
+            </p>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                Amit kapsz:
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
+                <li>Életmód- és jólléti kérdőívek kitöltése</li>
+                <li>Személyes "egészségkönyv" a válaszaidról</li>
+                <li>Motivációs visszajelzések (nem orvosi)</li>
+              </ul>
+            </div>
+            <div className="bg-accent/30 rounded-lg p-4 mt-4">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Fontos:</strong> A rendszer nem ad orvosi diagnózist, 
+                nem módosít kezeléseket, és nem helyettesíti az orvosi ellátást.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Block 2: Az adatok felhasználásának célja */}
         <Card className="shadow-soft border-0 mb-6 animate-fade-in">
           <CardHeader>
             <div className="flex items-center gap-2 text-primary mb-2">
               <FileText className="h-5 w-5" />
-              <span className="text-sm font-medium">Verzió: {latestVersion?.version || "1.0"}</span>
+              <span className="text-sm font-medium">2. lépés</span>
             </div>
-            <CardTitle className="text-xl">
-              {latestVersion?.title || "Kutatásban való részvétel és adatkezelési hozzájárulás"}
-            </CardTitle>
+            <CardTitle className="text-xl">Az adatok felhasználásának célja</CardTitle>
             <CardDescription>
-              Ez a dokumentum bemutatja, hogyan használjuk fel az adataidat
+              Hogyan használjuk fel az adataidat?
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-64 rounded-lg border border-border/50 p-4 bg-muted/30">
-              <div className="prose prose-sm max-w-none text-foreground/80">
-                {consentContent.split("\n\n").map((paragraph, index) => {
-                  if (paragraph.startsWith("## ")) {
-                    return (
-                      <h3 key={index} className="text-base font-medium text-foreground mt-4 mb-2">
-                        {paragraph.replace("## ", "")}
-                      </h3>
-                    );
-                  }
-                  if (paragraph.startsWith("- ")) {
-                    return (
-                      <ul key={index} className="list-disc pl-4 my-2 space-y-1">
-                        {paragraph.split("\n").map((item, i) => (
-                          <li key={i} className="text-sm">{item.replace("- ", "")}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  return (
-                    <p key={index} className="text-sm mb-3">
-                      {paragraph}
-                    </p>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-medium">1</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Életmód- és jólléti felmérések kitöltése és feldolgozása.</strong><br />
+                  A kérdőívekre adott válaszaidat feldolgozzuk és megjelenítjük számodra.
+                </p>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-medium">2</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Személyre szabott, nem orvosi, motivációs visszajelzések küldése.</strong><br />
+                  A válaszaid alapján jólléti fókuszú, edukációs jellegű visszajelzéseket kapsz.
+                </p>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-medium">3</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Személyes egészségkönyv építése a megadott adatokból.</strong><br />
+                  Az adataidból személyes napló épül, amely segít követni a változásokat.
+                </p>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-medium">4</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Anonimizált, összesített adatok felhasználása prevenciós kutatásokhoz.</strong><br />
+                  Adataid anonimizált formában hozzájárulnak kutatásokhoz és a rendszer fejlesztéséhez.
+                </p>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs font-medium">5</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Értesítések és emlékeztetők küldése jólléti támogatás céljából.</strong><br />
+                  Opcionálisan összefoglalókat és emlékeztetőket küldünk a fejlődésedhez.
+                </p>
+              </li>
+            </ul>
           </CardContent>
         </Card>
 
-        {/* Consent Checkboxes */}
+        {/* Block 3: A te választásaid */}
         <Card className="shadow-soft border-0 mb-6 animate-fade-in">
           <CardHeader>
             <div className="flex items-center gap-2 text-primary mb-2">
               <Shield className="h-5 w-5" />
+              <span className="text-sm font-medium">3. lépés</span>
             </div>
-            <CardTitle className="text-xl">Hozzájárulásod</CardTitle>
+            <CardTitle className="text-xl">A te választásaid</CardTitle>
             <CardDescription>
               Kérjük, erősítsd meg, hogy megértetted és elfogadod az alábbiakat
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start gap-3">
+            {/* Required consent 1 */}
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-muted/30">
               <Checkbox
                 id="research"
                 checked={consents.research_participation}
@@ -177,15 +231,17 @@ const Consent = () => {
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="research" className="font-medium cursor-pointer">
                   Kutatásban való részvétel <span className="text-destructive">*</span>
+                  <span className="text-xs text-muted-foreground ml-2">(kötelező)</span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Beleegyezem a kutatási tevékenységekben való részvételbe, és megértem, 
-                  hogy a kérdőívre adott válaszaimat tudományos kutatási célokra használják fel.
+                  Beleegyezem, hogy a kérdőívekre adott válaszaimat tudományos és prevenciós 
+                  kutatási célokra használják fel, a hozzájárulási dokumentumban leírtak szerint.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
+            {/* Required consent 2 */}
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-border/50 bg-muted/30">
               <Checkbox
                 id="health"
                 checked={consents.health_data_processing}
@@ -196,29 +252,33 @@ const Consent = () => {
               <div className="grid gap-1.5 leading-none">
                 <Label htmlFor="health" className="font-medium cursor-pointer">
                   Egészségügyi adatok kezelése <span className="text-destructive">*</span>
+                  <span className="text-xs text-muted-foreground ml-2">(kötelező)</span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Hozzájárulok az egészségügyi adataim kezeléséhez a fenti dokumentumban 
-                  leírtak szerint, a GDPR előírásainak megfelelően.
+                  Hozzájárulok az egészségügyi jellegű adataim kezeléséhez a hozzájárulási 
+                  dokumentumban leírtak szerint, a GDPR előírásainak megfelelően.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3">
+            {/* Optional consent */}
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-dashed border-border/50">
               <Checkbox
-                id="communication"
+                id="anonymized"
                 checked={consents.communication_preferences}
                 onCheckedChange={(checked) =>
                   setConsents({ ...consents, communication_preferences: checked === true })
                 }
               />
               <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="communication" className="font-medium cursor-pointer">
-                  Kommunikációs beállítások (opcionális)
+                <Label htmlFor="anonymized" className="font-medium cursor-pointer">
+                  Anonimizált adataim felhasználása összesített elemzésekhez és digitális iker kutatáshoz
+                  <span className="text-xs text-muted-foreground ml-2">(opcionális)</span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Szeretnék értesítéseket kapni új kérdőívekről, kutatási eredményekről 
-                  és közösségi hírekről.
+                  Engedélyezem, hogy anonimizált adataimat összesítve használják fel prevenciós 
+                  kutatásokhoz és digitális iker modellek fejlesztéséhez. Ennek visszautasítása 
+                  mellett is használhatom az alapfunkciókat.
                 </p>
               </div>
             </div>
