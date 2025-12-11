@@ -3,24 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
+import { useQuestionnaires } from "@/hooks/useQuestionnaires";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import {
-  Heart,
-  LogOut,
-  Loader2,
-  Trophy,
-  Star,
-  Medal,
-  Rocket,
-  Footprints,
-  Settings,
-  ClipboardList,
-} from "lucide-react";
+import { Heart, LogOut, Loader2, Settings, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
+import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 
 interface Profile {
   display_name: string;
@@ -28,35 +19,39 @@ interface Profile {
   smoking_status: string;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  footprints: Footprints,
-  rocket: Rocket,
-  trophy: Trophy,
-  medal: Medal,
-  star: Star,
-};
-
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
-  const { needsConsent, loading: consentLoading } = useConsent();
-  const { totalPoints, achievements, unlockedAchievements, getNextMilestone, getProgress, addPoints } = usePoints();
+  const { userConsent, needsConsent, loading: consentLoading } = useConsent();
+  const { totalPoints, addPoints, getNextMilestone, getProgress } = usePoints();
+  const { 
+    questionnaires, 
+    loading: questionnairesLoading, 
+    startQuestionnaire, 
+    completeQuestionnaire,
+    getCompletedCount,
+    getUniqueCompletedCount,
+  } = useQuestionnaires();
+  
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Auth check
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/login");
     }
   }, [user, authLoading, navigate]);
 
+  // Consent check
   useEffect(() => {
     if (!consentLoading && needsConsent && user) {
       navigate("/consent");
     }
   }, [needsConsent, consentLoading, user, navigate]);
 
+  // Fetch profile
   useEffect(() => {
     if (user) {
       fetchProfile();
@@ -83,26 +78,66 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  // Demo function to simulate completing a questionnaire
-  const handleDemoComplete = async () => {
-    const { newAchievements } = await addPoints(10, "Demó kérdőív kitöltése", "demo-1");
-    
-    toast({
-      title: "Kérdőív kitöltve!",
-      description: `10 pontot szereztél.`,
-    });
+  // Handle questionnaire start
+  const handleStartQuestionnaire = (id: string) => {
+    startQuestionnaire(id);
+  };
 
-    if (newAchievements && newAchievements.length > 0) {
-      setTimeout(() => {
-        toast({
-          title: "🎉 Új kitüntetés!",
-          description: newAchievements[0].name,
-        });
-      }, 1000);
+  // Handle questionnaire completion
+  const handleCompleteQuestionnaire = async (id: string) => {
+    const pointsEarned = completeQuestionnaire(id);
+    
+    if (pointsEarned > 0) {
+      const questionnaire = questionnaires.find((q) => q.id === id);
+      const { newAchievements } = await addPoints(
+        pointsEarned, 
+        `Kérdőív kitöltése: ${questionnaire?.title}`, 
+        id
+      );
+      
+      toast({
+        title: "Kérdőív befejezve!",
+        description: `${pointsEarned} pontot szereztél a kitöltésért.`,
+      });
+
+      // Check for new badge unlocks
+      const completedCount = getCompletedCount() + 1;
+      const badgeMessages: string[] = [];
+      
+      if (completedCount === 1) {
+        badgeMessages.push("Első lépések");
+      }
+      if (completedCount === 2) {
+        badgeMessages.push("Kezdő lendület");
+      }
+      if (completedCount === 3) {
+        badgeMessages.push("Heti Hős");
+      }
+
+      // Show badge notification
+      if (badgeMessages.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "🎉 Új kitüntetés!",
+            description: `Feloldottad: ${badgeMessages.join(", ")}`,
+          });
+        }, 1500);
+      }
+
+      // Show achievement notification from points system
+      if (newAchievements && newAchievements.length > 0) {
+        setTimeout(() => {
+          toast({
+            title: "🏆 Mérföldkő elérve!",
+            description: newAchievements[0].name,
+          });
+        }, 2500);
+      }
     }
   };
 
-  if (authLoading || consentLoading || profileLoading) {
+  // Loading state
+  if (authLoading || consentLoading || profileLoading || questionnairesLoading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -112,7 +147,17 @@ const Dashboard = () => {
 
   const nextMilestone = getNextMilestone();
   const progress = getProgress();
-  const unlockedIds = new Set(unlockedAchievements.map((ua) => ua.achievement_id));
+  
+  // Badge stats for display
+  const badgeStats: BadgeStats = {
+    completedQuestionnaires: getCompletedCount(),
+    uniqueQuestionnairesCompleted: getUniqueCompletedCount(),
+    hasOptionalConsent: userConsent?.communication_preferences || false,
+  };
+
+  const displayName = profile?.display_name && profile.display_name !== "Felhasználó" 
+    ? profile.display_name 
+    : user?.email?.split("@")[0] || "Barátom";
 
   return (
     <div className="min-h-screen gradient-hero">
@@ -132,25 +177,26 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
-        <div className="mb-8 animate-fade-in">
+        <div className="animate-fade-in">
           <h1 className="text-3xl font-light text-foreground mb-2">
-            Üdvözlünk újra, <span className="font-medium">{profile?.display_name || "Barátom"}</span>
+            Szia, <span className="font-medium">{displayName}</span>! Üdvözlünk az irányítópultodon.
           </h1>
           <p className="text-muted-foreground">
-            Köszönjük, hogy hozzájárulsz a jólléti kutatásokhoz. A részvételed fontos.
+            Köszönjük, hogy hozzájárulsz a jólléti és prevenciós kutatásokhoz.
           </p>
         </div>
 
-        {/* Points & Progress */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Points & Badges Section */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Points Card */}
           <Card className="shadow-card border-0 animate-fade-in">
             <CardHeader className="pb-2">
               <CardDescription>Pontjaid</CardDescription>
               <CardTitle className="text-4xl font-light text-primary">{totalPoints}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {nextMilestone && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -162,93 +208,38 @@ const Dashboard = () => {
               )}
               {!nextMilestone && (
                 <p className="text-sm text-muted-foreground">
-                  Az összes kitüntetést feloldottad! 🎉
+                  Az összes mérföldkövet elérted! 🎉
                 </p>
               )}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-0 animate-fade-in">
-            <CardHeader className="pb-2">
-              <CardDescription>Kitüntetések</CardDescription>
-              <CardTitle className="text-lg font-medium">
-                {unlockedAchievements.length} / {achievements.length} feloldva
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {achievements.map((achievement) => {
-                  const IconComponent = iconMap[achievement.icon] || Star;
-                  const isUnlocked = unlockedIds.has(achievement.id);
-                  return (
-                    <Badge
-                      key={achievement.id}
-                      variant={isUnlocked ? "default" : "secondary"}
-                      className={`px-3 py-1 ${!isUnlocked && "opacity-40"}`}
-                    >
-                      <IconComponent className="h-3 w-3 mr-1" />
-                      {achievement.name}
-                    </Badge>
-                  );
-                })}
+              
+              {/* Points explanation */}
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-accent/30 rounded-lg p-3">
+                <Gift className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  Pontokat gyűjthetsz a felmérések kitöltésével. A jövőben jutalmakat és kedvezményeket is társítunk hozzájuk.
+                </span>
               </div>
             </CardContent>
           </Card>
+
+          {/* Badges Card */}
+          <BadgeDisplay stats={badgeStats} />
         </div>
 
-        {/* Questionnaire Area */}
-        <h2 className="text-xl font-medium text-foreground mb-4">Kérdőívek</h2>
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Iframe-ready container for external questionnaires */}
-          <Card className="shadow-card border-0 animate-fade-in overflow-hidden">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Jólléti felmérés</CardTitle>
-              </div>
-              <CardDescription>
-                Egy rövid kérdőív a jelenlegi közérzeted felmérésére
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Placeholder for iframe integration */}
-              <div className="aspect-video bg-muted/50 rounded-lg border border-dashed border-border flex items-center justify-center mb-4">
-                <div className="text-center text-muted-foreground p-4">
-                  <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">A külső kérdőív itt fog megjelenni</p>
-                  <p className="text-xs mt-1">iframe-kompatibilis integrációs terület</p>
-                </div>
-              </div>
-              <Button onClick={handleDemoComplete} className="w-full">
-                Demó kitöltése (+10 pont)
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-0 animate-fade-in overflow-hidden">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ClipboardList className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Életmód felmérés</CardTitle>
-              </div>
-              <CardDescription>
-                Ismerd meg jobban a napi szokásaidat és mintázataidat
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Placeholder for iframe integration */}
-              <div className="aspect-video bg-muted/50 rounded-lg border border-dashed border-border flex items-center justify-center mb-4">
-                <div className="text-center text-muted-foreground p-4">
-                  <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Hamarosan</p>
-                  <p className="text-xs mt-1">További kérdőívek érkeznek</p>
-                </div>
-              </div>
-              <Button variant="secondary" disabled className="w-full">
-                Még nem elérhető
-              </Button>
-            </CardContent>
-          </Card>
+        {/* Questionnaires Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-medium text-foreground">Kérdőívek</h2>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {questionnaires.map((questionnaire) => (
+              <QuestionnaireCard
+                key={questionnaire.id}
+                questionnaire={questionnaire}
+                onStart={() => handleStartQuestionnaire(questionnaire.id)}
+                onComplete={() => handleCompleteQuestionnaire(questionnaire.id)}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Info Card */}
