@@ -6,7 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, metadata: { display_name: string; age_range: string; smoking_status: string }) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -38,11 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (
-    email: string,
-    password: string,
-    metadata: { display_name: string; age_range: string; smoking_status: string }
-  ) => {
+  /**
+   * Sign up a new user with email and password.
+   * Creates a profile with default placeholder values that the user can update later.
+   */
+  const signUp = async (email: string, password: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -50,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: metadata,
       },
     });
 
@@ -58,17 +57,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error };
     }
 
-    // Create profile after signup
+    // Create profile with default values after signup
+    // User can update their profile information later in settings
     if (data.user) {
+      // Extract display name from email (part before @)
+      const defaultDisplayName = email.split("@")[0] || "Felhasználó";
+      
       const { error: profileError } = await supabase.from("profiles").insert({
         id: data.user.id,
-        display_name: metadata.display_name,
-        age_range: metadata.age_range,
-        smoking_status: metadata.smoking_status,
+        display_name: defaultDisplayName,
+        age_range: "Nincs megadva",
+        smoking_status: "Nincs megadva",
       });
 
       if (profileError) {
         console.error("Profile creation error:", profileError);
+        // Don't fail the signup if profile creation fails
+        // The user can still use the app, just with missing profile data
       }
     }
 

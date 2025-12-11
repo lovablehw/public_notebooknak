@@ -125,7 +125,7 @@ const Landing = () => {
           <Heart className="h-6 w-6 text-primary" />
           <span className="font-semibold text-foreground">{COPY.header.brandName}</span>
         </div>
-        <Link to="/auth">
+        <Link to="/login">
           <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
             {COPY.header.signIn}
           </Button>
@@ -142,13 +142,13 @@ const Landing = () => {
             {COPY.hero.subheadline}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth?mode=signup">
+            <Link to="/register">
               <Button size="lg" className="w-full sm:w-auto px-8">
                 {COPY.hero.primaryCta}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/login">
               <Button variant="outline" size="lg" className="w-full sm:w-auto px-8">
                 {COPY.hero.secondaryCta}
               </Button>
@@ -226,7 +226,7 @@ const Landing = () => {
             ))}
           </div>
           <div className="text-center">
-            <Link to="/auth?mode=signup">
+            <Link to="/register">
               <Button size="lg" className="px-10">
                 {COPY.whyJoin.cta}
                 <ChevronRight className="ml-2 h-4 w-4" />
