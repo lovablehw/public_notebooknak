@@ -112,7 +112,7 @@ export const QuestionnaireCard = ({
             <Button 
               onClick={onComplete} 
               className="w-full"
-              variant="default"
+              variant="destructive"
             >
               <Check className="h-4 w-4 mr-2" />
               Jelölöm befejezettnek (+{rewardPoints} pont)
