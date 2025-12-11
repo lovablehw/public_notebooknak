@@ -107,7 +107,7 @@ const COPY = {
     text: "Fontos: Ez a portál kizárólag kutatási és jólléti célokat szolgál. Nem minősül orvostechnikai eszköznek, és nem nyújt diagnózist, kezelési javaslatot vagy egészségügyi kockázatértékelést. Orvosi tanácsért mindig fordulj szakemberhez.",
   },
   footer: {
-    copyright: "© 2024 Jólléti Kutatási Kezdeményezés",
+    copyright: "© 2025 Dohányzásmentes Jövő Kutatási Kezdeményezés",
     links: {
       privacy: "Adatkezelés",
       terms: "Felhasználási feltételek",
