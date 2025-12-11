@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Heart, LogOut, Loader2, Settings, Gift } from "lucide-react";
+import { Heart, LogOut, Loader2, Settings, Gift, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
@@ -168,6 +168,10 @@ const Dashboard = () => {
           <span className="font-semibold text-foreground">Közösségi Jóllét</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/healthbook")} className="gap-1">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Egészségkönyvem</span>
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
             <Settings className="h-5 w-5" />
           </Button>

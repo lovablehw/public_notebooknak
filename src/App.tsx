@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Consent from "./pages/Consent";
 import Dashboard from "./pages/Dashboard";
+import HealthBook from "./pages/HealthBook";
 import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
@@ -21,6 +22,7 @@ const queryClient = new QueryClient();
  * - /login → Login → /consent or /dashboard
  * - /consent → Consent wizard (requires auth)
  * - /dashboard → Main dashboard (requires auth + consent)
+ * - /healthbook → Personal health book (requires auth + consent)
  */
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -36,6 +38,7 @@ const App = () => (
             <Route path="/auth" element={<Login />} />
             <Route path="/consent" element={<Consent />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/healthbook" element={<HealthBook />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/reset" element={<ResetSession />} />
             <Route path="*" element={<NotFound />} />
