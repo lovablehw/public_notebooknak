@@ -10,7 +10,8 @@ import {
   FileText, 
   ScrollText,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const navItems = [
   { path: "/admin/kituntetesek", label: "Kitüntetések", icon: Trophy },
   { path: "/admin/hozzajarulasi-verziok", label: "Hozzájárulási verziók", icon: FileText },
   { path: "/admin/naplo", label: "Napló", icon: ScrollText },
+  { path: "/admin/admins", label: "Adminisztrátorok", icon: Shield },
 ];
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
