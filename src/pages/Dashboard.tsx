@@ -4,11 +4,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
 import { useQuestionnaires } from "@/hooks/useQuestionnaires";
+import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Heart, LogOut, Loader2, Settings, Gift, BookOpen } from "lucide-react";
+import { Heart, LogOut, Loader2, Settings, Gift, BookOpen, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userConsent, needsConsent, loading: consentLoading } = useConsent();
   const { totalPoints, addPoints, getNextMilestone, getProgress } = usePoints();
+  const { isAdmin } = useAdmin();
   const { 
     questionnaires, 
     loading: questionnairesLoading, 
@@ -172,6 +174,12 @@ const Dashboard = () => {
             <BookOpen className="h-4 w-4" />
             <span className="hidden sm:inline">Egészségkönyvem</span>
           </Button>
+          {isAdmin && (
+            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="gap-1">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
             <Settings className="h-5 w-5" />
           </Button>
