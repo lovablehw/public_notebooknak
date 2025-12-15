@@ -2,10 +2,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Hook to check if current user is an admin.
- * Admin emails are defined in VITE_ADMIN_EMAILS env variable (comma-separated).
+ * Uses server-side RPC function to verify admin status against admin_users table.
  */
 export function useAdmin() {
   const { user, loading: authLoading } = useAuth();
@@ -13,19 +14,26 @@ export function useAdmin() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) {
+      return;
+    }
 
-    const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS || "";
-    const adminEmails = adminEmailsEnv
-      .split(",")
-      .map((email: string) => email.trim().toLowerCase())
-      .filter(Boolean);
+    if (!user) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
 
-    const userEmail = user?.email?.toLowerCase() || "";
-    const isUserAdmin = adminEmails.includes(userEmail);
-
-    setIsAdmin(isUserAdmin);
-    setLoading(false);
+    // Check admin status via server-side RPC
+    supabase.rpc('check_is_admin').then(({ data, error }) => {
+      if (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(data || false);
+      }
+      setLoading(false);
+    });
   }, [user, authLoading]);
 
   return { isAdmin, loading, user };
