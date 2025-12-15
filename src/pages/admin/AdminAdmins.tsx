@@ -40,10 +40,20 @@ export default function AdminAdmins() {
 
   const addAdminMutation = useMutation({
     mutationFn: async (email: string) => {
+      const normalizedEmail = email.trim().toLowerCase();
       const { error } = await supabase
         .from("admin_users")
-        .insert({ email: email.trim().toLowerCase() });
+        .insert({ email: normalizedEmail });
       if (error) throw error;
+      
+      // Log audit event
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("audit_events").insert({
+        event_type: "admin_added",
+        actor_user_id: user?.id,
+        actor_email: user?.email,
+        metadata: { email: normalizedEmail },
+      });
     },
     onSuccess: () => {
       toast({
@@ -52,6 +62,7 @@ export default function AdminAdmins() {
       });
       setNewEmail("");
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-audit-events"] });
     },
     onError: (error: Error) => {
       toast({
@@ -65,12 +76,21 @@ export default function AdminAdmins() {
   });
 
   const removeAdminMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, email }: { id: string; email: string }) => {
       const { error } = await supabase
         .from("admin_users")
         .delete()
         .eq("id", id);
       if (error) throw error;
+      
+      // Log audit event
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("audit_events").insert({
+        event_type: "admin_removed",
+        actor_user_id: user?.id,
+        actor_email: user?.email,
+        metadata: { email },
+      });
     },
     onSuccess: () => {
       toast({
@@ -78,6 +98,7 @@ export default function AdminAdmins() {
         description: "Az admin sikeresen eltávolítva.",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-audit-events"] });
     },
     onError: () => {
       toast({
@@ -189,7 +210,7 @@ export default function AdminAdmins() {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Mégse</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => removeAdminMutation.mutate(admin.id)}
+                              onClick={() => removeAdminMutation.mutate({ id: admin.id, email: admin.email })}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               Eltávolítás
