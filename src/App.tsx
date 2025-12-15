@@ -23,6 +23,7 @@ import AdminAchievements from "./pages/admin/AdminAchievements";
 import AdminConsentVersions from "./pages/admin/AdminConsentVersions";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminAdmins from "./pages/admin/AdminAdmins";
+import AdminUploads from "./pages/admin/AdminUploads";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/admin/kituntetesek" element={<AdminAchievements />} />
             <Route path="/admin/hozzajarulasi-verziok" element={<AdminConsentVersions />} />
             <Route path="/admin/naplo" element={<AdminAuditLog />} />
+            <Route path="/admin/feltoltesek" element={<AdminUploads />} />
             <Route path="/admin/admins" element={<AdminAdmins />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

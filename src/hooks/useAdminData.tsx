@@ -18,10 +18,10 @@ export function useAdminProfiles() {
         .from("user_points")
         .select("user_id, points");
 
-      // Get user consents
+      // Get user consents with full data
       const { data: consents } = await supabase
         .from("user_consents")
-        .select("user_id, health_data_processing, research_participation, communication_preferences");
+        .select("user_id, health_data_processing, research_participation, communication_preferences, consented_at");
 
       // Aggregate points per user
       const pointsMap = new Map<string, number>();
@@ -132,6 +132,28 @@ export function useAdminAchievements() {
   });
 }
 
+// User achievements for a specific user
+export function useAdminUserAchievements(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin", "user-achievements", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .from("user_achievements")
+        .select(`
+          *,
+          achievement:achievements(*)
+        `)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+}
+
 // Consent versions
 export function useAdminConsentVersions() {
   return useQuery({
@@ -216,7 +238,7 @@ export function useAdminDashboardStats() {
         incompleteConsents,
         totalPoints,
         achievementStats,
-        currentVersion: consentVersions?.[0]?.version || "N/A",
+        currentVersion: consentVersions?.[0]?.version || null,
         recentEvents: auditEvents || [],
       };
     },

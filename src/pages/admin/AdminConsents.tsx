@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, FileCheck, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
@@ -37,8 +37,27 @@ export default function AdminConsents() {
     );
   }
 
+  if (!consents || consents.length === 0) {
+    return (
+      <AdminLayout title="Hozzájárulások">
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <FileCheck className="h-12 w-12 text-muted-foreground/30 mb-3" />
+          <p className="text-muted-foreground">Még nincs rögzített hozzájárulás.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout title="Hozzájárulások">
+      {/* Info box */}
+      <div className="mb-4 p-3 bg-muted/50 rounded-lg flex items-start gap-2">
+        <Lock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          Ez az oldal csak olvasható. A hozzájárulási adatok nem módosíthatók.
+        </p>
+      </div>
+
       {/* Filters */}
       <div className="mb-4 flex gap-2">
         <Button
@@ -46,7 +65,7 @@ export default function AdminConsents() {
           size="sm"
           onClick={() => setFilter("all")}
         >
-          Összes
+          Összes ({consents.length})
         </Button>
         <Button
           variant={filter === "complete" ? "default" : "outline"}
@@ -70,9 +89,9 @@ export default function AdminConsents() {
           <TableHeader>
             <TableRow>
               <TableHead>Felhasználó</TableHead>
-              <TableHead className="text-center">Kutatásban való részvétel</TableHead>
-              <TableHead className="text-center">Egészségügyi adatok kezelése</TableHead>
-              <TableHead className="text-center">Kommunikáció</TableHead>
+              <TableHead className="text-center">Kutatás (kötelező)</TableHead>
+              <TableHead className="text-center">Egészségügyi adatok (kötelező)</TableHead>
+              <TableHead className="text-center">Digitális iker / összesített (opcionális)</TableHead>
               <TableHead>Verzió</TableHead>
               <TableHead>Dátum/idő</TableHead>
             </TableRow>
@@ -84,48 +103,20 @@ export default function AdminConsents() {
                   {consent.user_id.slice(0, 8)}...
                 </TableCell>
                 <TableCell className="text-center">
-                  {consent.research_participation ? (
-                    <Badge variant="default" className="bg-success">
-                      <Check className="h-3 w-3 mr-1" />
-                      Igen
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      <X className="h-3 w-3 mr-1" />
-                      Nem
-                    </Badge>
-                  )}
+                  <ConsentBadge value={consent.research_participation} required />
                 </TableCell>
                 <TableCell className="text-center">
-                  {consent.health_data_processing ? (
-                    <Badge variant="default" className="bg-success">
-                      <Check className="h-3 w-3 mr-1" />
-                      Igen
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      <X className="h-3 w-3 mr-1" />
-                      Nem
-                    </Badge>
-                  )}
+                  <ConsentBadge value={consent.health_data_processing} required />
                 </TableCell>
                 <TableCell className="text-center">
-                  {consent.communication_preferences ? (
-                    <Badge variant="outline">
-                      <Check className="h-3 w-3 mr-1" />
-                      Igen
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">
-                      <X className="h-3 w-3 mr-1" />
-                      Nem
-                    </Badge>
-                  )}
+                  <ConsentBadge value={consent.communication_preferences} required={false} />
                 </TableCell>
                 <TableCell>
-                  {consent.consent_versions?.version || "N/A"}
+                  <Badge variant="outline">
+                    {consent.consent_versions?.version || "N/A"}
+                  </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="whitespace-nowrap">
                   {format(new Date(consent.consented_at), "yyyy.MM.dd HH:mm", { locale: hu })}
                 </TableCell>
               </TableRow>
@@ -141,5 +132,23 @@ export default function AdminConsents() {
         </Table>
       </div>
     </AdminLayout>
+  );
+}
+
+function ConsentBadge({ value, required }: { value?: boolean; required: boolean }) {
+  if (value) {
+    return (
+      <Badge variant="default" className="bg-green-600">
+        <Check className="h-3 w-3 mr-1" />
+        Igen
+      </Badge>
+    );
+  }
+  
+  return (
+    <Badge variant={required ? "destructive" : "secondary"}>
+      <X className="h-3 w-3 mr-1" />
+      Nem
+    </Badge>
   );
 }
