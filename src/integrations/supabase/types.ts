@@ -41,6 +41,24 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       audit_events: {
         Row: {
           actor_email: string | null
@@ -230,7 +248,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin_email: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
