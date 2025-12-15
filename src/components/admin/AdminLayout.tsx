@@ -27,6 +27,7 @@ const navItems = [
   { path: "/admin/pontok", label: "Pontok", icon: Star },
   { path: "/admin/kituntetesek", label: "Kitüntetések", icon: Trophy },
   { path: "/admin/hozzajarulasi-verziok", label: "Hozzájárulási verziók", icon: FileText },
+  { path: "/admin/feltoltesek", label: "Feltöltések", icon: FileText },
   { path: "/admin/naplo", label: "Napló", icon: ScrollText },
   { path: "/admin/admins", label: "Adminisztrátorok", icon: Shield },
 ];

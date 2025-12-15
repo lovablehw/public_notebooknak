@@ -35,78 +35,83 @@ export default function AdminAchievements() {
   }
 
   const totalUnlocks = achievements?.reduce((sum, a) => sum + a.unlockCount, 0) || 0;
+  const hasData = achievements && achievements.length > 0;
 
   return (
     <AdminLayout title="Kitüntetések">
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        {achievements?.map((achievement) => (
-          <Card key={achievement.id}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <span className="text-2xl">{achievement.icon}</span>
-                <span className="truncate">
-                  {achievementNames[achievement.name] || achievement.name}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{achievement.unlockCount}</div>
-              <p className="text-xs text-muted-foreground">feloldás</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Summary */}
       <div className="mb-6 p-4 bg-accent/50 rounded-lg flex items-center gap-4">
         <Trophy className="h-8 w-8 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">Összes feloldott kitüntetés</div>
-          <div className="text-3xl font-bold text-foreground">{totalUnlocks}</div>
+          <div className="text-3xl font-bold text-foreground">
+            {hasData ? totalUnlocks : "Még nincs adat"}
+          </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Ikon</TableHead>
-              <TableHead>Név</TableHead>
-              <TableHead>Leírás</TableHead>
-              <TableHead className="text-right">Szükséges pont</TableHead>
-              <TableHead className="text-right">Feloldások</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {!hasData ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <Trophy className="h-12 w-12 text-muted-foreground/30 mb-3" />
+          <p className="text-muted-foreground">Még nincs kitüntetés definiálva.</p>
+        </div>
+      ) : (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
             {achievements?.map((achievement) => (
-              <TableRow key={achievement.id}>
-                <TableCell className="text-2xl">{achievement.icon}</TableCell>
-                <TableCell className="font-medium">
-                  {achievementNames[achievement.name] || achievement.name}
-                </TableCell>
-                <TableCell className="text-muted-foreground max-w-xs truncate">
-                  {achievement.description}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Badge variant="outline">{achievement.points_required} pont</Badge>
-                </TableCell>
-                <TableCell className="text-right font-bold">
-                  {achievement.unlockCount}
-                </TableCell>
-              </TableRow>
+              <Card key={achievement.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <span className="text-2xl">{achievement.icon}</span>
+                    <span className="truncate">
+                      {achievementNames[achievement.name] || achievement.name}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{achievement.unlockCount}</div>
+                  <p className="text-xs text-muted-foreground">felhasználó</p>
+                </CardContent>
+              </Card>
             ))}
-            {achievements?.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Nincs kitüntetés
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          </div>
+
+          {/* Table */}
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ikon</TableHead>
+                  <TableHead>Név</TableHead>
+                  <TableHead>Leírás</TableHead>
+                  <TableHead className="text-right">Szükséges pont</TableHead>
+                  <TableHead className="text-right">Feloldások száma</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {achievements?.map((achievement) => (
+                  <TableRow key={achievement.id}>
+                    <TableCell className="text-2xl">{achievement.icon}</TableCell>
+                    <TableCell className="font-medium">
+                      {achievementNames[achievement.name] || achievement.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground max-w-xs truncate">
+                      {achievement.description}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline">{achievement.points_required} pont</Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-bold">
+                      {achievement.unlockCount}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
     </AdminLayout>
   );
 }

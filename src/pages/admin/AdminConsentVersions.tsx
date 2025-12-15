@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Eye } from "lucide-react";
+import { Loader2, Plus, Eye, AlertTriangle, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -101,15 +102,31 @@ export default function AdminConsentVersions() {
   }
 
   const latestVersion = versions?.[0];
+  const hasVersions = versions && versions.length > 0;
 
   return (
     <AdminLayout title="Hozzájárulási verziók">
+      {/* Legal warning */}
+      <Alert className="mb-6 border-yellow-500/50 bg-yellow-500/10">
+        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+        <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+          <strong>Figyelmeztetés:</strong> A hozzájárulási szöveg módosítása jogi és etikai következményekkel járhat. 
+          Kérjük, egyeztessen a jogi és etikai szakértőkkel új verzió létrehozása előtt.
+        </AlertDescription>
+      </Alert>
+
       {/* Create button */}
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <p className="text-sm text-muted-foreground">
-            Jelenlegi aktív verzió: <Badge variant="default">{latestVersion?.version || "N/A"}</Badge>
-          </p>
+          {hasVersions ? (
+            <p className="text-sm text-muted-foreground">
+              Jelenlegi aktív verzió: <Badge variant="default">{latestVersion?.version}</Badge>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nincs aktív hozzájárulási verzió
+            </p>
+          )}
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
@@ -122,9 +139,18 @@ export default function AdminConsentVersions() {
             <DialogHeader>
               <DialogTitle>Új hozzájárulási verzió létrehozása</DialogTitle>
               <DialogDescription>
-                Hozzon létre egy új hozzájárulási verziót. A legújabb verzió lesz automatikusan az aktív.
+                A legújabb verzió automatikusan aktívvá válik. A korábbi verziók megmaradnak az előzményekben.
               </DialogDescription>
             </DialogHeader>
+            
+            {/* Warning in dialog */}
+            <Alert className="border-yellow-500/50 bg-yellow-500/10">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription className="text-yellow-800 dark:text-yellow-200 text-sm">
+                A hozzájárulási szöveg módosítása jogi és etikai következményekkel járhat.
+              </AlertDescription>
+            </Alert>
+
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -147,7 +173,7 @@ export default function AdminConsentVersions() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content">Tartalom</Label>
+                <Label htmlFor="content">Tartalom (magyar nyelven)</Label>
                 <Textarea
                   id="content"
                   placeholder="A hozzájárulás teljes szövege..."
@@ -170,59 +196,65 @@ export default function AdminConsentVersions() {
         </Dialog>
       </div>
 
-      {/* Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Verzió</TableHead>
-              <TableHead>Cím</TableHead>
-              <TableHead>Létrehozva</TableHead>
-              <TableHead>Hatályba lép</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {versions?.map((version, index) => (
-              <TableRow key={version.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={index === 0 ? "default" : "secondary"}>
-                      {version.version}
-                    </Badge>
-                    {index === 0 && (
-                      <Badge variant="outline" className="text-xs">Aktív</Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">{version.title}</TableCell>
-                <TableCell>
-                  {format(new Date(version.created_at), "yyyy.MM.dd HH:mm", { locale: hu })}
-                </TableCell>
-                <TableCell>
-                  {format(new Date(version.effective_date), "yyyy.MM.dd", { locale: hu })}
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setSelectedVersion(version)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {versions?.length === 0 && (
+      {/* Table or empty state */}
+      {!hasVersions ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground/30 mb-3" />
+          <p className="text-muted-foreground mb-4">Még nincs hozzájárulási verzió létrehozva.</p>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Első verzió létrehozása
+          </Button>
+        </div>
+      ) : (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                  Nincs hozzájárulási verzió
-                </TableCell>
+                <TableHead>Verzió</TableHead>
+                <TableHead>Cím</TableHead>
+                <TableHead>Létrehozva</TableHead>
+                <TableHead>Hatályba lép</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {versions?.map((version, index) => (
+                <TableRow key={version.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={index === 0 ? "default" : "secondary"}>
+                        {version.version}
+                      </Badge>
+                      {index === 0 && (
+                        <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 border-green-500/30">
+                          Aktív
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium">{version.title}</TableCell>
+                  <TableCell>
+                    {format(new Date(version.created_at), "yyyy.MM.dd HH:mm", { locale: hu })}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(version.effective_date), "yyyy.MM.dd", { locale: hu })}
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setSelectedVersion(version)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Version detail drawer */}
       <Sheet open={!!selectedVersion} onOpenChange={() => setSelectedVersion(null)}>
