@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heart, LogOut, Loader2, Settings, Gift, BookOpen, Shield } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 
@@ -23,13 +23,11 @@ interface Profile {
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userConsent, needsConsent, loading: consentLoading } = useConsent();
-  const { totalPoints, addPoints, getNextMilestone, getProgress } = usePoints();
+  const { totalPoints, getNextMilestone, getProgress } = usePoints();
   const { isAdmin } = useAdmin();
   const { 
     questionnaires, 
     loading: questionnairesLoading, 
-    startQuestionnaire, 
-    completeQuestionnaire,
     getCompletedCount,
     getUniqueCompletedCount,
   } = useQuestionnaires();
@@ -37,7 +35,6 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Auth check
   useEffect(() => {
@@ -80,63 +77,10 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  // Handle questionnaire start
-  const handleStartQuestionnaire = (id: string) => {
-    startQuestionnaire(id);
-  };
-
-  // Handle questionnaire completion
-  const handleCompleteQuestionnaire = async (id: string) => {
-    const pointsEarned = completeQuestionnaire(id);
-    
-    if (pointsEarned > 0) {
-      const questionnaire = questionnaires.find((q) => q.id === id);
-      const { newAchievements } = await addPoints(
-        pointsEarned, 
-        `Kérdőív kitöltése: ${questionnaire?.title}`, 
-        id
-      );
-      
-      toast({
-        title: "Kérdőív befejezve!",
-        description: `${pointsEarned} pontot szereztél a kitöltésért.`,
-      });
-
-      // Check for new badge unlocks
-      const completedCount = getCompletedCount() + 1;
-      const badgeMessages: string[] = [];
-      
-      if (completedCount === 1) {
-        badgeMessages.push("Első lépések");
-      }
-      if (completedCount === 2) {
-        badgeMessages.push("Kezdő lendület");
-      }
-      if (completedCount === 3) {
-        badgeMessages.push("Heti Hős");
-      }
-
-      // Show badge notification
-      if (badgeMessages.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "🎉 Új kitüntetés!",
-            description: `Feloldottad: ${badgeMessages.join(", ")}`,
-          });
-        }, 1500);
-      }
-
-      // Show achievement notification from points system
-      if (newAchievements && newAchievements.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "🏆 Mérföldkő elérve!",
-            description: newAchievements[0].name,
-          });
-        }, 2500);
-      }
-    }
-  };
+  // Filter to show only active (not completed) questionnaires
+  const activeQuestionnaires = questionnaires.filter(
+    (q) => q.status !== "completed"
+  );
 
   // Loading state
   if (authLoading || consentLoading || profileLoading || questionnairesLoading) {
@@ -242,16 +186,24 @@ const Dashboard = () => {
         <div className="space-y-4">
           <h2 className="text-xl font-medium text-foreground">Kérdőívek</h2>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {questionnaires.map((questionnaire) => (
-              <QuestionnaireCard
-                key={questionnaire.id}
-                questionnaire={questionnaire}
-                onStart={() => handleStartQuestionnaire(questionnaire.id)}
-                onComplete={() => handleCompleteQuestionnaire(questionnaire.id)}
-              />
-            ))}
-          </div>
+          {activeQuestionnaires.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeQuestionnaires.map((questionnaire) => (
+                <QuestionnaireCard
+                  key={questionnaire.id}
+                  questionnaire={questionnaire}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="shadow-card border-0 animate-fade-in">
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">
+                  Jelenleg nincs elérhető kérdőív. A befejezett kérdőíveidet az Egészségkönyvedben találod.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Info Card */}
