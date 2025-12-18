@@ -13,6 +13,7 @@ import HealthBook from "./pages/HealthBook";
 import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
+import QuestionnairePage from "./pages/QuestionnairePage";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/healthbook" element={<HealthBook />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/reset" element={<ResetSession />} />
+            <Route path="/kerdoiv/:id" element={<QuestionnairePage />} />
             {/* Admin routes */}
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/felhasznalok" element={<AdminUsers />} />
