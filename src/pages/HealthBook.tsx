@@ -27,6 +27,13 @@ import {
   Shield,
   ArrowLeft,
   Eye,
+  Smile,
+  Zap,
+  Moon,
+  Brain,
+  Activity,
+  StickyNote,
+  LucideIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -415,36 +422,50 @@ const HealthBook = () => {
                 <div className="space-y-4">
                   {observations
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map((obs) => (
-                      <div key={obs.id} className="relative flex gap-4">
-                        {/* Timeline dot */}
-                        <div className="relative z-10 flex-shrink-0">
-                          <div className="w-8 h-8 rounded-full bg-secondary/50 border-2 border-secondary flex items-center justify-center">
-                            <Heart className="h-4 w-4 text-secondary-foreground" />
-                          </div>
-                        </div>
+                    .map((obs) => {
+                      // Category-specific icon and color
+                      const categoryConfig: Record<string, { icon: LucideIcon; bgColor: string; borderColor: string; iconColor: string }> = {
+                        mood: { icon: Smile, bgColor: "bg-yellow-100", borderColor: "border-yellow-400", iconColor: "text-yellow-600" },
+                        energy: { icon: Zap, bgColor: "bg-orange-100", borderColor: "border-orange-400", iconColor: "text-orange-600" },
+                        sleep: { icon: Moon, bgColor: "bg-indigo-100", borderColor: "border-indigo-400", iconColor: "text-indigo-600" },
+                        headache: { icon: Brain, bgColor: "bg-red-100", borderColor: "border-red-400", iconColor: "text-red-600" },
+                        pain: { icon: Activity, bgColor: "bg-rose-100", borderColor: "border-rose-400", iconColor: "text-rose-600" },
+                        note: { icon: StickyNote, bgColor: "bg-slate-100", borderColor: "border-slate-400", iconColor: "text-slate-600" },
+                      };
+                      const config = categoryConfig[obs.category] || categoryConfig.note;
+                      const IconComponent = config.icon;
 
-                        {/* Content card */}
-                        <div className="flex-1 pb-2">
-                          <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
-                                {obs.value && (
-                                  <span className="font-medium text-foreground">{obs.value}</span>
-                                )}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}
-                              </span>
+                      return (
+                        <div key={obs.id} className="relative flex gap-4">
+                          {/* Timeline dot with category icon */}
+                          <div className="relative z-10 flex-shrink-0">
+                            <div className={`w-8 h-8 rounded-full ${config.bgColor} border-2 ${config.borderColor} flex items-center justify-center`}>
+                              <IconComponent className={`h-4 w-4 ${config.iconColor}`} />
                             </div>
-                            {obs.note && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
-                            )}
+                          </div>
+
+                          {/* Content card */}
+                          <div className="flex-1 pb-2">
+                            <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
+                                  {obs.value && (
+                                    <span className="font-medium text-foreground">{obs.value}</span>
+                                  )}
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}
+                                </span>
+                              </div>
+                              {obs.note && (
+                                <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </div>
             )}
