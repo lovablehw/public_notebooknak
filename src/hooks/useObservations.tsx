@@ -6,6 +6,8 @@ export const OBSERVATION_CATEGORIES = [
   { value: "mood", label: "Hangulatom" },
   { value: "energy", label: "Energiaszintem" },
   { value: "sleep", label: "Alvásom" },
+  { value: "headache", label: "Fejfájás" },
+  { value: "pain", label: "Fájdalom" },
   { value: "note", label: "Megjegyzés" },
 ] as const;
 
