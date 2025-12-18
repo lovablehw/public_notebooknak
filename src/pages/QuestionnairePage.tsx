@@ -2,29 +2,22 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
-import { usePoints } from "@/hooks/usePoints";
 import { useQuestionnaires, Questionnaire } from "@/hooks/useQuestionnaires";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ClipboardList, Clock, Gift, Check, Mic, Loader2, Heart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, ClipboardList, Clock, Gift, Mic, Loader2, Heart } from "lucide-react";
 
 const QuestionnairePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { needsConsent, loading: consentLoading } = useConsent();
-  const { addPoints } = usePoints();
   const { 
     questionnaires, 
     loading: questionnairesLoading, 
     startQuestionnaire,
-    completeQuestionnaire,
-    getCompletedCount,
   } = useQuestionnaires();
-  const { toast } = useToast();
-
   const [questionnaire, setQuestionnaire] = useState<Questionnaire | null>(null);
 
   // Auth check
@@ -56,54 +49,6 @@ const QuestionnairePage = () => {
       }
     }
   }, [id, questionnaires, questionnairesLoading, navigate, startQuestionnaire]);
-
-  const handleComplete = async () => {
-    if (!questionnaire) return;
-
-    const pointsEarned = completeQuestionnaire(questionnaire.id);
-    
-    if (pointsEarned > 0) {
-      const { newAchievements } = await addPoints(
-        pointsEarned, 
-        `Kérdőív kitöltése: ${questionnaire.title}`, 
-        questionnaire.id
-      );
-      
-      toast({
-        title: "Kérdőív befejezve!",
-        description: `${pointsEarned} pontot szereztél a kitöltésért.`,
-      });
-
-      // Check for badge unlocks
-      const completedCount = getCompletedCount() + 1;
-      const badgeMessages: string[] = [];
-      
-      if (completedCount === 1) badgeMessages.push("Első lépések");
-      if (completedCount === 2) badgeMessages.push("Kezdő lendület");
-      if (completedCount === 3) badgeMessages.push("Heti Hős");
-
-      if (badgeMessages.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "🎉 Új kitüntetés!",
-            description: `Feloldottad: ${badgeMessages.join(", ")}`,
-          });
-        }, 1500);
-      }
-
-      if (newAchievements && newAchievements.length > 0) {
-        setTimeout(() => {
-          toast({
-            title: "🏆 Mérföldkő elérve!",
-            description: newAchievements[0].name,
-          });
-        }, 2500);
-      }
-    }
-
-    // Navigate back after completion
-    setTimeout(() => navigate("/dashboard"), 500);
-  };
 
   // Loading state
   if (authLoading || consentLoading || questionnairesLoading || !questionnaire) {
@@ -198,24 +143,25 @@ const QuestionnairePage = () => {
           </CardContent>
         </Card>
 
-        {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button 
-            onClick={handleComplete}
-            className="flex-1"
-            size="lg"
-          >
-            <Check className="h-5 w-5 mr-2" />
-            Jelölöm befejezettnek (+{questionnaire.rewardPoints} pont)
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => navigate("/dashboard")}
-            size="lg"
-          >
-            Mentés és kilépés
-          </Button>
+        {/* Info notice */}
+        <div className="bg-accent/30 rounded-lg p-4 text-sm text-muted-foreground">
+          <p>
+            A kérdőív befejezése és a pontok jóváírása automatikusan történik, 
+            amikor a beágyazott kérdőívet kitöltöd. A félbehagyott kérdőíveket 
+            később folytathatod.
+          </p>
         </div>
+
+        {/* Back button */}
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/dashboard")}
+          size="lg"
+          className="w-full sm:w-auto"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Vissza a kérdőívekhez
+        </Button>
       </main>
     </div>
   );

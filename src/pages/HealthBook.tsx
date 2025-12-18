@@ -244,7 +244,7 @@ const HealthBook = () => {
           </Card>
         </div>
 
-        {/* Questionnaire History */}
+        {/* Questionnaire History Timeline */}
         <Card className="shadow-card border-0 animate-fade-in">
           <CardHeader>
             <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -252,7 +252,7 @@ const HealthBook = () => {
               Kérdőív történet
             </CardTitle>
             <CardDescription>
-              A kitöltött felméréseid listája és eredményei.
+              A kitöltött felméréseid időrendi sorrendben.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -267,35 +267,57 @@ const HealthBook = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
-                {completedQuestionnaires.map((q) => {
-                  const category = getQuestionnaireCategoryBadge(q.id);
-                  return (
-                    <div 
-                      key={q.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-foreground">{q.title}</span>
-                          <Badge variant={category.variant}>{category.label}</Badge>
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+
+                <div className="space-y-6">
+                  {completedQuestionnaires
+                    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())
+                    .map((q) => {
+                      const category = getQuestionnaireCategoryBadge(q.id);
+                      return (
+                        <div key={q.id} className="relative flex gap-4">
+                          {/* Timeline dot */}
+                          <div className="relative z-10 flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                              <ClipboardList className="h-4 w-4 text-primary" />
+                            </div>
+                          </div>
+
+                          {/* Content card */}
+                          <div className="flex-1 pb-2">
+                            <div className="bg-accent/30 hover:bg-accent/50 transition-colors rounded-lg p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-foreground">{q.title}</span>
+                                    <Badge variant={category.variant}>{category.label}</Badge>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span>
+                                      {q.completedAt
+                                        ? format(new Date(q.completedAt), "yyyy. MMMM d.", { locale: hu })
+                                        : "–"
+                                      }
+                                    </span>
+                                    <span className="flex items-center gap-1 text-primary">
+                                      <Star className="h-3 w-3" />
+                                      +{q.rewardPoints} pont
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm" className="gap-1 flex-shrink-0">
+                                  <Eye className="h-4 w-4" />
+                                  Eredmények
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {q.completedAt 
-                            ? format(new Date(q.completedAt), "yyyy. MMMM d.", { locale: hu })
-                            : "–"
-                          }
-                          {" · "}
-                          <span className="text-primary">+{q.rewardPoints} pont</span>
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm" className="gap-1">
-                        <Eye className="h-4 w-4" />
-                        Eredmények megtekintése
-                      </Button>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                </div>
               </div>
             )}
           </CardContent>
