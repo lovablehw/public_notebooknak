@@ -402,36 +402,52 @@ const HealthBook = () => {
               </Button>
             </div>
 
-            {/* Observations list */}
-            <div className="space-y-3">
-              {observations.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
-                  Még nem vettél fel saját megfigyelést.
-                </p>
-              ) : (
-                observations.map((obs) => (
-                  <div 
-                    key={obs.id}
-                    className="flex flex-col gap-1 p-3 rounded-lg border border-border/50 hover:border-border transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
-                        {obs.value && (
-                          <span className="font-medium text-foreground">{obs.value}</span>
-                        )}
+            {/* Observations timeline */}
+            {observations.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                Még nem vettél fel saját megfigyelést.
+              </p>
+            ) : (
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+
+                <div className="space-y-4">
+                  {observations
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .map((obs) => (
+                      <div key={obs.id} className="relative flex gap-4">
+                        {/* Timeline dot */}
+                        <div className="relative z-10 flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-secondary/50 border-2 border-secondary flex items-center justify-center">
+                            <Heart className="h-4 w-4 text-secondary-foreground" />
+                          </div>
+                        </div>
+
+                        {/* Content card */}
+                        <div className="flex-1 pb-2">
+                          <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
+                                {obs.value && (
+                                  <span className="font-medium text-foreground">{obs.value}</span>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}
+                              </span>
+                            </div>
+                            {obs.note && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(obs.date), "yyyy. MM. dd.", { locale: hu })}
-                      </span>
-                    </div>
-                    {obs.note && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
