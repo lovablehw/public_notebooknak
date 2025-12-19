@@ -261,6 +261,10 @@ export type Database = {
       }
       check_is_admin: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      log_audit_event: {
+        Args: { p_event_type: string; p_metadata?: Json }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
