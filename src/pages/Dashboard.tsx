@@ -36,19 +36,12 @@ const Dashboard = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Auth check
+  // Fetch profile
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
+    if (user) {
+      fetchProfile();
     }
-  }, [user, authLoading, navigate]);
-
-  // Consent check
-  useEffect(() => {
-    if (!consentLoading && needsConsent && user) {
-      navigate("/consent");
-    }
-  }, [needsConsent, consentLoading, user, navigate]);
+  }, [user]);
 
   // Fetch profile
   useEffect(() => {
