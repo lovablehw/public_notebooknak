@@ -79,33 +79,23 @@ export function usePoints() {
     }
 
     try {
-      // Add points
-      const { error: pointsError } = await supabase.from("user_points").insert({
-        user_id: user.id,
-        points,
-        reason,
-        questionnaire_id: questionnaireId,
+      // Use secure server-side RPC function to add points and achievements
+      const { data, error: rpcError } = await supabase.rpc("add_user_points", {
+        p_points: points,
+        p_reason: reason,
+        p_questionnaire_id: questionnaireId ?? null,
       });
 
-      if (pointsError) throw pointsError;
+      if (rpcError) throw rpcError;
 
-      // Check and unlock any new achievements
-      const newTotal = totalPoints + points;
-      const unlockedIds = new Set(unlockedAchievements.map((ua) => ua.achievement_id));
+      const result = data as unknown as { success: boolean; error?: string; total_points?: number; new_achievements?: Achievement[] };
 
-      const newlyUnlocked = achievements.filter(
-        (a) => a.points_required <= newTotal && !unlockedIds.has(a.id)
-      );
-
-      for (const achievement of newlyUnlocked) {
-        await supabase.from("user_achievements").insert({
-          user_id: user.id,
-          achievement_id: achievement.id,
-        });
+      if (!result.success) {
+        throw new Error(result.error || "Failed to add points");
       }
 
       await fetchPointsData();
-      return { error: null, newAchievements: newlyUnlocked };
+      return { error: null, newAchievements: result.new_achievements || [] };
     } catch (error) {
       return { error: error as Error, newAchievements: [] };
     }

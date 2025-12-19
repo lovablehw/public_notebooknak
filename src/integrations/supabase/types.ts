@@ -251,6 +251,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_points: {
+        Args: {
+          p_points: number
+          p_questionnaire_id?: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       check_is_admin: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
     }
