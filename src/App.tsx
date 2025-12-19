@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { RequireConsent } from "@/components/RequireConsent";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -36,26 +37,31 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth" element={<Login />} />
             <Route path="/consent" element={<Consent />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/healthbook" element={<HealthBook />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/reset" element={<ResetSession />} />
-            <Route path="/kerdoiv/:id" element={<QuestionnairePage />} />
-            {/* Admin routes */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/felhasznalok" element={<AdminUsers />} />
-            <Route path="/admin/hozzajarulasok" element={<AdminConsents />} />
-            <Route path="/admin/pontok" element={<AdminPoints />} />
-            <Route path="/admin/kituntetesek" element={<AdminAchievements />} />
-            <Route path="/admin/hozzajarulasi-verziok" element={<AdminConsentVersions />} />
-            <Route path="/admin/naplo" element={<AdminAuditLog />} />
-            <Route path="/admin/feltoltesek" element={<AdminUploads />} />
-            <Route path="/admin/admins" element={<AdminAdmins />} />
+            
+            {/* Protected routes - require auth + consent */}
+            <Route path="/dashboard" element={<RequireConsent><Dashboard /></RequireConsent>} />
+            <Route path="/healthbook" element={<RequireConsent><HealthBook /></RequireConsent>} />
+            <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
+            <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
+            <Route path="/kerdoiv/:id" element={<RequireConsent><QuestionnairePage /></RequireConsent>} />
+            
+            {/* Admin routes - require auth + consent */}
+            <Route path="/admin" element={<RequireConsent><AdminDashboard /></RequireConsent>} />
+            <Route path="/admin/felhasznalok" element={<RequireConsent><AdminUsers /></RequireConsent>} />
+            <Route path="/admin/hozzajarulasok" element={<RequireConsent><AdminConsents /></RequireConsent>} />
+            <Route path="/admin/pontok" element={<RequireConsent><AdminPoints /></RequireConsent>} />
+            <Route path="/admin/kituntetesek" element={<RequireConsent><AdminAchievements /></RequireConsent>} />
+            <Route path="/admin/hozzajarulasi-verziok" element={<RequireConsent><AdminConsentVersions /></RequireConsent>} />
+            <Route path="/admin/naplo" element={<RequireConsent><AdminAuditLog /></RequireConsent>} />
+            <Route path="/admin/feltoltesek" element={<RequireConsent><AdminUploads /></RequireConsent>} />
+            <Route path="/admin/admins" element={<RequireConsent><AdminAdmins /></RequireConsent>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { PasswordStrengthIndicator, isPasswordValid } from "@/components/PasswordStrengthIndicator";
 
 // Validation schemas with Hungarian error messages
 const emailSchema = z.string().trim().email("Kérjük, adj meg egy érvényes e-mail címet");
-const passwordSchema = z.string().min(6, "A jelszónak legalább 6 karakter hosszúnak kell lennie");
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -26,9 +26,12 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check password validity for submit button
+  const passwordIsValid = useMemo(() => isPasswordValid(password), [password]);
+
   useEffect(() => {
     if (user) {
-      // User is already logged in, redirect to consent or dashboard
+      // User is already logged in, redirect to consent
       navigate("/consent");
     }
   }, [user, navigate]);
@@ -41,9 +44,9 @@ const Register = () => {
       newErrors.email = emailResult.error.errors[0].message;
     }
 
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
+    // Password strength validation
+    if (!passwordIsValid) {
+      newErrors.password = "A jelszó nem felel meg a követelményeknek";
     }
 
     if (password !== confirmPassword) {
@@ -94,6 +97,9 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  // Determine if submit should be disabled
+  const isSubmitDisabled = loading || !passwordIsValid || !isAdult || !email || password !== confirmPassword;
 
   return (
     <div className="min-h-screen gradient-hero flex flex-col">
@@ -148,6 +154,8 @@ const Register = () => {
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
                 )}
+                {/* Password strength indicator */}
+                <PasswordStrengthIndicator password={password} />
               </div>
 
               <div className="space-y-2">
@@ -188,7 +196,7 @@ const Register = () => {
                 Hozzájárulásomat bármikor visszavonhatom a profilomban.
               </p>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={isSubmitDisabled}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Fiók létrehozása
               </Button>
