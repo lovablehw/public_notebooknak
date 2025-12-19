@@ -42,22 +42,15 @@ export default function AdminAdmins() {
     mutationFn: async (email: string) => {
       const normalizedEmail = email.trim().toLowerCase();
       
-      // Look up user_id from profiles by email (requires the user to be registered)
-      // We use an RPC or direct lookup - since we can't query auth.users directly,
-      // we need to add the admin by email and let them gain access when they log in
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      
       const { error } = await supabase
         .from("admin_users")
         .insert({ email: normalizedEmail });
       if (error) throw error;
       
-      // Log audit event
-      await supabase.from("audit_events").insert({
-        event_type: "admin_added",
-        actor_user_id: currentUser?.id,
-        actor_email: currentUser?.email,
-        metadata: { email: normalizedEmail },
+      // Log audit event via secure RPC function
+      await supabase.rpc("log_audit_event", {
+        p_event_type: "admin_added",
+        p_metadata: { email: normalizedEmail },
       });
     },
     onSuccess: () => {
@@ -88,13 +81,10 @@ export default function AdminAdmins() {
         .eq("id", id);
       if (error) throw error;
       
-      // Log audit event
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("audit_events").insert({
-        event_type: "admin_removed",
-        actor_user_id: user?.id,
-        actor_email: user?.email,
-        metadata: { email },
+      // Log audit event via secure RPC function
+      await supabase.rpc("log_audit_event", {
+        p_event_type: "admin_removed",
+        p_metadata: { email },
       });
     },
     onSuccess: () => {
