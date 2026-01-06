@@ -562,7 +562,7 @@ const HealthBook = () => {
 
         {/* Future Features / Upload Boxes */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border-0 flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <FlaskConical className="h-5 w-5 text-primary" />
@@ -573,14 +573,14 @@ const HealthBook = () => {
                 +30 pont feltöltésenként
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-sm text-muted-foreground flex-1">
                 A jövőben lehetőséged lesz laboreredményeid metaadatait is rögzíteni, 
                 hogy jobban átlásd a változásokat.
               </p>
               <Button 
                 onClick={() => handleUpload('lab')}
-                className="w-full gap-2"
+                className="w-full gap-2 mt-4"
               >
                 <Upload className="h-4 w-4" />
                 Feltöltés
@@ -588,7 +588,7 @@ const HealthBook = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border-0 flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Watch className="h-5 w-5 text-primary" />
@@ -599,13 +599,13 @@ const HealthBook = () => {
                 +30 pont feltöltésenként
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="flex flex-col flex-1">
+              <p className="text-sm text-muted-foreground flex-1">
                 Tervezett funkció: aktivitás- és alvásadatok csatlakoztatása viselhető eszközökből.
               </p>
               <Button 
                 onClick={() => handleUpload('wearable')}
-                className="w-full gap-2"
+                className="w-full gap-2 mt-4"
               >
                 <Upload className="h-4 w-4" />
                 Feltöltés
@@ -613,7 +613,7 @@ const HealthBook = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0">
+          <Card className="shadow-card border-0 flex flex-col">
             <CardHeader>
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
@@ -624,7 +624,7 @@ const HealthBook = () => {
                 +30 pont feltöltésenként
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-col flex-1">
               <p className="text-sm text-muted-foreground">
                 Ide tölthetsz fel zárójelentést vagy összefoglaló dokumentumot. A megtekintés és feldolgozás a beágyazott modulban történik.
               </p>
@@ -634,7 +634,7 @@ const HealthBook = () => {
                 id="medalyse-document-viewer-container" 
                 data-component="document-viewer"
                 data-document-type="discharge_or_summary"
-                className="min-h-[120px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+                className="min-h-[120px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center flex-1 mt-4"
               >
                 <div className="text-center text-muted-foreground p-4">
                   <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -644,7 +644,7 @@ const HealthBook = () => {
               
               <Button 
                 onClick={() => handleUpload('discharge_or_summary')}
-                className="w-full gap-2"
+                className="w-full gap-2 mt-4"
               >
                 <Upload className="h-4 w-4" />
                 Feltöltés
