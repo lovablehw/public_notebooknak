@@ -166,15 +166,25 @@ const QuestionnairePage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
-        {/* Back button */}
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate("/dashboard")}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Vissza a kérdőívekhez
-        </Button>
+        {/* Navigation buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/dashboard")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Vissza a kérdőívekhez
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/")}
+            className="gap-2"
+          >
+            <Heart className="h-4 w-4" />
+            Kezdőlap
+          </Button>
+        </div>
 
         {/* Questionnaire header card */}
         <Card className="shadow-card border-0 animate-fade-in">

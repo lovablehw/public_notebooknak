@@ -34,6 +34,8 @@ import {
   Activity,
   StickyNote,
   LucideIcon,
+  FileText,
+  Upload,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -193,6 +195,32 @@ const HealthBook = () => {
             nem helyettesíti az orvosi vizsgálatot.
           </p>
         </div>
+
+        {/* Medalyse Timeline Placeholder */}
+        <Card className="shadow-card border-0 animate-fade-in">
+          <CardHeader>
+            <CardTitle className="text-lg font-medium flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Idővonal
+            </CardTitle>
+            <CardDescription>
+              Itt jelenik meg a kitöltések és feltöltések idővonala.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Medalyse idővonal webkomponens helye */}
+            <div 
+              id="medalyse-timeline-container" 
+              data-component="timeline"
+              className="min-h-[200px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+            >
+              <div className="text-center text-muted-foreground p-8">
+                <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">A Medalyse idővonal komponens helye</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Summary Cards */}
         <div className="grid sm:grid-cols-3 gap-4 animate-fade-in">
@@ -473,7 +501,7 @@ const HealthBook = () => {
         </Card>
 
         {/* Future Features Placeholder */}
-        <div className="grid sm:grid-cols-2 gap-4 animate-fade-in">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
           <Card className="shadow-card border-0 opacity-75">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -506,6 +534,40 @@ const HealthBook = () => {
               <p className="text-sm text-muted-foreground">
                 Tervezett funkció: aktivitás- és alvásadatok csatlakoztatása viselhető eszközökből.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Zárójelentések és összefoglalók
+                </CardTitle>
+                <Badge variant="secondary">Hamarosan</Badge>
+              </div>
+              <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
+                <Star className="h-3 w-3" />
+                +30 pont feltöltésenként
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Ide tölthetsz fel zárójelentést vagy összefoglaló dokumentumot. A megtekintés és feldolgozás a beágyazott modulban történik.
+              </p>
+              
+              {/* Medalyse dokumentum-megjelenítő webkomponens helye */}
+              <div 
+                id="medalyse-document-viewer-container" 
+                data-component="document-viewer"
+                data-document-type="discharge_or_summary"
+                className="min-h-[120px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+              >
+                <div className="text-center text-muted-foreground p-4">
+                  <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-xs">Dokumentum feltöltés helye</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
