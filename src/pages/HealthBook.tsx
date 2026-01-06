@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Heart, 
   LogOut, 
@@ -36,8 +37,11 @@ import {
   LucideIcon,
   FileText,
   Upload,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUploadRewards } from "@/hooks/useUploadRewards";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
@@ -62,6 +66,38 @@ const HealthBook = () => {
   const [observationValue, setObservationValue] = useState("");
   const [observationNote, setObservationNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Collapsible state for observations section
+  const [isObservationsOpen, setIsObservationsOpen] = useState(false);
+  
+  // Upload rewards hook
+  const { awardUploadPoints } = useUploadRewards();
+  
+  // Upload handlers for each document type
+  const handleUpload = async (uploadType: string) => {
+    // Trigger file input (in a real implementation, this would open a file picker)
+    // For MVP, we'll create a hidden file input and trigger it
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = uploadType === 'lab' ? '.pdf,.jpg,.jpeg,.png' : 
+                   uploadType === 'wearable' ? '.csv,.json,.xml' : 
+                   '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+    
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        toast({
+          title: "Feltöltés folyamatban",
+          description: `${file.name} feltöltése...`,
+        });
+        
+        // Award points for the upload
+        await awardUploadPoints(uploadType);
+      }
+    };
+    
+    input.click();
+  };
 
   // Auth check
   useEffect(() => {
@@ -358,194 +394,231 @@ const HealthBook = () => {
           </CardContent>
         </Card>
 
-        {/* Self-reported Observations */}
+        {/* Self-reported Observations (Collapsible) */}
         <Card className="shadow-card border-0 animate-fade-in">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" />
-              Saját megfigyeléseim
-            </CardTitle>
-            <CardDescription>
-              Jegyezd fel a napi közérzetedet, hangulatodat vagy bármilyen megfigyelésedet.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Add observation form */}
-            <div className="p-4 rounded-lg bg-accent/30 space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="obs-date">Dátum</Label>
-                  <Input
-                    id="obs-date"
-                    type="date"
-                    value={observationDate}
-                    onChange={(e) => setObservationDate(e.target.value)}
-                  />
+          <Collapsible open={isObservationsOpen} onOpenChange={setIsObservationsOpen}>
+            <CardHeader>
+              <CollapsibleTrigger className="w-full">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Plus className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg font-medium">Saját megfigyeléseim</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {isObservationsOpen ? "Bezárás" : "Megnyitás"}
+                    </span>
+                    {isObservationsOpen ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="obs-category">Kategória</Label>
-                  <Select 
-                    value={observationCategory} 
-                    onValueChange={(v) => setObservationCategory(v as ObservationCategory)}
+              </CollapsibleTrigger>
+              {!isObservationsOpen && (
+                <CardDescription className="mt-2">
+                  Személyes jegyzetek és megfigyelések rögzítése (opcionális).
+                </CardDescription>
+              )}
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-6 pt-0">
+                <CardDescription className="mb-4">
+                  Jegyezd fel a napi közérzetedet, hangulatodat vagy bármilyen megfigyelésedet.
+                </CardDescription>
+                
+                {/* Add observation form */}
+                <div className="p-4 rounded-lg bg-accent/30 space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="obs-date">Dátum</Label>
+                      <Input
+                        id="obs-date"
+                        type="date"
+                        value={observationDate}
+                        onChange={(e) => setObservationDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="obs-category">Kategória</Label>
+                      <Select 
+                        value={observationCategory} 
+                        onValueChange={(v) => setObservationCategory(v as ObservationCategory)}
+                      >
+                        <SelectTrigger id="obs-category">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OBSERVATION_CATEGORIES.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="obs-value">Érték (szám vagy rövid szöveg)</Label>
+                    <Input
+                      id="obs-value"
+                      placeholder="pl. 7/10, jó, fáradt..."
+                      value={observationValue}
+                      onChange={(e) => setObservationValue(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="obs-note">Jegyzet (opcionális)</Label>
+                    <Textarea
+                      id="obs-note"
+                      placeholder="Bővebb megjegyzések..."
+                      value={observationNote}
+                      onChange={(e) => setObservationNote(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleAddObservation} 
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto"
                   >
-                    <SelectTrigger id="obs-category">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OBSERVATION_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    Megfigyelés hozzáadása
+                  </Button>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="obs-value">Érték (szám vagy rövid szöveg)</Label>
-                <Input
-                  id="obs-value"
-                  placeholder="pl. 7/10, jó, fáradt..."
-                  value={observationValue}
-                  onChange={(e) => setObservationValue(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="obs-note">Jegyzet (opcionális)</Label>
-                <Textarea
-                  id="obs-note"
-                  placeholder="Bővebb megjegyzések..."
-                  value={observationNote}
-                  onChange={(e) => setObservationNote(e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <Button 
-                onClick={handleAddObservation} 
-                disabled={isSubmitting}
-                className="w-full sm:w-auto"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {/* Observations timeline */}
+                {observations.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    Még nem vettél fel saját megfigyelést.
+                  </p>
                 ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Megfigyelés hozzáadása
-              </Button>
-            </div>
+                  <div className="relative">
+                    {/* Timeline line */}
+                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
 
-            {/* Observations timeline */}
-            {observations.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                Még nem vettél fel saját megfigyelést.
-              </p>
-            ) : (
-              <div className="relative">
-                {/* Timeline line */}
-                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+                    <div className="space-y-4">
+                      {observations
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .map((obs) => {
+                          // Category-specific icon and color
+                          const categoryConfig: Record<string, { icon: LucideIcon; bgColor: string; borderColor: string; iconColor: string }> = {
+                            mood: { icon: Smile, bgColor: "bg-yellow-100", borderColor: "border-yellow-400", iconColor: "text-yellow-600" },
+                            energy: { icon: Zap, bgColor: "bg-orange-100", borderColor: "border-orange-400", iconColor: "text-orange-600" },
+                            sleep: { icon: Moon, bgColor: "bg-indigo-100", borderColor: "border-indigo-400", iconColor: "text-indigo-600" },
+                            headache: { icon: Brain, bgColor: "bg-red-100", borderColor: "border-red-400", iconColor: "text-red-600" },
+                            pain: { icon: Activity, bgColor: "bg-rose-100", borderColor: "border-rose-400", iconColor: "text-rose-600" },
+                            note: { icon: StickyNote, bgColor: "bg-slate-100", borderColor: "border-slate-400", iconColor: "text-slate-600" },
+                          };
+                          const config = categoryConfig[obs.category] || categoryConfig.note;
+                          const IconComponent = config.icon;
 
-                <div className="space-y-4">
-                  {observations
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map((obs) => {
-                      // Category-specific icon and color
-                      const categoryConfig: Record<string, { icon: LucideIcon; bgColor: string; borderColor: string; iconColor: string }> = {
-                        mood: { icon: Smile, bgColor: "bg-yellow-100", borderColor: "border-yellow-400", iconColor: "text-yellow-600" },
-                        energy: { icon: Zap, bgColor: "bg-orange-100", borderColor: "border-orange-400", iconColor: "text-orange-600" },
-                        sleep: { icon: Moon, bgColor: "bg-indigo-100", borderColor: "border-indigo-400", iconColor: "text-indigo-600" },
-                        headache: { icon: Brain, bgColor: "bg-red-100", borderColor: "border-red-400", iconColor: "text-red-600" },
-                        pain: { icon: Activity, bgColor: "bg-rose-100", borderColor: "border-rose-400", iconColor: "text-rose-600" },
-                        note: { icon: StickyNote, bgColor: "bg-slate-100", borderColor: "border-slate-400", iconColor: "text-slate-600" },
-                      };
-                      const config = categoryConfig[obs.category] || categoryConfig.note;
-                      const IconComponent = config.icon;
+                          return (
+                            <div key={obs.id} className="relative flex gap-4">
+                              {/* Timeline dot with category icon */}
+                              <div className="relative z-10 flex-shrink-0">
+                                <div className={`w-8 h-8 rounded-full ${config.bgColor} border-2 ${config.borderColor} flex items-center justify-center`}>
+                                  <IconComponent className={`h-4 w-4 ${config.iconColor}`} />
+                                </div>
+                              </div>
 
-                      return (
-                        <div key={obs.id} className="relative flex gap-4">
-                          {/* Timeline dot with category icon */}
-                          <div className="relative z-10 flex-shrink-0">
-                            <div className={`w-8 h-8 rounded-full ${config.bgColor} border-2 ${config.borderColor} flex items-center justify-center`}>
-                              <IconComponent className={`h-4 w-4 ${config.iconColor}`} />
-                            </div>
-                          </div>
-
-                          {/* Content card */}
-                          <div className="flex-1 pb-2">
-                            <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
-                                  {obs.value && (
-                                    <span className="font-medium text-foreground">{obs.value}</span>
+                              {/* Content card */}
+                              <div className="flex-1 pb-2">
+                                <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
+                                      {obs.value && (
+                                        <span className="font-medium text-foreground">{obs.value}</span>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}
+                                    </span>
+                                  </div>
+                                  {obs.note && (
+                                    <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
                                   )}
                                 </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}
-                                </span>
                               </div>
-                              {obs.note && (
-                                <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>
-                              )}
                             </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </CardContent>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
         </Card>
 
-        {/* Future Features Placeholder */}
+        {/* Future Features / Upload Boxes */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
-          <Card className="shadow-card border-0 opacity-75">
+          <Card className="shadow-card border-0">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <FlaskConical className="h-5 w-5 text-muted-foreground" />
-                  Laboreredmények
-                </CardTitle>
-                <Badge variant="secondary">Hamarosan</Badge>
-              </div>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <FlaskConical className="h-5 w-5 text-primary" />
+                Laboreredmények
+              </CardTitle>
+              <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
+                <Star className="h-3 w-3" />
+                +30 pont feltöltésenként
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 A jövőben lehetőséged lesz laboreredményeid metaadatait is rögzíteni, 
                 hogy jobban átlásd a változásokat.
               </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-0 opacity-75">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Watch className="h-5 w-5 text-muted-foreground" />
-                  Viselhető eszközök
-                </CardTitle>
-                <Badge variant="secondary">Hamarosan</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Tervezett funkció: aktivitás- és alvásadatok csatlakoztatása viselhető eszközökből.
-              </p>
+              <Button 
+                onClick={() => handleUpload('lab')}
+                className="w-full gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Feltöltés
+              </Button>
             </CardContent>
           </Card>
 
           <Card className="shadow-card border-0">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Zárójelentések és összefoglalók
-                </CardTitle>
-                <Badge variant="secondary">Hamarosan</Badge>
-              </div>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <Watch className="h-5 w-5 text-primary" />
+                Viselhető eszközök
+              </CardTitle>
+              <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
+                <Star className="h-3 w-3" />
+                +30 pont feltöltésenként
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Tervezett funkció: aktivitás- és alvásadatok csatlakoztatása viselhető eszközökből.
+              </p>
+              <Button 
+                onClick={() => handleUpload('wearable')}
+                className="w-full gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Feltöltés
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-0">
+            <CardHeader>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Zárójelentések és összefoglalók
+              </CardTitle>
               <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
                 <Star className="h-3 w-3" />
                 +30 pont feltöltésenként
@@ -565,9 +638,17 @@ const HealthBook = () => {
               >
                 <div className="text-center text-muted-foreground p-4">
                   <Upload className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-xs">Dokumentum feltöltés helye</p>
+                  <p className="text-xs">Dokumentum megjelenítő helye</p>
                 </div>
               </div>
+              
+              <Button 
+                onClick={() => handleUpload('discharge_or_summary')}
+                className="w-full gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Feltöltés
+              </Button>
             </CardContent>
           </Card>
         </div>
