@@ -166,7 +166,7 @@ const QuestionnairePage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
-        {/* Navigation buttons */}
+        {/* Navigation button */}
         <div className="flex flex-wrap items-center gap-2">
           <Button 
             variant="ghost" 
@@ -174,15 +174,7 @@ const QuestionnairePage = () => {
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Vissza a kérdőívekhez
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/")}
-            className="gap-2"
-          >
-            <Heart className="h-4 w-4" />
-            Kezdőlap
+            Vissza az irányítópulthoz
           </Button>
         </div>
 
