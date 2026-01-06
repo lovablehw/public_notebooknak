@@ -225,7 +225,7 @@ const HealthBook = () => {
             <BookOpen className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-light text-foreground">Egészségkönyvem</h1>
           </div>
-          <p className="text-muted-foreground max-w-2xl">
+          <p className="text-muted-foreground">
             Itt láthatod a kitöltött felméréseid történetét, a saját megfigyeléseidet és a jövőben 
             más egészségügyi jellegű adataidat is. A felület önismereti és jólléti célokat szolgál, 
             nem helyettesíti az orvosi vizsgálatot.
