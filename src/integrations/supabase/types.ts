@@ -143,6 +143,33 @@ export type Database = {
         }
         Relationships: []
       }
+      upload_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          points_awarded: number
+          upload_date: string
+          upload_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_awarded: number
+          upload_date?: string
+          upload_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          upload_date?: string
+          upload_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -257,6 +284,10 @@ export type Database = {
           p_questionnaire_id?: string
           p_reason: string
         }
+        Returns: Json
+      }
+      award_upload_points: {
+        Args: { p_points?: number; p_upload_type: string }
         Returns: Json
       }
       check_is_admin: { Args: never; Returns: boolean }
