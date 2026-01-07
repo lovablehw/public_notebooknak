@@ -5,8 +5,8 @@ const TRUSTED_MEDALYSE_ORIGINS = [
   "https://medalyse.com",
   "https://app.medalyse.com",
   "https://questionnaire.medalyse.com",
-  // Add localhost for development
-  window.location.origin,
+  // Only allow localhost origin in development mode
+  ...(import.meta.env.DEV ? [window.location.origin] : []),
 ];
 
 interface MedalyseCompletionEvent {
