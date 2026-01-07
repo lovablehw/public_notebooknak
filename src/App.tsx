@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminConsents from "./pages/admin/AdminConsents";
 import AdminPoints from "./pages/admin/AdminPoints";
+import AdminRewardRules from "./pages/admin/AdminRewardRules";
 import AdminAchievements from "./pages/admin/AdminAchievements";
 import AdminConsentVersions from "./pages/admin/AdminConsentVersions";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/admin/felhasznalok" element={<RequireConsent><AdminUsers /></RequireConsent>} />
             <Route path="/admin/hozzajarulasok" element={<RequireConsent><AdminConsents /></RequireConsent>} />
             <Route path="/admin/pontok" element={<RequireConsent><AdminPoints /></RequireConsent>} />
+            <Route path="/admin/pontszabalyok" element={<RequireConsent><AdminRewardRules /></RequireConsent>} />
             <Route path="/admin/kituntetesek" element={<RequireConsent><AdminAchievements /></RequireConsent>} />
             <Route path="/admin/hozzajarulasi-verziok" element={<RequireConsent><AdminConsentVersions /></RequireConsent>} />
             <Route path="/admin/naplo" element={<RequireConsent><AdminAuditLog /></RequireConsent>} />

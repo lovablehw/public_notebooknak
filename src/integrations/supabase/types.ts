@@ -20,6 +20,7 @@ export type Database = {
           description: string
           icon: string
           id: string
+          min_points_threshold: number | null
           name: string
           points_required: number
         }
@@ -28,6 +29,7 @@ export type Database = {
           description: string
           icon: string
           id?: string
+          min_points_threshold?: number | null
           name: string
           points_required: number
         }
@@ -36,6 +38,7 @@ export type Database = {
           description?: string
           icon?: string
           id?: string
+          min_points_threshold?: number | null
           name?: string
           points_required?: number
         }
@@ -89,6 +92,38 @@ export type Database = {
         }
         Relationships: []
       }
+      badge_conditions: {
+        Row: {
+          achievement_id: string
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string
+          id: string
+          required_count: number
+        }
+        Insert: {
+          achievement_id: string
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          id?: string
+          required_count?: number
+        }
+        Update: {
+          achievement_id?: string
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          id?: string
+          required_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "badge_conditions_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consent_versions: {
         Row: {
           content: string
@@ -139,6 +174,36 @@ export type Database = {
           display_name?: string
           id?: string
           smoking_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reward_rules: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string
+          frequency: Database["public"]["Enums"]["reward_frequency"]
+          id: string
+          is_active: boolean
+          points: number
+          updated_at: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["reward_frequency"]
+          id?: string
+          is_active?: boolean
+          points?: number
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["reward_frequency"]
+          id?: string
+          is_active?: boolean
+          points?: number
           updated_at?: string
         }
         Relationships: []
@@ -198,6 +263,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_activity_counts: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string
+          id: string
+          last_activity_date: string | null
+          total_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          id?: string
+          last_activity_date?: string | null
+          total_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          id?: string
+          last_activity_date?: string | null
+          total_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_consents: {
         Row: {
@@ -286,6 +381,13 @@ export type Database = {
         }
         Returns: Json
       }
+      award_activity_points: {
+        Args: {
+          p_activity_type: Database["public"]["Enums"]["activity_type"]
+          p_description?: string
+        }
+        Returns: Json
+      }
       award_upload_points: {
         Args: { p_points?: number; p_upload_type: string }
         Returns: Json
@@ -298,7 +400,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      activity_type:
+        | "questionnaire_completion"
+        | "lab_upload"
+        | "discharge_upload"
+        | "patient_summary_upload"
+        | "observation_creation"
+      reward_frequency: "per_event" | "daily" | "once_total"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -425,6 +533,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      activity_type: [
+        "questionnaire_completion",
+        "lab_upload",
+        "discharge_upload",
+        "patient_summary_upload",
+        "observation_creation",
+      ],
+      reward_frequency: ["per_event", "daily", "once_total"],
+    },
   },
 } as const
