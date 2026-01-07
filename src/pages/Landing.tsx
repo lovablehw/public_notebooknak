@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import heartLeafLogo from "@/assets/heart-leaf-logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -157,19 +158,12 @@ const Landing = () => {
         </div>
 
         {/* Abstract illustration */}
-        <div className="max-w-md mx-auto mt-16 opacity-60">
-          <svg viewBox="0 0 400 120" className="w-full text-primary">
-            <path
-              d="M0 60 Q100 20 200 60 Q300 100 400 60"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle cx="100" cy="40" r="4" fill="currentColor" opacity="0.6" />
-            <circle cx="200" cy="60" r="6" fill="currentColor" opacity="0.8" />
-            <circle cx="300" cy="80" r="4" fill="currentColor" opacity="0.6" />
-          </svg>
+        <div className="max-w-xs mx-auto mt-16">
+          <img 
+            src={heartLeafLogo} 
+            alt="Heart and leaf wellness logo" 
+            className="w-full h-auto"
+          />
         </div>
 
         {/* How It Works */}
