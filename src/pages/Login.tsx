@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Heart, ArrowLeft, Loader2, Eye, EyeOff, KeyRound, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
@@ -19,9 +20,10 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [keycloakLoading, setKeycloakLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { signIn, user, loading: authLoading } = useAuth();
+  const { signIn, signInWithKeycloak, user, loading: authLoading, authError, clearAuthError } = useAuth();
   const { needsConsent, loading: consentLoading } = useConsent();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -82,6 +84,24 @@ const Login = () => {
     }
   };
 
+  const handleKeycloakLogin = async () => {
+    setKeycloakLoading(true);
+    clearAuthError();
+    
+    try {
+      await signInWithKeycloak();
+      // OAuth will redirect, so we don't need to handle success here
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Keycloak bejelentkezési hiba",
+        description: "Váratlan hiba történt. Kérjük, próbáld újra később.",
+      });
+    } finally {
+      setKeycloakLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen gradient-hero flex flex-col">
       {/* Header */}
@@ -106,6 +126,39 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
+            {/* OAuth Error Alert */}
+            {authError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Keycloak SSO Button */}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full mb-4 border-primary/20 hover:bg-primary/5"
+              onClick={handleKeycloakLogin}
+              disabled={keycloakLoading || loading}
+            >
+              {keycloakLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <KeyRound className="mr-2 h-4 w-4" />
+              )}
+              Bejelentkezés Keycloak fiókkal
+            </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">vagy</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail cím</Label>
@@ -147,7 +200,7 @@ const Login = () => {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || keycloakLoading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Bejelentkezés
               </Button>
