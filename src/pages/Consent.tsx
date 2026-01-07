@@ -42,10 +42,10 @@ const Consent = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Redirect to dashboard if consent already given
+  // Redirect to healthbook if consent already given
   useEffect(() => {
     if (!loading && !needsConsent && user) {
-      navigate("/dashboard");
+      navigate("/healthbook");
     }
   }, [loading, needsConsent, user, navigate]);
 
@@ -75,7 +75,7 @@ const Consent = () => {
         title: "Köszönjük!",
         description: "Hozzájárulásod rögzítettük. Üdvözlünk a közösségben!",
       });
-      navigate("/dashboard");
+      navigate("/healthbook");
     }
   };
 

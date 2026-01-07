@@ -123,7 +123,7 @@ const Landing = () => {
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Heart className="h-6 w-6 text-primary" />
+          <img src={heartLeafLogo} alt="Jólléti Portál" className="h-6 w-6 object-contain" />
           <span className="font-semibold text-foreground">{COPY.header.brandName}</span>
         </div>
         <Link to="/login">
@@ -158,7 +158,7 @@ const Landing = () => {
         </div>
 
         {/* Abstract illustration */}
-        <div className="max-w-xs mx-auto mt-16">
+        <div className="max-w-xs mx-auto mt-8">
           <img 
             src={heartLeafLogo} 
             alt="Heart and leaf wellness logo" 
