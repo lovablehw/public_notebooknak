@@ -34,7 +34,8 @@ const Login = () => {
       if (needsConsent) {
         navigate("/consent");
       } else {
-        navigate("/dashboard");
+        // Land on Egészségkönyvem after login
+        navigate("/healthbook");
       }
     }
   }, [user, authLoading, needsConsent, consentLoading, navigate]);

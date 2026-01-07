@@ -11,6 +11,9 @@ import Login from "./pages/Login";
 import Consent from "./pages/Consent";
 import Dashboard from "./pages/Dashboard";
 import HealthBook from "./pages/HealthBook";
+import HealthBookLabor from "./pages/HealthBookLabor";
+import HealthBookDocuments from "./pages/HealthBookDocuments";
+import PointsHistory from "./pages/PointsHistory";
 import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
@@ -47,6 +50,9 @@ const App = () => (
             {/* Protected routes - require auth + consent */}
             <Route path="/dashboard" element={<RequireConsent><Dashboard /></RequireConsent>} />
             <Route path="/healthbook" element={<RequireConsent><HealthBook /></RequireConsent>} />
+            <Route path="/healthbook/labor" element={<RequireConsent><HealthBookLabor /></RequireConsent>} />
+            <Route path="/healthbook/dokumentumok" element={<RequireConsent><HealthBookDocuments /></RequireConsent>} />
+            <Route path="/pontok" element={<RequireConsent><PointsHistory /></RequireConsent>} />
             <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
             <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
             <Route path="/kerdoiv/:id" element={<RequireConsent><QuestionnairePage /></RequireConsent>} />

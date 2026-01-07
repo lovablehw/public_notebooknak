@@ -134,7 +134,7 @@ const QuestionnairePage = () => {
           startQuestionnaire(id);
         }
       } else {
-        navigate("/dashboard");
+        navigate("/healthbook");
       }
     }
   }, [id, questionnaires, questionnairesLoading, navigate, startQuestionnaire]);
@@ -170,11 +170,11 @@ const QuestionnairePage = () => {
         <div className="flex flex-wrap items-center gap-2">
           <Button 
             variant="ghost" 
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/healthbook")}
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Vissza az irányítópulthoz
+            Vissza az Egészségkönyvemhez
           </Button>
         </div>
 
@@ -272,12 +272,12 @@ const QuestionnairePage = () => {
         {/* Back button */}
         <Button 
           variant="outline"
-          onClick={() => navigate(isCompleted ? "/healthbook" : "/dashboard")}
+          onClick={() => navigate("/healthbook")}
           size="lg"
           className="w-full sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {isCompleted ? "Vissza az Egészségkönyvemhez" : "Vissza a kérdőívekhez"}
+          Vissza az Egészségkönyvemhez
         </Button>
       </main>
     </div>
