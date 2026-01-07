@@ -62,6 +62,18 @@ export default function AdminConsentVersions() {
       return;
     }
 
+    // Validate no HTML tags in content to prevent XSS
+    const hasHtmlTags = /<[^>]*>/g.test(newVersion.content) || 
+                        /<[^>]*>/g.test(newVersion.title);
+    if (hasHtmlTags) {
+      toast({
+        title: "Érvénytelen tartalom",
+        description: "HTML címkék nem engedélyezettek a tartalomban.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCreating(true);
     try {
       const { error } = await supabase.from("consent_versions").insert({
