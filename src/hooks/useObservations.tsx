@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
-
-// Observation categories in Hungarian
+import { supabase } from "@/integrations/supabase/client";
+import { usePoints } from "./usePoints";
+import { useToast } from "./use-toast";
 export const OBSERVATION_CATEGORIES = [
   { value: "mood", label: "Hangulatom" },
   { value: "energy", label: "Energiaszintem" },
@@ -69,13 +70,13 @@ export function useObservations() {
     localStorage.setItem(storageKey, JSON.stringify(updatedObservations));
   };
 
-  // Add a new observation
-  const addObservation = (
+  // Add a new observation with activity reward
+  const addObservation = useCallback(async (
     date: string,
     category: ObservationCategory,
     value: string,
     note: string
-  ): boolean => {
+  ): Promise<boolean> => {
     if (!user) return false;
 
     const newObservation: Observation = {
@@ -90,9 +91,19 @@ export function useObservations() {
     const updated = [newObservation, ...observations];
     setObservations(updated);
     saveObservations(updated);
+
+    // Award points for observation creation using configurable rules
+    try {
+      await supabase.rpc("award_activity_points", {
+        p_activity_type: "observation_creation",
+        p_description: `Megfigyelés: ${getCategoryLabel(category)}`,
+      });
+    } catch (error) {
+      console.error("Error awarding observation points:", error);
+    }
     
     return true;
-  };
+  }, [user, observations, saveObservations]);
 
   // Delete an observation
   const deleteObservation = (id: string): boolean => {

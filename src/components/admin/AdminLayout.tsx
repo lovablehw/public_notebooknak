@@ -25,6 +25,7 @@ const navItems = [
   { path: "/admin/felhasznalok", label: "Felhasználók", icon: Users },
   { path: "/admin/hozzajarulasok", label: "Hozzájárulások", icon: FileCheck },
   { path: "/admin/pontok", label: "Pontok", icon: Star },
+  { path: "/admin/pontszabalyok", label: "Pontszabályok", icon: Star },
   { path: "/admin/kituntetesek", label: "Kitüntetések", icon: Trophy },
   { path: "/admin/hozzajarulasi-verziok", label: "Hozzájárulási verziók", icon: FileText },
   { path: "/admin/feltoltesek", label: "Feltöltések", icon: FileText },
