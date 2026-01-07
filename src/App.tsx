@@ -18,6 +18,8 @@ import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
 import QuestionnairePage from "./pages/QuestionnairePage";
+import PasswordResetRequest from "./pages/PasswordResetRequest";
+import PasswordResetConfirm from "./pages/PasswordResetConfirm";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auth" element={<Login />} />
+            <Route path="/jelszo-visszaallitas" element={<PasswordResetRequest />} />
+            <Route path="/jelszo-uj" element={<PasswordResetConfirm />} />
             <Route path="/consent" element={<Consent />} />
             
             {/* Protected routes - require auth + consent */}

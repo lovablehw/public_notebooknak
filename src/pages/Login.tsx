@@ -153,7 +153,13 @@ const Login = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <div className="mt-4 text-center">
+              <Link to="/jelszo-visszaallitas" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                Elfelejtetted a jelszavad?
+              </Link>
+            </div>
+
+            <div className="mt-4 text-center text-sm text-muted-foreground">
               Nincs még fiókod?{" "}
               <Link to="/register" className="text-primary hover:underline font-medium">
                 Fiók létrehozása
