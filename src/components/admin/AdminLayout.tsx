@@ -56,7 +56,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link 
-              to="/" 
+              to="/healthbook" 
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />

@@ -62,10 +62,10 @@ const Settings = () => {
           <Heart className="h-6 w-6 text-primary" />
           <span className="font-semibold text-foreground">Közösségi Jóllét</span>
         </div>
-        <Link to="/dashboard">
+        <Link to="/healthbook">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Vissza az irányítópultra
+            Vissza az Egészségkönyvembe
           </Button>
         </Link>
       </header>

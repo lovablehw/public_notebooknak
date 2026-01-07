@@ -4,22 +4,19 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
 import { useQuestionnaires } from "@/hooks/useQuestionnaires";
-import { useObservations, OBSERVATION_CATEGORIES, ObservationCategory } from "@/hooks/useObservations";
+import { useObservations, ObservationCategory } from "@/hooks/useObservations";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
+import { ObservationCalendar } from "@/components/observations/ObservationCalendar";
 import { 
-  Heart, LogOut, Loader2, Settings, BookOpen, ClipboardList, Calendar, Star, Plus,
-  FlaskConical, Watch, Shield, Eye, Smile, Zap, Moon, Brain, Activity, StickyNote,
-  LucideIcon, FileText, Upload, ChevronDown, ChevronUp, ExternalLink, Trophy,
+  Heart, LogOut, Loader2, Settings, BookOpen, ClipboardList, Calendar, Star,
+  FlaskConical, Watch, Shield, Eye, 
+  FileText, Upload, ChevronDown, ChevronUp, ExternalLink, Trophy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUploadRewards } from "@/hooks/useUploadRewards";
@@ -36,12 +33,8 @@ const HealthBook = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [observationDate, setObservationDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [observationCategory, setObservationCategory] = useState<ObservationCategory>("mood");
-  const [observationValue, setObservationValue] = useState("");
-  const [observationNote, setObservationNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isObservationsOpen, setIsObservationsOpen] = useState(false);
+  
   
   const { awardUploadPoints } = useUploadRewards();
 
@@ -73,21 +66,14 @@ const HealthBook = () => {
     navigate("/");
   };
 
-  const handleAddObservation = async () => {
-    if (!observationValue.trim() && !observationNote.trim()) {
-      toast({ title: "Hiányzó adat", description: "Kérjük, adj meg értéket vagy jegyzetet.", variant: "destructive" });
-      return;
-    }
-    setIsSubmitting(true);
-    const success = addObservation(observationDate, observationCategory, observationValue.trim(), observationNote.trim());
+  const handleAddObservation = async (date: string, category: ObservationCategory, value: string, note: string) => {
+    const success = await addObservation(date, category, value, note);
     if (success) {
       toast({ title: "Mentve", description: "A megfigyelésedet elmentettük." });
-      setObservationValue("");
-      setObservationNote("");
     } else {
       toast({ title: "Hiba", description: "Nem sikerült menteni a megfigyelést.", variant: "destructive" });
     }
-    setIsSubmitting(false);
+    return success;
   };
 
   const completedQuestionnaires = questionnaires.filter((q) => q.status === "completed");
@@ -293,14 +279,14 @@ const HealthBook = () => {
           </CardContent>
         </Card>
 
-        {/* Self-observations (Collapsible) - keeping existing code structure */}
+        {/* Self-observations Calendar */}
         <Card className="shadow-card border-0 animate-fade-in">
           <Collapsible open={isObservationsOpen} onOpenChange={setIsObservationsOpen}>
             <CardHeader>
               <CollapsibleTrigger className="w-full">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-primary" />
+                    <Calendar className="h-5 w-5 text-primary" />
                     <CardTitle className="text-lg font-medium">Saját megfigyeléseim</CardTitle>
                   </div>
                   <div className="flex items-center gap-2">
@@ -309,80 +295,17 @@ const HealthBook = () => {
                   </div>
                 </div>
               </CollapsibleTrigger>
-              {!isObservationsOpen && <CardDescription className="mt-2">Személyes jegyzetek és megfigyelések rögzítése (opcionális).</CardDescription>}
+              {!isObservationsOpen && <CardDescription className="mt-2">Személyes jegyzetek és megfigyelések rögzítése naptár nézetben.</CardDescription>}
             </CardHeader>
             <CollapsibleContent>
-              <CardContent className="space-y-6 pt-0">
+              <CardContent className="pt-0">
                 <CardDescription className="mb-4">Jegyezd fel a napi közérzetedet, hangulatodat vagy bármilyen megfigyelésedet.</CardDescription>
-                <div className="p-4 rounded-lg bg-accent/30 space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="obs-date">Dátum</Label>
-                      <Input id="obs-date" type="date" value={observationDate} onChange={(e) => setObservationDate(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="obs-category">Kategória</Label>
-                      <Select value={observationCategory} onValueChange={(v) => setObservationCategory(v as ObservationCategory)}>
-                        <SelectTrigger id="obs-category"><SelectValue /></SelectTrigger>
-                        <SelectContent>{OBSERVATION_CATEGORIES.map((cat) => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="obs-value">Érték</Label>
-                    <Input id="obs-value" placeholder="pl. 7/10, jó, fáradt..." value={observationValue} onChange={(e) => setObservationValue(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="obs-note">Jegyzet (opcionális)</Label>
-                    <Textarea id="obs-note" placeholder="Bővebb megjegyzések..." value={observationNote} onChange={(e) => setObservationNote(e.target.value)} rows={3} />
-                  </div>
-                  <Button onClick={handleAddObservation} disabled={isSubmitting} className="w-full sm:w-auto">
-                    {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                    Megfigyelés hozzáadása
-                  </Button>
-                </div>
-                {observations.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">Még nem vettél fel saját megfigyelést.</p>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-                    <div className="space-y-4">
-                      {observations.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((obs) => {
-                        const categoryConfig: Record<string, { icon: LucideIcon; bgColor: string; borderColor: string; iconColor: string }> = {
-                          mood: { icon: Smile, bgColor: "bg-yellow-100", borderColor: "border-yellow-400", iconColor: "text-yellow-600" },
-                          energy: { icon: Zap, bgColor: "bg-orange-100", borderColor: "border-orange-400", iconColor: "text-orange-600" },
-                          sleep: { icon: Moon, bgColor: "bg-indigo-100", borderColor: "border-indigo-400", iconColor: "text-indigo-600" },
-                          headache: { icon: Brain, bgColor: "bg-red-100", borderColor: "border-red-400", iconColor: "text-red-600" },
-                          pain: { icon: Activity, bgColor: "bg-rose-100", borderColor: "border-rose-400", iconColor: "text-rose-600" },
-                          note: { icon: StickyNote, bgColor: "bg-slate-100", borderColor: "border-slate-400", iconColor: "text-slate-600" },
-                        };
-                        const config = categoryConfig[obs.category] || categoryConfig.note;
-                        const IconComponent = config.icon;
-                        return (
-                          <div key={obs.id} className="relative flex gap-4">
-                            <div className="relative z-10 flex-shrink-0">
-                              <div className={`w-8 h-8 rounded-full ${config.bgColor} border-2 ${config.borderColor} flex items-center justify-center`}>
-                                <IconComponent className={`h-4 w-4 ${config.iconColor}`} />
-                              </div>
-                            </div>
-                            <div className="flex-1 pb-2">
-                              <div className="border border-border/50 hover:border-border transition-colors rounded-lg p-3">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline">{getCategoryLabel(obs.category)}</Badge>
-                                    {obs.value && <span className="font-medium text-foreground">{obs.value}</span>}
-                                  </div>
-                                  <span className="text-xs text-muted-foreground">{format(new Date(obs.date), "yyyy. MMMM d.", { locale: hu })}</span>
-                                </div>
-                                {obs.note && <p className="text-sm text-muted-foreground line-clamp-2">{obs.note}</p>}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <ObservationCalendar
+                  observations={observations}
+                  loading={observationsLoading}
+                  onAddObservation={handleAddObservation}
+                  getCategoryLabel={getCategoryLabel}
+                />
               </CardContent>
             </CollapsibleContent>
           </Collapsible>
