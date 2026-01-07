@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useAdminConsentVersions } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,13 +63,15 @@ export default function AdminConsentVersions() {
       return;
     }
 
-    // Validate no HTML tags in content to prevent XSS
-    const hasHtmlTags = /<[^>]*>/g.test(newVersion.content) || 
-                        /<[^>]*>/g.test(newVersion.title);
-    if (hasHtmlTags) {
+    // Validate no HTML/script content using DOMPurify to prevent XSS
+    // Sanitize with no allowed tags - if output differs from input, HTML was present
+    const sanitizedTitle = DOMPurify.sanitize(newVersion.title, { ALLOWED_TAGS: [] });
+    const sanitizedContent = DOMPurify.sanitize(newVersion.content, { ALLOWED_TAGS: [] });
+    
+    if (sanitizedTitle !== newVersion.title || sanitizedContent !== newVersion.content) {
       toast({
         title: "Érvénytelen tartalom",
-        description: "HTML címkék nem engedélyezettek a tartalomban.",
+        description: "HTML címkék, szkriptek és kódolt tartalom nem engedélyezettek.",
         variant: "destructive",
       });
       return;
