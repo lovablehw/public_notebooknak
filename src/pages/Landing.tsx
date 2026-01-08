@@ -23,7 +23,7 @@ import {
 // ============================================
 const COPY = {
   header: {
-    brandName: "Jólléti Portál",
+    brandName: "HealthPass Wellbeing Szolgáltatások",
     signIn: "Bejelentkezés",
   },
   hero: {
