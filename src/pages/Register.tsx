@@ -119,7 +119,7 @@ const Register = () => {
           <CardHeader className="text-center pb-2">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Heart className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">Közösségi Jóllét</span>
+              <span className="font-semibold text-foreground">HealthPass Wellbeing Szolgáltatások</span>
             </div>
             <CardTitle className="text-2xl font-medium">Regisztráció</CardTitle>
             <CardDescription>

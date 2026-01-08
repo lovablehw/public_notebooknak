@@ -60,7 +60,7 @@ const Settings = () => {
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart className="h-6 w-6 text-primary" />
-          <span className="font-semibold text-foreground">Közösségi Jóllét</span>
+          <span className="font-semibold text-foreground">HealthPass Wellbeing Szolgáltatások</span>
         </div>
         <Link to="/healthbook">
           <Button variant="ghost" size="sm">
