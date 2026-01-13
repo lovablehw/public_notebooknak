@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import HealthBook from "./pages/HealthBook";
 import HealthBookLabor from "./pages/HealthBookLabor";
 import HealthBookDocuments from "./pages/HealthBookDocuments";
+import HealthBookWearables from "./pages/HealthBookWearables";
 import PointsHistory from "./pages/PointsHistory";
 import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/healthbook" element={<RequireConsent><HealthBook /></RequireConsent>} />
             <Route path="/healthbook/labor" element={<RequireConsent><HealthBookLabor /></RequireConsent>} />
             <Route path="/healthbook/dokumentumok" element={<RequireConsent><HealthBookDocuments /></RequireConsent>} />
+            <Route path="/healthbook/viselheto-eszkozok" element={<RequireConsent><HealthBookWearables /></RequireConsent>} />
             <Route path="/pontok" element={<RequireConsent><PointsHistory /></RequireConsent>} />
             <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
             <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
