@@ -121,7 +121,7 @@ const HealthBook = () => {
             <BookOpen className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-light text-foreground">Egészségkönyvem</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-center md:text-left lg:text-left">
             Itt láthatod a kitöltött felméréseid történetét, a saját megfigyeléseidet és egészségügyi adataidat.
           </p>
         </div>
