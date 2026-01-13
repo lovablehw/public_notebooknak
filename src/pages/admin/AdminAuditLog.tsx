@@ -22,7 +22,20 @@ import { Loader2, ScrollText } from "lucide-react";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
-// Event type translations - non-IT friendly
+/**
+ * Masks an email address for display to reduce exposure risk.
+ * Example: "admin@example.com" -> "a***n@example.com"
+ */
+function maskEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  if (!domain || localPart.length <= 2) {
+    return localPart.charAt(0) + "***@" + (domain || "***");
+  }
+  const firstChar = localPart.charAt(0);
+  const lastChar = localPart.charAt(localPart.length - 1);
+  return `${firstChar}***${lastChar}@${domain}`;
+}
+
 const eventTypeLabels: Record<string, string> = {
   user_registered: "Felhasználó regisztrált",
   consent_submitted: "Hozzájárulás megadva",
@@ -47,10 +60,10 @@ const getEventDescription = (eventType: string, metadata: Record<string, any> | 
       const reason = metadata?.reason || "tevékenység";
       return `${points} pont jóváírva: ${reason}`;
     case "admin_added":
-      const addedEmail = metadata?.email || "ismeretlen";
+      const addedEmail = metadata?.email ? maskEmail(metadata.email) : "ismeretlen";
       return `Új adminisztrátor hozzáadva: ${addedEmail}`;
     case "admin_removed":
-      const removedEmail = metadata?.email || "ismeretlen";
+      const removedEmail = metadata?.email ? maskEmail(metadata.email) : "ismeretlen";
       return `Adminisztrátor eltávolítva: ${removedEmail}`;
     default:
       return "Esemény történt.";
@@ -151,7 +164,7 @@ export default function AdminAuditLog() {
                     </TableCell>
                     <TableCell>
                       {event.actor_email ? (
-                        <span className="text-sm">{event.actor_email}</span>
+                        <span className="text-sm" title="Az email cím biztonsági okokból részlegesen rejtett">{maskEmail(event.actor_email)}</span>
                       ) : event.actor_user_id ? (
                         <span className="font-mono text-xs text-muted-foreground">
                           {event.actor_user_id.slice(0, 8)}...
