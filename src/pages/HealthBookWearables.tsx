@@ -114,19 +114,25 @@ const HealthBookWearables = () => {
             </Card>
           </div>
 
-          {/* Mobile & Tablet: edge-to-edge, no card chrome */}
-          <div className="lg:hidden -mx-4">
-            <div 
-              id="medalyse-wearables-container-mobile" 
-              data-component="wearables"
-              className="min-h-[60vh] w-full bg-muted/20 border-y border-border flex items-center justify-center"
-            >
-              <div className="text-center text-muted-foreground px-4">
-                <Watch className="h-10 w-10 mx-auto mb-4 opacity-50" />
-                <p className="text-base">Medalyse viselhető eszközök modul helye</p>
-                <p className="text-sm mt-2 opacity-75">
-                  A beágyazott komponens itt jelenik meg.
-                </p>
+          {/* Mobile & Tablet: slim white frame */}
+          <div className="lg:hidden">
+            <div className="bg-background rounded-lg border border-border/50 p-2">
+              <div className="px-2 py-1 flex items-center gap-2 text-muted-foreground mb-1">
+                <Watch className="h-4 w-4" />
+                <span className="text-sm font-medium">Aktivitás- és alvásadatok</span>
+              </div>
+              <div 
+                id="medalyse-wearables-container-mobile" 
+                data-component="wearables"
+                className="min-h-[60vh] w-full bg-muted/20 rounded border border-dashed border-border flex items-center justify-center"
+              >
+                <div className="text-center text-muted-foreground px-4">
+                  <Watch className="h-10 w-10 mx-auto mb-4 opacity-50" />
+                  <p className="text-base">Medalyse viselhető eszközök modul helye</p>
+                  <p className="text-sm mt-2 opacity-75">
+                    A beágyazott komponens itt jelenik meg.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
