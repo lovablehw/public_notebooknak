@@ -1,18 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
-import { useUploadRewards } from "@/hooks/useUploadRewards";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, ArrowLeft, FlaskConical, Loader2, LogOut, Settings, Upload, Star } from "lucide-react";
+import { Heart, ArrowLeft, Watch, Loader2, LogOut, Settings } from "lucide-react";
 import { useEffect } from "react";
 
-const HealthBookLabor = () => {
+const HealthBookWearables = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { needsConsent, loading: consentLoading } = useConsent();
-  const { awardUploadPoints } = useUploadRewards();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Auth check
@@ -32,26 +28,6 @@ const HealthBookLabor = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
-  };
-
-  const handleUpload = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.jpg,.jpeg,.png';
-    
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        toast({
-          title: "Feltöltés folyamatban",
-          description: `${file.name} feltöltése...`,
-        });
-        
-        await awardUploadPoints('lab');
-      }
-    };
-    
-    input.click();
   };
 
   if (authLoading || consentLoading) {
@@ -94,58 +70,32 @@ const HealthBookLabor = () => {
         {/* Title */}
         <div className="animate-fade-in">
           <div className="flex items-center gap-3 mb-2">
-            <FlaskConical className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-light text-foreground">Laboreredmények</h1>
+            <Watch className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-light text-foreground">Viselhető eszközök</h1>
           </div>
           <p className="text-muted-foreground">
-            Itt jelennek meg a laboreredmények a beágyazott modulban.
+            Itt jelennek meg a viselhető eszközök adatai a beágyazott modulban.
           </p>
         </div>
 
-        {/* Upload action */}
+        {/* Medalyse Wearables Webcomponent */}
         <Card className="shadow-card border-0 animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" />
-              Feltöltés
-            </CardTitle>
-            <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
-              <Star className="h-3 w-3" />
-              +30 pont feltöltésenként
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tölts fel laboreredményt PDF, JPG vagy PNG formátumban.
-            </p>
-            <Button onClick={handleUpload} className="gap-2">
-              <Upload className="h-4 w-4" />
-              Laboreredmény feltöltése
-            </Button>
-            <p className="text-xs text-muted-foreground mt-3">
-              Demo mód: A fájlmegjelenítés a Medalyse-ban történik majd.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Medalyse Lab Webcomponent */}
-        <Card className="shadow-card border-0 animate-fade-in">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">Laboreredmények megtekintése</CardTitle>
+            <CardTitle className="text-lg font-medium">Aktivitás- és alvásadatok</CardTitle>
             <CardDescription>
-              A feltöltött laboreredményeid megjelenítése és feldolgozása.
+              A csatlakoztatott viselhető eszközök adatainak megjelenítése és feldolgozása.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Medalyse labor webkomponens helye */}
+            {/* Medalyse wearables webkomponens helye */}
             <div 
-              id="medalyse-lab-container" 
-              data-component="lab-results"
+              id="medalyse-wearables-container" 
+              data-component="wearables"
               className="min-h-[400px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
             >
               <div className="text-center text-muted-foreground p-8">
-                <FlaskConical className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Medalyse laboreredmény modul helye</p>
+                <Watch className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg">Medalyse viselhető eszközök modul helye</p>
                 <p className="text-sm mt-2 opacity-75">
                   A beágyazott komponens itt jelenik meg.
                 </p>
@@ -158,4 +108,4 @@ const HealthBookLabor = () => {
   );
 };
 
-export default HealthBookLabor;
+export default HealthBookWearables;

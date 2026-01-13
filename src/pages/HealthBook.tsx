@@ -19,7 +19,6 @@ import {
   FileText, Upload, ChevronDown, ChevronUp, ExternalLink, Trophy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useUploadRewards } from "@/hooks/useUploadRewards";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
@@ -34,24 +33,6 @@ const HealthBook = () => {
   const { toast } = useToast();
 
   const [isObservationsOpen, setIsObservationsOpen] = useState(false);
-  
-  
-  const { awardUploadPoints } = useUploadRewards();
-
-  const handleUpload = async (uploadType: string) => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = uploadType === 'lab' ? '.pdf,.jpg,.jpeg,.png' : 
-                   uploadType === 'wearable' ? '.csv,.json,.xml' : '.pdf,.doc,.docx,.jpg,.jpeg,.png';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        toast({ title: "Feltöltés folyamatban", description: `${file.name} feltöltése...` });
-        await awardUploadPoints(uploadType);
-      }
-    };
-    input.click();
-  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login");
@@ -331,22 +312,27 @@ const HealthBook = () => {
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
               <p className="text-sm text-muted-foreground flex-1">Laboreredményeid feltöltése és megtekintése.</p>
-              <Button onClick={(e) => { e.stopPropagation(); handleUpload('lab'); }} className="w-full gap-2 mt-4">
+              <Button onClick={(e) => { e.stopPropagation(); navigate("/healthbook/labor"); }} className="w-full gap-2 mt-4">
                 <Upload className="h-4 w-4" />Feltöltés
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card border-0 flex flex-col">
+          <Card 
+            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group"
+            onClick={() => navigate("/healthbook/viselheto-eszkozok")}
+            tabIndex={0}
+            onKeyDown={(e) => e.key === "Enter" && navigate("/healthbook/viselheto-eszkozok")}
+          >
             <CardHeader>
-              <CardTitle className="text-lg font-medium flex items-center gap-2"><Watch className="h-5 w-5 text-primary" />Viselhető eszközök</CardTitle>
-              <CardDescription className="flex items-center gap-1 text-xs text-primary font-medium">
-                <Star className="h-3 w-3" />+30 pont feltöltésenként
-              </CardDescription>
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <Watch className="h-5 w-5 text-primary" />
+                Viselhető eszközök
+                <ExternalLink className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
-              <p className="text-sm text-muted-foreground flex-1">Tervezett funkció: aktivitás- és alvásadatok csatlakoztatása.</p>
-              <Button onClick={() => handleUpload('wearable')} className="w-full gap-2 mt-4"><Upload className="h-4 w-4" />Feltöltés</Button>
+              <p className="text-sm text-muted-foreground flex-1">Aktivitás- és alvásadatok megtekintése.</p>
             </CardContent>
           </Card>
 
@@ -368,7 +354,7 @@ const HealthBook = () => {
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
               <p className="text-sm text-muted-foreground flex-1">Zárójelentések és összefoglalók feltöltése.</p>
-              <Button onClick={(e) => { e.stopPropagation(); handleUpload('discharge_or_summary'); }} className="w-full gap-2 mt-4">
+              <Button onClick={(e) => { e.stopPropagation(); navigate("/healthbook/dokumentumok"); }} className="w-full gap-2 mt-4">
                 <Upload className="h-4 w-4" />Feltöltés
               </Button>
             </CardContent>

@@ -122,6 +122,9 @@ const HealthBookDocuments = () => {
               <Upload className="h-4 w-4" />
               Dokumentum feltöltése
             </Button>
+            <p className="text-xs text-muted-foreground mt-3">
+              Demo mód: A fájlmegjelenítés a Medalyse-ban történik majd.
+            </p>
           </CardContent>
         </Card>
 
