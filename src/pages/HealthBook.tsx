@@ -136,8 +136,9 @@ const HealthBook = () => {
             <CardDescription>Itt jelenik meg a kitöltések és feltöltések idővonala.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[200px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
-              <div className="text-center text-muted-foreground p-8">
+            {/* Medalyse idővonal webkomponens helye */}
+            <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[250px] md:min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
+              <div className="text-center text-muted-foreground p-4 md:p-8">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">A Medalyse idővonal komponens helye</p>
               </div>
@@ -312,9 +313,6 @@ const HealthBook = () => {
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
               <p className="text-sm text-muted-foreground flex-1">Laboreredményeid feltöltése és megtekintése.</p>
-              <Button onClick={(e) => { e.stopPropagation(); navigate("/healthbook/labor"); }} className="w-full gap-2 mt-4">
-                <Upload className="h-4 w-4" />Feltöltés
-              </Button>
             </CardContent>
           </Card>
 
@@ -354,9 +352,6 @@ const HealthBook = () => {
             </CardHeader>
             <CardContent className="flex flex-col flex-1">
               <p className="text-sm text-muted-foreground flex-1">Zárójelentések és összefoglalók feltöltése.</p>
-              <Button onClick={(e) => { e.stopPropagation(); navigate("/healthbook/dokumentumok"); }} className="w-full gap-2 mt-4">
-                <Upload className="h-4 w-4" />Feltöltés
-              </Button>
             </CardContent>
           </Card>
         </div>

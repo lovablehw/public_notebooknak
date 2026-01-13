@@ -142,11 +142,11 @@ const HealthBookDocuments = () => {
               id="medalyse-document-viewer-container" 
               data-component="document-viewer"
               data-document-type="discharge_or_summary"
-              className="min-h-[400px] bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+              className="min-h-[300px] md:min-h-[400px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
             >
-              <div className="text-center text-muted-foreground p-8">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Medalyse dokumentum-megjelenítő modul helye</p>
+              <div className="text-center text-muted-foreground p-4 md:p-8">
+                <FileText className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-base md:text-lg">Medalyse dokumentum-megjelenítő modul helye</p>
                 <p className="text-sm mt-2 opacity-75">
                   A beágyazott komponens itt jelenik meg.
                 </p>
