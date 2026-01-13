@@ -127,24 +127,43 @@ const HealthBook = () => {
         </div>
 
         {/* Timeline Placeholder */}
-        <Card className="shadow-card border-0 animate-fade-in">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
-              Idővonal
-            </CardTitle>
-            <CardDescription>Itt jelenik meg a kitöltések és feltöltések idővonala.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Medalyse idővonal webkomponens helye */}
-            <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[250px] md:min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
-              <div className="text-center text-muted-foreground p-4 md:p-8">
+        {/* Medalyse Timeline - mobile: minimal chrome, desktop: card */}
+        <div className="animate-fade-in">
+          {/* Desktop: Card wrapper */}
+          <div className="hidden lg:block">
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Idővonal
+                </CardTitle>
+                <CardDescription>Itt jelenik meg a kitöltések és feltöltések idővonala.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
+                  <div className="text-center text-muted-foreground p-8">
+                    <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">A Medalyse idővonal komponens helye</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mobile & Tablet: edge-to-edge, minimal chrome */}
+          <div className="lg:hidden -mx-4">
+            <div className="px-4 py-2 flex items-center gap-2 text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">Idővonal</span>
+            </div>
+            <div id="medalyse-timeline-container-mobile" data-component="timeline" className="min-h-[50vh] w-full bg-muted/20 border-y border-border flex items-center justify-center">
+              <div className="text-center text-muted-foreground px-4">
                 <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">A Medalyse idővonal komponens helye</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Activity, Achievements, Badges Section */}
         <div className="grid md:grid-cols-3 gap-4 animate-fade-in">
