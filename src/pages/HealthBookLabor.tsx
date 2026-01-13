@@ -128,31 +128,59 @@ const HealthBookLabor = () => {
           </CardContent>
         </Card>
 
-        {/* Medalyse Lab Webcomponent */}
-        <Card className="shadow-card border-0 animate-fade-in">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">Laboreredmények megtekintése</CardTitle>
-            <CardDescription>
-              A feltöltött laboreredményeid megjelenítése és feldolgozása.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Medalyse labor webkomponens helye */}
+        {/* Medalyse Lab Webcomponent - mobile: edge-to-edge, desktop: card */}
+        <div className="animate-fade-in">
+          {/* Title - visible on all screens */}
+          <div className="mb-2 lg:hidden">
+            <p className="text-xs text-muted-foreground">
+              Demo mód: A fájlmegjelenítés a Medalyse-ban történik majd.
+            </p>
+          </div>
+          
+          {/* Desktop: Card wrapper */}
+          <div className="hidden lg:block">
+            <Card className="shadow-card border-0">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">Laboreredmények megtekintése</CardTitle>
+                <CardDescription>
+                  A feltöltött laboreredményeid megjelenítése és feldolgozása.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div 
+                  id="medalyse-lab-container" 
+                  data-component="lab-results"
+                  className="min-h-[400px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+                >
+                  <div className="text-center text-muted-foreground p-8">
+                    <FlaskConical className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">Medalyse laboreredmény modul helye</p>
+                    <p className="text-sm mt-2 opacity-75">
+                      A beágyazott komponens itt jelenik meg.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Mobile & Tablet: edge-to-edge, no card chrome */}
+          <div className="lg:hidden -mx-4">
             <div 
-              id="medalyse-lab-container" 
+              id="medalyse-lab-container-mobile" 
               data-component="lab-results"
-              className="min-h-[300px] md:min-h-[400px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center"
+              className="min-h-[60vh] w-full bg-muted/20 border-y border-border flex items-center justify-center"
             >
-              <div className="text-center text-muted-foreground p-4 md:p-8">
-                <FlaskConical className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-base md:text-lg">Medalyse laboreredmény modul helye</p>
+              <div className="text-center text-muted-foreground px-4">
+                <FlaskConical className="h-10 w-10 mx-auto mb-4 opacity-50" />
+                <p className="text-base">Medalyse laboreredmény modul helye</p>
                 <p className="text-sm mt-2 opacity-75">
                   A beágyazott komponens itt jelenik meg.
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </main>
     </div>
   );
