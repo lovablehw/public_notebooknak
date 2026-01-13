@@ -21,6 +21,22 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * Masks an email address for display to reduce exposure risk.
+ * Example: "admin@example.com" -> "a***n@example.com"
+ */
+function maskEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  if (!domain || localPart.length <= 2) {
+    // Very short emails: just show first char + asterisks
+    return localPart.charAt(0) + "***@" + (domain || "***");
+  }
+  // Show first and last character of local part
+  const firstChar = localPart.charAt(0);
+  const lastChar = localPart.charAt(localPart.length - 1);
+  return `${firstChar}***${lastChar}@${domain}`;
+}
+
 export default function AdminAdmins() {
   const [newEmail, setNewEmail] = useState("");
   const { toast } = useToast();
@@ -179,7 +195,9 @@ export default function AdminAdmins() {
               ) : (
                 admins?.map((admin) => (
                   <TableRow key={admin.id}>
-                    <TableCell className="font-medium">{admin.email}</TableCell>
+                    <TableCell className="font-medium" title="Az email cím biztonsági okokból részlegesen rejtett">
+                      {maskEmail(admin.email)}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(admin.created_at), "yyyy. MMM d.", { locale: hu })}
                     </TableCell>
@@ -198,7 +216,7 @@ export default function AdminAdmins() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Admin eltávolítása</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Biztosan eltávolítja <strong>{admin.email}</strong> admin jogosultságát? 
+                              Biztosan eltávolítja <strong>{maskEmail(admin.email)}</strong> admin jogosultságát?
                               Ez a művelet nem vonható vissza.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
