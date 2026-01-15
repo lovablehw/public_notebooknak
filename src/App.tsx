@@ -33,6 +33,8 @@ import AdminConsentVersions from "./pages/admin/AdminConsentVersions";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminUploads from "./pages/admin/AdminUploads";
+import AdminQuestionnaires from "./pages/admin/AdminQuestionnaires";
+import AdminUserGroups from "./pages/admin/AdminUserGroups";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +77,8 @@ const App = () => (
             <Route path="/admin/naplo" element={<RequireConsent><AdminAuditLog /></RequireConsent>} />
             <Route path="/admin/feltoltesek" element={<RequireConsent><AdminUploads /></RequireConsent>} />
             <Route path="/admin/admins" element={<RequireConsent><AdminAdmins /></RequireConsent>} />
+            <Route path="/admin/kerdoivek" element={<RequireConsent><AdminQuestionnaires /></RequireConsent>} />
+            <Route path="/admin/csoportok" element={<RequireConsent><AdminUserGroups /></RequireConsent>} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -263,7 +263,7 @@ const AdminQuestionnaires = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Kérdőív konfiguráció">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -272,7 +272,7 @@ const AdminQuestionnaires = () => {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Kérdőív konfiguráció">
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
