@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_users: {
         Row: {
           created_at: string
@@ -174,6 +198,81 @@ export type Database = {
           display_name?: string
           id?: string
           smoking_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      questionnaire_permissions: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          questionnaire_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          questionnaire_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          questionnaire_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_permissions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "user_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questionnaire_permissions_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaires_config: {
+        Row: {
+          completion_time: number
+          created_at: string
+          deadline: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          points: number
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          completion_time?: number
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          points?: number
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          completion_time?: number
+          created_at?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          points?: number
+          target_url?: string
           updated_at?: string
         }
         Relationships: []
@@ -341,6 +440,59 @@ export type Database = {
           },
         ]
       }
+      user_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "user_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           created_at: string
@@ -368,6 +520,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_questionnaire_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          questionnaire_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          questionnaire_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          questionnaire_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_questionnaire_progress_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires_config"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -393,7 +586,37 @@ export type Database = {
         Returns: Json
       }
       check_is_admin: { Args: never; Returns: boolean }
+      get_user_questionnaires: {
+        Args: never
+        Returns: {
+          completion_time: number
+          created_at: string
+          deadline: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          points: number
+          target_url: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "questionnaires_config"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      has_admin_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["admin_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
+      is_service_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       log_audit_event: {
         Args: { p_event_type: string; p_metadata?: Json }
         Returns: undefined
@@ -406,6 +629,7 @@ export type Database = {
         | "discharge_upload"
         | "patient_summary_upload"
         | "observation_creation"
+      admin_role: "super_admin" | "service_admin"
       reward_frequency: "per_event" | "daily" | "once_total"
     }
     CompositeTypes: {
@@ -541,6 +765,7 @@ export const Constants = {
         "patient_summary_upload",
         "observation_creation",
       ],
+      admin_role: ["super_admin", "service_admin"],
       reward_frequency: ["per_event", "daily", "once_total"],
     },
   },

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
+import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useQuestionnaires } from "@/hooks/useQuestionnaires";
 import { useObservations, ObservationCategory } from "@/hooks/useObservations";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -11,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
+import { QuestionnaireWidget } from "@/components/dashboard/QuestionnaireWidget";
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
 import { ObservationCalendar } from "@/components/observations/ObservationCalendar";
 import { 
@@ -26,13 +28,25 @@ const HealthBook = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userConsent, needsConsent, loading: consentLoading } = useConsent();
   const { totalPoints } = usePoints();
-  const { questionnaires, loading: questionnairesLoading, getCompletedCount, getUniqueCompletedCount } = useQuestionnaires();
+  // Database-driven questionnaires (permission-based)
+  const { 
+    questionnaires: dbQuestionnaires, 
+    loading: dbQuestionnairesLoading, 
+    startQuestionnaire: startDbQuestionnaire,
+    getCompletedCount: getDbCompletedCount,
+    getUniqueCompletedCount: getDbUniqueCompletedCount,
+  } = useQuestionnaireConfig();
+  // Legacy localStorage questionnaires (for backwards compatibility)
+  const { questionnaires: legacyQuestionnaires, loading: legacyQuestionnairesLoading, getCompletedCount, getUniqueCompletedCount } = useQuestionnaires();
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel } = useObservations();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [isObservationsOpen, setIsObservationsOpen] = useState(false);
+  
+  // Combine loading states
+  const questionnairesLoading = dbQuestionnairesLoading || legacyQuestionnairesLoading;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login");
@@ -57,20 +71,39 @@ const HealthBook = () => {
     return success;
   };
 
-  const completedQuestionnaires = questionnaires.filter((q) => q.status === "completed");
-  const activeQuestionnaires = questionnaires.filter((q) => q.status !== "completed");
+  // Database-driven questionnaires (permission-based)
+  const activeDbQuestionnaires = dbQuestionnaires.filter((q) => q.status !== "completed");
+  const completedDbQuestionnaires = dbQuestionnaires.filter((q) => q.status === "completed");
+  
+  // Legacy localStorage questionnaires
+  const completedLegacyQuestionnaires = legacyQuestionnaires.filter((q) => q.status === "completed");
+  const activeLegacyQuestionnaires = legacyQuestionnaires.filter((q) => q.status !== "completed");
+  
+  // Handler for starting a DB questionnaire
+  const handleStartDbQuestionnaire = async (id: string) => {
+    await startDbQuestionnaire(id);
+  };
   
   const getLastActivityDate = () => {
-    const completed = completedQuestionnaires.filter((q) => q.completedAt);
-    if (completed.length === 0) return null;
-    const sorted = completed.sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
-    return sorted[0].completedAt;
+    // Check both DB and legacy completed questionnaires
+    const allCompleted = [
+      ...completedDbQuestionnaires.filter((q) => q.completed_at).map(q => q.completed_at),
+      ...completedLegacyQuestionnaires.filter((q) => q.completedAt).map(q => q.completedAt),
+    ].filter(Boolean) as string[];
+    
+    if (allCompleted.length === 0) return null;
+    const sorted = allCompleted.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    return sorted[0];
   };
   const lastActivity = getLastActivityDate();
 
+  // Combined counts for badges
+  const totalCompletedCount = getDbCompletedCount() + getCompletedCount();
+  const totalUniqueCompletedCount = getDbUniqueCompletedCount() + getUniqueCompletedCount();
+
   const badgeStats: BadgeStats = {
-    completedQuestionnaires: getCompletedCount(),
-    uniqueQuestionnairesCompleted: getUniqueCompletedCount(),
+    completedQuestionnaires: totalCompletedCount,
+    uniqueQuestionnairesCompleted: totalUniqueCompletedCount,
     hasOptionalConsent: userConsent?.communication_preferences || false,
   };
 
@@ -172,7 +205,7 @@ const HealthBook = () => {
           <Card className="shadow-card border-0">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2"><ClipboardList className="h-4 w-4" />Kitöltött felmérések</CardDescription>
-              <CardTitle className="text-3xl font-light text-primary">{completedQuestionnaires.length}</CardTitle>
+              <CardTitle className="text-3xl font-light text-primary">{totalCompletedCount}</CardTitle>
             </CardHeader>
             <CardContent><p className="text-xs text-muted-foreground">Az eddig kitöltött kérdőíveid száma.</p></CardContent>
           </Card>
@@ -208,7 +241,7 @@ const HealthBook = () => {
         {/* Badges */}
         <BadgeDisplay stats={badgeStats} />
 
-        {/* Available Questionnaires */}
+        {/* Available Questionnaires - Database-driven Widget Grid */}
         <Card className="shadow-card border-0 animate-fade-in">
           <CardHeader>
             <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -218,11 +251,29 @@ const HealthBook = () => {
             <CardDescription>A még nem befejezett felméréseid.</CardDescription>
           </CardHeader>
           <CardContent>
-            {activeQuestionnaires.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {activeQuestionnaires.map((q) => <QuestionnaireCard key={q.id} questionnaire={q} />)}
+            {/* Database-driven questionnaires as widget grid */}
+            {activeDbQuestionnaires.length > 0 && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                {activeDbQuestionnaires.map((q) => (
+                  <QuestionnaireWidget 
+                    key={q.id} 
+                    questionnaire={q} 
+                    onStart={handleStartDbQuestionnaire}
+                  />
+                ))}
               </div>
-            ) : (
+            )}
+            
+            {/* Legacy questionnaires (for backwards compatibility) */}
+            {activeLegacyQuestionnaires.length > 0 && (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeLegacyQuestionnaires.map((q) => (
+                  <QuestionnaireCard key={q.id} questionnaire={q} />
+                ))}
+              </div>
+            )}
+            
+            {activeDbQuestionnaires.length === 0 && activeLegacyQuestionnaires.length === 0 && (
               <p className="text-muted-foreground text-center py-4">Jelenleg nincs elérhető kérdőív.</p>
             )}
           </CardContent>
@@ -238,7 +289,7 @@ const HealthBook = () => {
             <CardDescription>A kitöltött felméréseid időrendi sorrendben.</CardDescription>
           </CardHeader>
           <CardContent>
-            {completedQuestionnaires.length === 0 ? (
+            {totalCompletedCount === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <ClipboardList className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Még nincs kitöltött felmérésed.</p>
@@ -247,9 +298,10 @@ const HealthBook = () => {
               <div className="relative">
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
                 <div className="space-y-6">
-                  {completedQuestionnaires.sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime()).map((q) => {
-                    const category = getQuestionnaireCategoryBadge(q.id);
-                    return (
+                  {/* Database questionnaires history */}
+                  {completedDbQuestionnaires
+                    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
+                    .map((q) => (
                       <div key={q.id} className="relative flex gap-4">
                         <div className="relative z-10 flex-shrink-0">
                           <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
@@ -261,12 +313,12 @@ const HealthBook = () => {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium text-foreground">{q.title}</span>
-                                  <Badge variant={category.variant}>{category.label}</Badge>
+                                  <span className="font-medium text-foreground">{q.name}</span>
+                                  <Badge variant="default">Felmérés</Badge>
                                 </div>
                                 <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                  <span>{q.completedAt ? format(new Date(q.completedAt), "yyyy. MMMM d.", { locale: hu }) : "–"}</span>
-                                  <span className="flex items-center gap-1 text-primary"><Star className="h-3 w-3" />+{q.rewardPoints} pont</span>
+                                  <span>{q.completed_at ? format(new Date(q.completed_at), "yyyy. MMMM d.", { locale: hu }) : "–"}</span>
+                                  <span className="flex items-center gap-1 text-primary"><Star className="h-3 w-3" />+{q.points} pont</span>
                                 </div>
                               </div>
                               <Button variant="outline" size="sm" className="gap-1 flex-shrink-0"><Eye className="h-4 w-4" />Eredmények</Button>
@@ -274,8 +326,40 @@ const HealthBook = () => {
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  
+                  {/* Legacy questionnaires history */}
+                  {completedLegacyQuestionnaires
+                    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())
+                    .map((q) => {
+                      const category = getQuestionnaireCategoryBadge(q.id);
+                      return (
+                        <div key={q.id} className="relative flex gap-4">
+                          <div className="relative z-10 flex-shrink-0">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                              <ClipboardList className="h-4 w-4 text-primary" />
+                            </div>
+                          </div>
+                          <div className="flex-1 pb-2">
+                            <div className="bg-accent/30 hover:bg-accent/50 transition-colors rounded-lg p-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-foreground">{q.title}</span>
+                                    <Badge variant={category.variant}>{category.label}</Badge>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span>{q.completedAt ? format(new Date(q.completedAt), "yyyy. MMMM d.", { locale: hu }) : "–"}</span>
+                                    <span className="flex items-center gap-1 text-primary"><Star className="h-3 w-3" />+{q.rewardPoints} pont</span>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm" className="gap-1 flex-shrink-0"><Eye className="h-4 w-4" />Eredmények</Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             )}
