@@ -11,7 +11,9 @@ import {
   ScrollText,
   ArrowLeft,
   Loader2,
-  Shield
+  Shield,
+  ClipboardList,
+  UsersRound
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,8 @@ interface AdminLayoutProps {
 const navItems = [
   { path: "/admin", label: "Főoldal", icon: LayoutDashboard },
   { path: "/admin/felhasznalok", label: "Felhasználók", icon: Users },
+  { path: "/admin/csoportok", label: "Csoportok", icon: UsersRound },
+  { path: "/admin/kerdoivek", label: "Kérdőívek", icon: ClipboardList },
   { path: "/admin/hozzajarulasok", label: "Hozzájárulások", icon: FileCheck },
   { path: "/admin/pontok", label: "Pontok", icon: Star },
   { path: "/admin/pontszabalyok", label: "Pontszabályok", icon: Star },
