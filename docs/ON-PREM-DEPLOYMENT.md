@@ -7,12 +7,13 @@ Ez a dokumentáció leírja az alkalmazás on-premises környezetben történő 
 1. [Előfeltételek](#előfeltételek)
 2. [Architektúra áttekintés](#architektúra-áttekintés)
 3. [Docker Compose konfiguráció](#docker-compose-konfiguráció)
-4. [Keycloak beállítás](#keycloak-beállítás)
-5. [Supabase konfiguráció](#supabase-konfiguráció)
-6. [Frontend konfiguráció](#frontend-konfiguráció)
-7. [Nginx reverse proxy](#nginx-reverse-proxy)
-8. [Indítás és ellenőrzés](#indítás-és-ellenőrzés)
-9. [Hibaelhárítás](#hibaelhárítás)
+4. [Adatbázis migrációk](#adatbázis-migrációk)
+5. [Keycloak beállítás](#keycloak-beállítás)
+6. [Supabase konfiguráció](#supabase-konfiguráció)
+7. [Frontend konfiguráció](#frontend-konfiguráció)
+8. [Nginx reverse proxy](#nginx-reverse-proxy)
+9. [Indítás és ellenőrzés](#indítás-és-ellenőrzés)
+10. [Hibaelhárítás](#hibaelhárítás)
 
 ---
 
@@ -327,6 +328,114 @@ REALTIME_SECRET_KEY_BASE=<64-byte-hex-key>
 SUPABASE_ANON_KEY=<your-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 ```
+
+---
+
+## Adatbázis migrációk
+
+**FONTOS**: A `supabase/migrations` mappában található SQL fájlok NEM futnak le automatikusan self-hosted környezetben. Manuálisan kell alkalmazni őket!
+
+### 1. Migrációk alkalmazása
+
+A Supabase Postgres konténer elindítása után futtasd a migrációkat:
+
+```bash
+# Összes migráció alkalmazása sorrendben
+for f in supabase/migrations/*.sql; do
+  echo "Running migration: $f"
+  docker-compose exec -T supabase-db psql -U postgres -d postgres -f - < "$f"
+done
+```
+
+Vagy egyenként:
+
+```bash
+# Példa egy konkrét migráció futtatására
+docker-compose exec -T supabase-db psql -U postgres -d postgres < supabase/migrations/20251212104944_remix_migration_from_pg_dump.sql
+```
+
+### 2. Migráció script létrehozása
+
+Hozz létre egy `scripts/run-migrations.sh` fájlt az egyszerűbb kezeléshez:
+
+```bash
+#!/bin/bash
+set -e
+
+MIGRATIONS_DIR="supabase/migrations"
+DB_CONTAINER="supabase-db"
+
+echo "Waiting for database to be ready..."
+until docker-compose exec -T $DB_CONTAINER pg_isready -U postgres; do
+  sleep 2
+done
+
+echo "Running migrations..."
+for migration in $(ls $MIGRATIONS_DIR/*.sql | sort); do
+  echo "Applying: $(basename $migration)"
+  docker-compose exec -T $DB_CONTAINER psql -U postgres -d postgres -f - < "$migration"
+  if [ $? -eq 0 ]; then
+    echo "✓ $(basename $migration) applied successfully"
+  else
+    echo "✗ Failed to apply $(basename $migration)"
+    exit 1
+  fi
+done
+
+echo "All migrations applied successfully!"
+```
+
+```bash
+chmod +x scripts/run-migrations.sh
+./scripts/run-migrations.sh
+```
+
+### 3. Docker init container (opcionális)
+
+A `docker-compose.yml`-ben hozzáadhatsz egy init konténert a migrációkhoz:
+
+```yaml
+services:
+  migrations:
+    image: postgres:15-alpine
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    volumes:
+      - ./supabase/migrations:/migrations:ro
+    environment:
+      PGHOST: supabase-db
+      PGUSER: postgres
+      PGPASSWORD: ${SUPABASE_DB_PASSWORD}
+      PGDATABASE: postgres
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for f in /migrations/*.sql; do
+          echo "Running: $$f"
+          psql -f "$$f"
+        done
+    networks:
+      - app-network
+```
+
+### 4. Migráció állapot ellenőrzése
+
+A migrációk alkalmazása után ellenőrizd a táblák létrejöttét:
+
+```bash
+docker-compose exec supabase-db psql -U postgres -d postgres -c "\dt public.*"
+```
+
+Elvárt táblák:
+- `admin_users` - Admin felhasználók (tartalmazza a `teszt@localhost.com` seed rekordot)
+- `profiles` - Felhasználói profilok
+- `achievements` - Elérhető jelvények
+- `user_achievements` - Felhasználói jelvények
+- `user_points` - Pont előzmények
+- `consent_versions` - Beleegyezés verziók
+- `user_consents` - Felhasználói beleegyezések
+- stb.
 
 ---
 
