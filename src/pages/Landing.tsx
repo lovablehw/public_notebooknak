@@ -113,6 +113,7 @@ const COPY = {
       privacy: "Adatkezelés",
       terms: "Felhasználási feltételek",
       contact: "Kapcsolat",
+      cookies: "Cookie szabályzat",
     },
   },
 };
@@ -245,7 +246,7 @@ const Landing = () => {
       <footer className="container mx-auto px-4 py-8 border-t border-border/50">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
           <p>{COPY.footer.copyright}</p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap gap-6">
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               {COPY.footer.links.privacy}
             </Link>
@@ -254,6 +255,9 @@ const Landing = () => {
             </Link>
             <Link to="/contact" className="hover:text-foreground transition-colors">
               {COPY.footer.links.contact}
+            </Link>
+            <Link to="/cookie-szabalyzat" className="hover:text-foreground transition-colors">
+              {COPY.footer.links.cookies}
             </Link>
           </div>
         </div>
