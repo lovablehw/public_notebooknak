@@ -5,10 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RequireConsent } from "@/components/RequireConsent";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import Consent from "./pages/Consent";
 import Dashboard from "./pages/Dashboard";
 import HealthBook from "./pages/HealthBook";
 import HealthBookLabor from "./pages/HealthBookLabor";
@@ -18,11 +18,11 @@ import PointsHistory from "./pages/PointsHistory";
 import Settings from "./pages/Settings";
 import ResetSession from "./pages/ResetSession";
 import NotFound from "./pages/NotFound";
+import Consent from "./pages/Consent";
 import QuestionnairePage from "./pages/QuestionnairePage";
 import PasswordResetRequest from "./pages/PasswordResetRequest";
 import PasswordResetConfirm from "./pages/PasswordResetConfirm";
-
-// Admin pages
+import CookiePolicy from "./pages/CookiePolicy";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminConsents from "./pages/admin/AdminConsents";
@@ -31,11 +31,11 @@ import AdminRewardRules from "./pages/admin/AdminRewardRules";
 import AdminAchievements from "./pages/admin/AdminAchievements";
 import AdminConsentVersions from "./pages/admin/AdminConsentVersions";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
-import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminUploads from "./pages/admin/AdminUploads";
+import AdminAdmins from "./pages/admin/AdminAdmins";
 import AdminQuestionnaires from "./pages/admin/AdminQuestionnaires";
-import AdminRoles from "./pages/admin/AdminRoles";
 import AdminUserGroups from "./pages/admin/AdminUserGroups";
+import AdminRoles from "./pages/admin/AdminRoles";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +55,7 @@ const App = () => (
             <Route path="/jelszo-visszaallitas" element={<PasswordResetRequest />} />
             <Route path="/jelszo-uj" element={<PasswordResetConfirm />} />
             <Route path="/consent" element={<Consent />} />
+            <Route path="/cookie-szabalyzat" element={<CookiePolicy />} />
             
             {/* Protected routes - require auth + consent */}
             <Route path="/dashboard" element={<RequireConsent><Dashboard /></RequireConsent>} />
@@ -84,6 +85,7 @@ const App = () => (
             
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <CookieConsentBanner />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
