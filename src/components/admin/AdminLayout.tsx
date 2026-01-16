@@ -13,7 +13,8 @@ import {
   Loader2,
   Shield,
   ClipboardList,
-  UsersRound
+  UsersRound,
+  ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ const navItems = [
   { path: "/admin/feltoltesek", label: "Feltöltések", icon: FileText },
   { path: "/admin/naplo", label: "Napló", icon: ScrollText },
   { path: "/admin/admins", label: "Adminisztrátorok", icon: Shield },
+  { path: "/admin/szerepkorok", label: "Szerepkörök", icon: ShieldCheck },
 ];
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
