@@ -616,6 +616,15 @@ export type Database = {
         Returns: Json
       }
       check_is_admin: { Args: never; Returns: boolean }
+      get_admin_list_masked: {
+        Args: never
+        Returns: {
+          created_at: string
+          has_user_id: boolean
+          id: string
+          masked_email: string
+        }[]
+      }
       get_user_questionnaires: {
         Args: never
         Returns: {
