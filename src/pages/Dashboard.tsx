@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
-import { useQuestionnaires } from "@/hooks/useQuestionnaires";
+import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useButtonConfigs } from "@/hooks/useButtonConfigs";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Heart, LogOut, Loader2, Settings, Gift, BookOpen, Shield } from "lucide-react";
 
-import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
+import { QuestionnaireGrid } from "@/components/dashboard/QuestionnaireGrid";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 
 interface Profile {
@@ -30,20 +30,14 @@ const Dashboard = () => {
   const { 
     questionnaires, 
     loading: questionnairesLoading, 
+    startQuestionnaire,
     getCompletedCount,
     getUniqueCompletedCount,
-  } = useQuestionnaires();
+  } = useQuestionnaireConfig();
   
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
-
-  // Fetch profile
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
 
   // Fetch profile
   useEffect(() => {
@@ -72,6 +66,22 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  // Create a map of button configs by questionnaire ID
+  const buttonConfigMap = useMemo(() => {
+    const map = new Map<string, typeof buttonConfigs[0]>();
+    buttonConfigs.forEach(bc => {
+      if (bc.gomb_azonosito.startsWith('q_')) {
+        const questionnaireId = bc.gomb_azonosito.substring(2);
+        map.set(questionnaireId, bc);
+      } else {
+        if (!map.has(bc.gomb_azonosito)) {
+          map.set(bc.gomb_azonosito, bc);
+        }
+      }
+    });
+    return map;
+  }, [buttonConfigs]);
+
   // Filter to show only active (not completed) questionnaires
   const activeQuestionnaires = questionnaires.filter(
     (q) => q.status !== "completed"
@@ -85,11 +95,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
-  // Helper to get button config for a questionnaire
-  const getButtonConfigForQuestionnaire = (questionnaireId: string) => {
-    return buttonConfigs.find(bc => bc.gomb_azonosito === questionnaireId);
-  };
 
   const nextMilestone = getNextMilestone();
   const progress = getProgress();
@@ -187,15 +192,11 @@ const Dashboard = () => {
           <h2 className="text-xl font-medium text-foreground">Kérdőívek</h2>
           
           {activeQuestionnaires.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeQuestionnaires.map((questionnaire) => (
-                <QuestionnaireCard
-                  key={questionnaire.id}
-                  questionnaire={questionnaire}
-                  buttonConfig={getButtonConfigForQuestionnaire(questionnaire.id)}
-                />
-              ))}
-            </div>
+            <QuestionnaireGrid
+              questionnaires={activeQuestionnaires}
+              onStart={startQuestionnaire}
+              buttonConfigMap={buttonConfigMap}
+            />
           ) : (
             <Card className="shadow-card border-0 animate-fade-in">
               <CardContent className="py-8 text-center">
