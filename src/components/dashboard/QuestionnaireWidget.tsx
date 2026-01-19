@@ -66,9 +66,11 @@ export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: Qu
   const isCompleted = status === "completed";
 
   const getButtonText = () => {
+    // System states take precedence
     if (isCompleted) return "Befejezve";
     if (isExpired) return "Lejárt";
-    if (status === "in_progress") return "Folytatás";
+    // Always use button_label from button_configs - even for in_progress
+    // The Super Admin controls the label via Gomb Karbantartó
     return buttonLabel;
   };
 
