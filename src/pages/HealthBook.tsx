@@ -49,10 +49,17 @@ const HealthBook = () => {
   const buttonConfigMap = useMemo(() => {
     const map = new Map<string, typeof buttonConfigs[0]>();
     buttonConfigs.forEach(bc => {
-      // gomb_azonosito format is "q_{questionnaire_id}"
+      // gomb_azonosito format is "q_{questionnaire_id}" (new trigger format)
+      // Also handle legacy format without prefix
       if (bc.gomb_azonosito.startsWith('q_')) {
         const questionnaireId = bc.gomb_azonosito.substring(2);
         map.set(questionnaireId, bc);
+      } else {
+        // Legacy: gomb_azonosito equals questionnaire_id directly
+        // Only set if not already set by prefixed version (prefixed takes precedence)
+        if (!map.has(bc.gomb_azonosito)) {
+          map.set(bc.gomb_azonosito, bc);
+        }
       }
     });
     return map;
