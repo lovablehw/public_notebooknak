@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuestionnaireGridProps {
   questionnaires: QuestionnaireConfig[];
-  onStart: (id: string) => Promise<void>;
+  onStart: (id: string) => Promise<void | boolean>;
   buttonConfigMap: Map<string, ButtonConfig>;
 }
 

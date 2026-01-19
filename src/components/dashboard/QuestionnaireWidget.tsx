@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
-  onStart: (id: string) => Promise<void>;
+  onStart: (id: string) => Promise<void | boolean>;
   buttonConfig?: ButtonConfig;
 }
 
