@@ -7,6 +7,7 @@ import { QuestionnaireConfig, QuestionnaireStatus } from "@/hooks/useQuestionnai
 import { ButtonConfig } from "@/hooks/useButtonConfigs";
 import { format, isPast, isValid } from "date-fns";
 import { hu } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
@@ -23,8 +24,10 @@ const statusLabels: Record<QuestionnaireStatus, string> = {
 
 export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: QuestionnaireWidgetProps) => {
   const { id, name, description, completion_time, points, deadline, target_url, status } = questionnaire;
+  const navigate = useNavigate();
 
   // Get button properties from config or use defaults
+  // Button config takes precedence over questionnaire's target_url
   const buttonLabel = buttonConfig?.button_label || "Kezdés";
   const buttonTooltip = buttonConfig?.tooltip;
   const buttonTargetUrl = buttonConfig?.target_url || target_url;
@@ -32,16 +35,27 @@ export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: Qu
 
   const handleStart = async () => {
     await onStart(id);
+    
+    // Check if URL is configured (not /404 or empty)
+    if (!buttonTargetUrl || buttonTargetUrl === '/404') {
+      // Navigate to 404 with state indicating button config is pending
+      navigate('/404', { state: { buttonConfigPending: true } });
+      return;
+    }
+    
     // Redirect to target URL
-    if (buttonTargetUrl) {
-      if (buttonTargetUrl.startsWith("http")) {
-        if (urlTarget === "_blank") {
-          window.open(buttonTargetUrl, "_blank", "noopener,noreferrer");
-        } else {
-          window.location.href = buttonTargetUrl;
-        }
+    if (buttonTargetUrl.startsWith("http")) {
+      if (urlTarget === "_blank") {
+        window.open(buttonTargetUrl, "_blank", "noopener,noreferrer");
       } else {
         window.location.href = buttonTargetUrl;
+      }
+    } else {
+      // For internal URLs
+      if (urlTarget === "_blank") {
+        window.open(buttonTargetUrl, "_blank");
+      } else {
+        navigate(buttonTargetUrl);
       }
     }
   };

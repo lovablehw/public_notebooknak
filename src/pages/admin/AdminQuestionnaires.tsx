@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, ClipboardList, Users, Loader2, Link as LinkIcon, MousePointer2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, Pencil, Trash2, ClipboardList, Users, Loader2, MousePointer2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
@@ -44,6 +46,7 @@ interface QuestionnairePermission {
 const AdminQuestionnaires = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isSuperAdmin, loading: roleLoading } = useAdminRole();
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireConfig[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [permissions, setPermissions] = useState<QuestionnairePermission[]>([]);
@@ -56,14 +59,13 @@ const AdminQuestionnaires = () => {
   const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
   const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<QuestionnaireConfig | null>(null);
 
-  // Form states
+  // Form states - URL removed for Service Admins (managed via Gomb Karbantartó)
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     completion_time: 5,
     points: 10,
     deadline: "",
-    target_url: "",
     is_active: true,
   });
 
@@ -96,20 +98,21 @@ const AdminQuestionnaires = () => {
   }, []);
 
   const handleCreate = async () => {
-    if (!formData.name || !formData.target_url) {
-      toast({ title: "Hiba", description: "A név és a cél URL kötelező.", variant: "destructive" });
+    if (!formData.name) {
+      toast({ title: "Hiba", description: "A név kötelező.", variant: "destructive" });
       return;
     }
 
     setSaving(true);
     try {
+      // Insert questionnaire - target_url defaults to /404, trigger creates button_config
       const { error } = await supabase.from('questionnaires_config').insert({
         name: formData.name,
         description: formData.description || null,
         completion_time: formData.completion_time,
         points: formData.points,
         deadline: formData.deadline || null,
-        target_url: formData.target_url,
+        target_url: '/404', // Default - Super Admin configures actual URL via Gomb Karbantartó
         is_active: formData.is_active,
       });
 
@@ -132,6 +135,7 @@ const AdminQuestionnaires = () => {
 
     setSaving(true);
     try {
+      // Only update non-URL fields - URL is managed via Gomb Karbantartó by Super Admin
       const { error } = await supabase
         .from('questionnaires_config')
         .update({
@@ -140,7 +144,6 @@ const AdminQuestionnaires = () => {
           completion_time: formData.completion_time,
           points: formData.points,
           deadline: formData.deadline || null,
-          target_url: formData.target_url,
           is_active: formData.is_active,
         })
         .eq('id', selectedQuestionnaire.id);
@@ -225,7 +228,6 @@ const AdminQuestionnaires = () => {
       completion_time: 5,
       points: 10,
       deadline: "",
-      target_url: "",
       is_active: true,
     });
   };
@@ -238,7 +240,6 @@ const AdminQuestionnaires = () => {
       completion_time: q.completion_time,
       points: q.points,
       deadline: q.deadline ? q.deadline.split('T')[0] : "",
-      target_url: q.target_url,
       is_active: q.is_active,
     });
     setIsEditOpen(true);
@@ -285,14 +286,16 @@ const AdminQuestionnaires = () => {
             <p className="text-muted-foreground">Kérdőívek létrehozása, szerkesztése és jogosultságok kezelése.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="outline" 
-              className="gap-2"
-              onClick={() => navigate('/admin/gombok')}
-            >
-              <MousePointer2 className="h-4 w-4" />
-              Gombok Kezelése
-            </Button>
+            {isSuperAdmin && (
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => navigate('/admin/gombok')}
+              >
+                <MousePointer2 className="h-4 w-4" />
+                Gombok Kezelése
+              </Button>
+            )}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
@@ -355,15 +358,12 @@ const AdminQuestionnaires = () => {
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="target_url">Cél URL *</Label>
-                  <Input
-                    id="target_url"
-                    value={formData.target_url}
-                    onChange={(e) => setFormData({ ...formData, target_url: e.target.value })}
-                    placeholder="https://medalyse.example.com/survey/123"
-                  />
-                </div>
+                <Alert className="bg-muted/50">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    A gomb URL-jét a Super Admin állítja be a Gomb Karbantartó felületen.
+                  </AlertDescription>
+                </Alert>
                 <div className="flex items-center gap-2">
                   <Switch
                     id="is_active"
@@ -522,14 +522,12 @@ const AdminQuestionnaires = () => {
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-target_url">Cél URL *</Label>
-                <Input
-                  id="edit-target_url"
-                  value={formData.target_url}
-                  onChange={(e) => setFormData({ ...formData, target_url: e.target.value })}
-                />
-              </div>
+              <Alert className="bg-muted/50">
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  A gomb URL-jét a Super Admin állítja be a Gomb Karbantartó felületen.
+                </AlertDescription>
+              </Alert>
               <div className="flex items-center gap-2">
                 <Switch
                   id="edit-is_active"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
@@ -7,6 +7,7 @@ import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useQuestionnaires } from "@/hooks/useQuestionnaires";
 import { useObservations, ObservationCategory } from "@/hooks/useObservations";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useButtonConfigs } from "@/hooks/useButtonConfigs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +41,22 @@ const HealthBook = () => {
   const { questionnaires: legacyQuestionnaires, loading: legacyQuestionnairesLoading, getCompletedCount, getUniqueCompletedCount } = useQuestionnaires();
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel } = useObservations();
   const { isAdmin } = useAdmin();
+  const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig } = useButtonConfigs();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Create a map of button configs by questionnaire ID
+  const buttonConfigMap = useMemo(() => {
+    const map = new Map<string, typeof buttonConfigs[0]>();
+    buttonConfigs.forEach(bc => {
+      // gomb_azonosito format is "q_{questionnaire_id}"
+      if (bc.gomb_azonosito.startsWith('q_')) {
+        const questionnaireId = bc.gomb_azonosito.substring(2);
+        map.set(questionnaireId, bc);
+      }
+    });
+    return map;
+  }, [buttonConfigs]);
 
   const [isObservationsOpen, setIsObservationsOpen] = useState(false);
   
@@ -253,12 +268,13 @@ const HealthBook = () => {
           <CardContent>
             {/* Database-driven questionnaires as widget grid */}
             {activeDbQuestionnaires.length > 0 && (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 {activeDbQuestionnaires.map((q) => (
                   <QuestionnaireWidget 
                     key={q.id} 
                     questionnaire={q} 
                     onStart={handleStartDbQuestionnaire}
+                    buttonConfig={buttonConfigMap.get(q.id)}
                   />
                 ))}
               </div>
