@@ -62,7 +62,8 @@ export const QuestionnaireCard = ({ questionnaire, buttonConfig }: Questionnaire
   };
 
   const getButtonText = () => {
-    if (status === "in_progress") return "Folytatás";
+    // Always use button_label from button_configs
+    // The Super Admin controls the label via Gomb Karbantartó
     return buttonLabel;
   };
 
