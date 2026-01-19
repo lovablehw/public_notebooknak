@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminRole } from "./useAdminRole";
 
@@ -9,11 +9,14 @@ import { useAdminRole } from "./useAdminRole";
  * Only super admins can trigger sync.
  */
 export function useButtonConfigSync() {
-  const { isSuperAdmin } = useAdminRole();
+  const { isSuperAdmin, loading: roleLoading } = useAdminRole();
+  const [syncCompleted, setSyncCompleted] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
-  const syncButtonConfigs = useCallback(async () => {
-    if (!isSuperAdmin) return;
+  const syncButtonConfigs = useCallback(async (): Promise<boolean> => {
+    if (!isSuperAdmin) return false;
 
+    setSyncing(true);
     try {
       // Fetch all questionnaires
       const { data: questionnaires, error: qError } = await supabase
@@ -22,10 +25,12 @@ export function useButtonConfigSync() {
 
       if (qError) {
         console.error("Error fetching questionnaires for sync:", qError);
-        return;
+        return false;
       }
 
-      if (!questionnaires || questionnaires.length === 0) return;
+      if (!questionnaires || questionnaires.length === 0) {
+        return true; // Nothing to sync
+      }
 
       // Fetch all existing button configs
       const { data: buttonConfigs, error: bcError } = await supabase
@@ -34,7 +39,7 @@ export function useButtonConfigSync() {
 
       if (bcError) {
         console.error("Error fetching button configs for sync:", bcError);
-        return;
+        return false;
       }
 
       // Create a set of existing gomb_azonosito values (both q_ prefixed and legacy)
@@ -54,7 +59,9 @@ export function useButtonConfigSync() {
         return !existingIds.has(prefixedId) && !existingIds.has(q.id);
       });
 
-      if (missingConfigs.length === 0) return;
+      if (missingConfigs.length === 0) {
+        return true; // All in sync
+      }
 
       console.log(`Creating ${missingConfigs.length} missing button configs...`);
 
@@ -73,18 +80,29 @@ export function useButtonConfigSync() {
 
       if (insertError) {
         console.error("Error inserting missing button configs:", insertError);
+        return false;
       } else {
         console.log(`Successfully created ${missingConfigs.length} button configs`);
+        return true;
       }
     } catch (error) {
       console.error("Error in button config sync:", error);
+      return false;
+    } finally {
+      setSyncing(false);
     }
   }, [isSuperAdmin]);
 
-  // Run sync on mount when user is super admin
+  // Run sync on mount when user is super admin (after role check completes)
   useEffect(() => {
-    syncButtonConfigs();
-  }, [syncButtonConfigs]);
+    if (!roleLoading && isSuperAdmin && !syncCompleted) {
+      syncButtonConfigs().then((success) => {
+        if (success) {
+          setSyncCompleted(true);
+        }
+      });
+    }
+  }, [roleLoading, isSuperAdmin, syncCompleted, syncButtonConfigs]);
 
-  return { syncButtonConfigs };
+  return { syncButtonConfigs, syncCompleted, syncing };
 }

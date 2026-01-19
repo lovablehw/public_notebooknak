@@ -30,10 +30,17 @@ const AdminButtonConfigs = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { buttonConfigs, loading, refetch, updateButtonConfig, deleteButtonConfig, createButtonConfig } = useButtonConfigs();
-  const { isSuperAdmin, isServiceAdmin, loading: roleLoading } = useAdminRole();
+  const { isSuperAdmin, loading: roleLoading } = useAdminRole();
   const { questionnaires, loading: questionnairesLoading } = useQuestionnaireConfig();
-  const { syncButtonConfigs } = useButtonConfigSync();
-  const [syncing, setSyncing] = useState(false);
+  const { syncButtonConfigs, syncCompleted, syncing: autoSyncing } = useButtonConfigSync();
+  const [manualSyncing, setManualSyncing] = useState(false);
+
+  // Refetch button configs after auto-sync completes
+  useEffect(() => {
+    if (syncCompleted) {
+      refetch();
+    }
+  }, [syncCompleted, refetch]);
 
   // Dialog states
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -70,10 +77,10 @@ const AdminButtonConfigs = () => {
   }, [questionnaires, buttonConfigs]);
 
   const handleManualSync = async () => {
-    setSyncing(true);
+    setManualSyncing(true);
     await syncButtonConfigs();
     await refetch();
-    setSyncing(false);
+    setManualSyncing(false);
     toast({ title: "Szinkronizálás kész", description: "A hiányzó konfigurációk létrehozva." });
   };
 
@@ -195,11 +202,11 @@ const AdminButtonConfigs = () => {
           </div>
           <Button 
             onClick={handleManualSync} 
-            disabled={syncing}
+            disabled={manualSyncing || autoSyncing}
             variant="outline"
             className="gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${manualSyncing || autoSyncing ? 'animate-spin' : ''}`} />
             Szinkronizálás
           </Button>
         </div>
