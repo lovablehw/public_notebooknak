@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAdminGuard } from "@/hooks/useAdmin";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { 
   LayoutDashboard, 
   Users, 
@@ -14,7 +15,8 @@ import {
   Shield,
   ClipboardList,
   UsersRound,
-  ShieldCheck
+  ShieldCheck,
+  MousePointer2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +25,8 @@ interface AdminLayoutProps {
   title: string;
 }
 
-const navItems = [
+// Base nav items available to all admins
+const baseNavItems = [
   { path: "/admin", label: "Főoldal", icon: LayoutDashboard },
   { path: "/admin/felhasznalok", label: "Felhasználók", icon: Users },
   { path: "/admin/csoportok", label: "Csoportok", icon: UsersRound },
@@ -39,11 +42,22 @@ const navItems = [
   { path: "/admin/szerepkorok", label: "Szerepkörök", icon: ShieldCheck },
 ];
 
+// Super admin only nav items
+const superAdminOnlyItems = [
+  { path: "/admin/gombok", label: "Gomb Karbantartó", icon: MousePointer2 },
+];
+
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const { isAdmin, loading } = useAdminGuard();
+  const { isSuperAdmin, loading: roleLoading } = useAdminRole();
   const location = useLocation();
 
-  if (loading) {
+  // Combine nav items based on role
+  const navItems = isSuperAdmin 
+    ? [...baseNavItems, ...superAdminOnlyItems]
+    : baseNavItems;
+
+  if (loading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
