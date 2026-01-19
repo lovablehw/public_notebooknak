@@ -8,11 +8,13 @@ import { useQuestionnaires } from "@/hooks/useQuestionnaires";
 import { useObservations, ObservationCategory } from "@/hooks/useObservations";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useButtonConfigs } from "@/hooks/useButtonConfigs";
+import { useLegacyQuestionnaireSeed } from "@/hooks/useLegacyQuestionnaireSeed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
+import { QuestionnaireGrid } from "@/components/dashboard/QuestionnaireGrid";
 import { QuestionnaireWidget } from "@/components/dashboard/QuestionnaireWidget";
 import { QuestionnaireCard } from "@/components/dashboard/QuestionnaireCard";
 import { ObservationCalendar } from "@/components/observations/ObservationCalendar";
@@ -29,10 +31,13 @@ const HealthBook = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const { userConsent, needsConsent, loading: consentLoading } = useConsent();
   const { totalPoints } = usePoints();
+  // Seed legacy questionnaires if they don't exist
+  const { seeded: legacySeeded, seeding: legacySeeding } = useLegacyQuestionnaireSeed();
   // Database-driven questionnaires (permission-based)
   const { 
     questionnaires: dbQuestionnaires, 
     loading: dbQuestionnairesLoading, 
+    refetch: refetchQuestionnaires,
     startQuestionnaire: startDbQuestionnaire,
     getCompletedCount: getDbCompletedCount,
     getUniqueCompletedCount: getDbUniqueCompletedCount,
@@ -41,9 +46,17 @@ const HealthBook = () => {
   const { questionnaires: legacyQuestionnaires, loading: legacyQuestionnairesLoading, getCompletedCount, getUniqueCompletedCount } = useQuestionnaires();
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel } = useObservations();
   const { isAdmin } = useAdmin();
-  const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig } = useButtonConfigs();
+  const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig, refetch: refetchButtonConfigs } = useButtonConfigs();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Refetch questionnaires and button configs after legacy seeding completes
+  useEffect(() => {
+    if (legacySeeded) {
+      refetchQuestionnaires();
+      refetchButtonConfigs();
+    }
+  }, [legacySeeded, refetchQuestionnaires, refetchButtonConfigs]);
 
   // Create a map of button configs by questionnaire ID
   const buttonConfigMap = useMemo(() => {
@@ -67,8 +80,8 @@ const HealthBook = () => {
 
   const [isObservationsOpen, setIsObservationsOpen] = useState(false);
   
-  // Combine loading states
-  const questionnairesLoading = dbQuestionnairesLoading || legacyQuestionnairesLoading;
+  // Combine loading states (also wait for legacy seeding)
+  const questionnairesLoading = dbQuestionnairesLoading || legacyQuestionnairesLoading || legacySeeding;
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login");
@@ -273,17 +286,14 @@ const HealthBook = () => {
             <CardDescription>A még nem befejezett felméréseid.</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Database-driven questionnaires as widget grid */}
+            {/* Database-driven questionnaires with smart grid layout */}
             {activeDbQuestionnaires.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                {activeDbQuestionnaires.map((q) => (
-                  <QuestionnaireWidget 
-                    key={q.id} 
-                    questionnaire={q} 
-                    onStart={handleStartDbQuestionnaire}
-                    buttonConfig={buttonConfigMap.get(q.id)}
-                  />
-                ))}
+              <div className="mb-4">
+                <QuestionnaireGrid
+                  questionnaires={activeDbQuestionnaires}
+                  onStart={handleStartDbQuestionnaire}
+                  buttonConfigMap={buttonConfigMap}
+                />
               </div>
             )}
             
