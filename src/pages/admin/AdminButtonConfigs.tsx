@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,23 +8,37 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Pencil, Trash2, MousePointer2, Loader2, Info, ExternalLink, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, MousePointer2, Loader2, Info, ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useButtonConfigs, ButtonConfig } from "@/hooks/useButtonConfigs";
 import { useAdminRole } from "@/hooks/useAdminRole";
+import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
+import { useButtonConfigSync } from "@/hooks/useButtonConfigSync";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 
+interface CombinedConfig {
+  questionnaireId: string;
+  questionnaireName: string;
+  buttonConfig: ButtonConfig | null;
+  hasPendingUrl: boolean;
+}
+
 const AdminButtonConfigs = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { buttonConfigs, loading, refetch, updateButtonConfig, deleteButtonConfig } = useButtonConfigs();
+  const { buttonConfigs, loading, refetch, updateButtonConfig, deleteButtonConfig, createButtonConfig } = useButtonConfigs();
   const { isSuperAdmin, isServiceAdmin, loading: roleLoading } = useAdminRole();
+  const { questionnaires, loading: questionnairesLoading } = useQuestionnaireConfig();
+  const { syncButtonConfigs } = useButtonConfigSync();
+  const [syncing, setSyncing] = useState(false);
 
   // Dialog states
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState<ButtonConfig | null>(null);
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<{ id: string; name: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Form states
@@ -35,19 +49,48 @@ const AdminButtonConfigs = () => {
     url_target: "_blank" as "_blank" | "_self",
   });
 
-  const openEdit = (config: ButtonConfig) => {
+  // Combine questionnaires with button configs
+  const combinedConfigs = useMemo((): CombinedConfig[] => {
+    return questionnaires.map(q => {
+      // Find button config - check both q_ prefixed and legacy formats
+      const prefixedId = `q_${q.id}`;
+      const config = buttonConfigs.find(bc => 
+        bc.gomb_azonosito === prefixedId || bc.gomb_azonosito === q.id
+      );
+      
+      const hasPendingUrl = !config || !config.target_url || config.target_url === '/404';
+      
+      return {
+        questionnaireId: q.id,
+        questionnaireName: q.name,
+        buttonConfig: config || null,
+        hasPendingUrl,
+      };
+    });
+  }, [questionnaires, buttonConfigs]);
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    await syncButtonConfigs();
+    await refetch();
+    setSyncing(false);
+    toast({ title: "Szinkronizálás kész", description: "A hiányzó konfigurációk létrehozva." });
+  };
+
+  const openEdit = (config: ButtonConfig | null, questionnaire: { id: string; name: string }) => {
     setSelectedConfig(config);
+    setSelectedQuestionnaire(questionnaire);
     setFormData({
-      button_label: config.button_label,
-      tooltip: config.tooltip || "",
-      target_url: config.target_url || "",
-      url_target: config.url_target,
+      button_label: config?.button_label || "Kezdés",
+      tooltip: config?.tooltip || "",
+      target_url: config?.target_url || "",
+      url_target: config?.url_target || "_blank",
     });
     setIsEditOpen(true);
   };
 
   const handleUpdate = async () => {
-    if (!selectedConfig) return;
+    if (!selectedQuestionnaire) return;
 
     if (!formData.button_label.trim()) {
       toast({ title: "Hiba", description: "A gomb felirat kötelező.", variant: "destructive" });
@@ -56,19 +99,35 @@ const AdminButtonConfigs = () => {
 
     setSaving(true);
     try {
-      const success = await updateButtonConfig(selectedConfig.gomb_azonosito, {
-        button_label: formData.button_label,
-        tooltip: formData.tooltip || null,
-        target_url: formData.target_url || null,
-        url_target: formData.url_target,
-      });
+      let success = false;
+      
+      if (selectedConfig) {
+        // Update existing config
+        success = await updateButtonConfig(selectedConfig.gomb_azonosito, {
+          button_label: formData.button_label,
+          tooltip: formData.tooltip || null,
+          target_url: formData.target_url || null,
+          url_target: formData.url_target,
+        });
+      } else {
+        // Create new config
+        success = await createButtonConfig({
+          gomb_azonosito: `q_${selectedQuestionnaire.id}`,
+          button_label: formData.button_label,
+          tooltip: formData.tooltip || null,
+          target_url: formData.target_url || null,
+          url_target: formData.url_target,
+        });
+      }
 
       if (success) {
-        toast({ title: "Siker", description: "Gomb konfiguráció frissítve." });
+        toast({ title: "Siker", description: "Gomb konfiguráció mentve." });
         setIsEditOpen(false);
         setSelectedConfig(null);
+        setSelectedQuestionnaire(null);
+        await refetch();
       } else {
-        toast({ title: "Hiba", description: "Nem sikerült frissíteni a konfigurációt.", variant: "destructive" });
+        toast({ title: "Hiba", description: "Nem sikerült menteni a konfigurációt.", variant: "destructive" });
       }
     } finally {
       setSaving(false);
@@ -86,18 +145,18 @@ const AdminButtonConfigs = () => {
     }
   };
 
-  // Access control check
-  if (!roleLoading && !isServiceAdmin) {
+  // Access control check - only super admin can access
+  if (!roleLoading && !isSuperAdmin) {
     return (
       <AdminLayout title="Gomb Karbantartó">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">Nincs jogosultságod ehhez az oldalhoz.</p>
+          <p className="text-muted-foreground">Nincs jogosultságod ehhez az oldalhoz. Csak Super Admin férhet hozzá.</p>
         </div>
       </AdminLayout>
     );
   }
 
-  if (loading || roleLoading) {
+  if (loading || roleLoading || questionnairesLoading) {
     return (
       <AdminLayout title="Gomb Karbantartó">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -106,6 +165,8 @@ const AdminButtonConfigs = () => {
       </AdminLayout>
     );
   }
+
+  const pendingCount = combinedConfigs.filter(c => c.hasPendingUrl).length;
 
   return (
     <AdminLayout title="Gomb Karbantartó">
@@ -132,6 +193,15 @@ const AdminButtonConfigs = () => {
               Globális gomb konfigurációk kezelése a kérdőív widgetekhez.
             </p>
           </div>
+          <Button 
+            onClick={handleManualSync} 
+            disabled={syncing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            Szinkronizálás
+          </Button>
         </div>
 
         {/* Info Card */}
@@ -142,120 +212,129 @@ const AdminButtonConfigs = () => {
               <div className="text-sm text-muted-foreground">
                 <p className="font-medium text-foreground mb-1">Hogyan működik?</p>
                 <p>
-                  Minden kérdőív automatikusan kap egy gomb konfigurációt létrehozáskor. 
-                  Itt módosíthatod a gombok feliratát, tooltip szövegét és a megnyitási módot.
-                  {!isSuperAdmin && (
-                    <span className="block mt-1 text-amber-600">
-                      Figyelem: Csak super admin jogosultsággal lehet szerkeszteni vagy törölni.
-                    </span>
-                  )}
+                  Minden kérdőív automatikusan kap egy gomb konfigurációt létrehozáskor (alapértelmezett cél: /404). 
+                  Itt módosíthatod a gombok feliratát, tooltip szövegét, cél URL-jét és a megnyitási módot.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Warning for pending configs */}
+        {pendingCount > 0 && (
+          <Card className="border-amber-500/30 bg-amber-50">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">{pendingCount} konfiguráció várakozik beállításra</p>
+                  <p>
+                    Ezek a kérdőívek a /404 oldalra irányítanak, amíg nem állítod be a cél URL-t.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Button Configs Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Gomb Konfigurációk</CardTitle>
-            <CardDescription>{buttonConfigs.length} konfiguráció</CardDescription>
+            <CardTitle>Kérdőív Gomb Konfigurációk</CardTitle>
+            <CardDescription>{combinedConfigs.length} kérdőív összesen</CardDescription>
           </CardHeader>
           <CardContent>
-            {buttonConfigs.length === 0 ? (
+            {combinedConfigs.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                Még nincs gomb konfiguráció. Hozz létre egy kérdőívet a konfigurációk automatikus generálásához.
+                Még nincs kérdőív. Hozz létre egyet a Kérdőívek menüpontban.
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Azonosító</TableHead>
+                      <TableHead>Kérdőív</TableHead>
                       <TableHead>Felirat</TableHead>
-                      <TableHead>Tooltip</TableHead>
                       <TableHead>Cél URL</TableHead>
-                      <TableHead>Megnyitás</TableHead>
+                      <TableHead>Állapot</TableHead>
                       <TableHead>Módosítva</TableHead>
-                      {isSuperAdmin && <TableHead className="text-right">Műveletek</TableHead>}
+                      <TableHead className="text-right">Műveletek</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {buttonConfigs.map((config) => (
-                      <TableRow key={config.gomb_azonosito}>
+                    {combinedConfigs.map((item) => (
+                      <TableRow key={item.questionnaireId}>
                         <TableCell>
-                          <code className="text-xs bg-muted px-2 py-1 rounded">
-                            {config.gomb_azonosito.substring(0, 8)}...
-                          </code>
+                          <div>
+                            <span className="font-medium block">{item.questionnaireName}</span>
+                            <code className="text-xs text-muted-foreground">
+                              {item.questionnaireId.substring(0, 8)}...
+                            </code>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <span className="font-medium">{config.button_label}</span>
+                          <span className="font-medium">{item.buttonConfig?.button_label || "Kezdés"}</span>
                         </TableCell>
                         <TableCell>
-                          {config.tooltip ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="text-sm text-muted-foreground cursor-help underline decoration-dotted">
-                                  {config.tooltip.substring(0, 30)}...
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">{config.tooltip}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {config.target_url ? (
+                          {item.buttonConfig?.target_url && item.buttonConfig.target_url !== '/404' ? (
                             <a 
-                              href={config.target_url} 
+                              href={item.buttonConfig.target_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-primary hover:underline flex items-center gap-1 text-sm"
                             >
                               <ExternalLink className="h-3 w-3" />
-                              Link
+                              {item.buttonConfig.target_url.substring(0, 30)}...
                             </a>
                           ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
+                            <span className="text-amber-600 text-sm flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              /404
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            config.url_target === '_blank' 
-                              ? 'bg-blue-100 text-blue-700' 
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {config.url_target === '_blank' ? 'Új ablak' : 'Ugyanitt'}
-                          </span>
+                          {item.hasPendingUrl ? (
+                            <Badge variant="outline" className="border-amber-500 text-amber-600 bg-amber-50">
+                              Beállításra vár
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">
+                              Konfigurálva
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(config.updated_at), "yyyy. MMM d. HH:mm", { locale: hu })}
+                          {item.buttonConfig 
+                            ? format(new Date(item.buttonConfig.updated_at), "yyyy. MMM d. HH:mm", { locale: hu })
+                            : "-"
+                          }
                         </TableCell>
-                        {isSuperAdmin && (
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => openEdit(item.buttonConfig, { 
+                                id: item.questionnaireId, 
+                                name: item.questionnaireName 
+                              })} 
+                              title="Szerkesztés"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {item.buttonConfig && (
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={() => openEdit(config)} 
-                                title="Szerkesztés"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => handleDelete(config.gomb_azonosito)} 
+                                onClick={() => handleDelete(item.buttonConfig!.gomb_azonosito)} 
                                 title="Törlés"
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
-                            </div>
-                          </TableCell>
-                        )}
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -269,9 +348,11 @@ const AdminButtonConfigs = () => {
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Gomb konfiguráció szerkesztése</DialogTitle>
+              <DialogTitle>
+                {selectedConfig ? "Gomb konfiguráció szerkesztése" : "Gomb konfiguráció létrehozása"}
+              </DialogTitle>
               <DialogDescription>
-                Módosítsd a gomb megjelenését és viselkedését.
+                {selectedQuestionnaire?.name}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -294,13 +375,16 @@ const AdminButtonConfigs = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="target_url">Cél URL</Label>
+                <Label htmlFor="target_url">Cél URL *</Label>
                 <Input
                   id="target_url"
                   value={formData.target_url}
                   onChange={(e) => setFormData({ ...formData, target_url: e.target.value })}
                   placeholder="https://example.com/survey"
                 />
+                <p className="text-xs text-muted-foreground">
+                  A /404 vagy üres URL esetén a felhasználó a "konfiguráció folyamatban" oldalra kerül.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="url_target">Megnyitás módja</Label>

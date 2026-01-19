@@ -8,6 +8,7 @@ import { ButtonConfig } from "@/hooks/useButtonConfigs";
 import { format, isPast, isValid } from "date-fns";
 import { hu } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
@@ -25,6 +26,7 @@ const statusLabels: Record<QuestionnaireStatus, string> = {
 export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: QuestionnaireWidgetProps) => {
   const { id, name, description, completion_time, points, deadline, target_url, status } = questionnaire;
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Get button properties from config or use defaults
   // Button config takes precedence over questionnaire's target_url
@@ -70,6 +72,62 @@ export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: Qu
     return buttonLabel;
   };
 
+  // Economic View for Mobile/Tablet - Compact row layout
+  if (isMobile) {
+    return (
+      <Card className={`bg-white shadow-sm border border-border/40 rounded-lg transition-all hover:shadow-md ${isExpired && !isCompleted ? 'opacity-60' : ''}`}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </div>
+            
+            {/* Title + Meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="font-semibold text-sm text-foreground truncate">{name}</h3>
+                <Badge 
+                  variant="outline" 
+                  className={`flex-shrink-0 text-[10px] font-normal px-1.5 py-0 rounded-full border ${
+                    status === 'in_progress' 
+                      ? 'border-primary/30 text-primary bg-primary/5' 
+                      : status === 'completed'
+                      ? 'border-green-500/30 text-green-600 bg-green-50'
+                      : 'border-muted-foreground/30 text-muted-foreground bg-muted/30'
+                  }`}
+                >
+                  {statusLabels[status]}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {completion_time} perc
+                </span>
+                <span className="flex items-center gap-1 text-primary font-medium">
+                  <Gift className="h-3 w-3" />
+                  +{points}
+                </span>
+              </div>
+            </div>
+            
+            {/* Action Button */}
+            <Button 
+              onClick={handleStart} 
+              size="sm"
+              className="bg-[#4A9B9B] hover:bg-[#3d8585] text-white font-medium px-4 h-8 text-xs flex-shrink-0"
+              disabled={isCompleted || isExpired}
+            >
+              {getButtonText()}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop View - Full card layout
   const ActionButton = () => (
     <Button 
       onClick={handleStart} 

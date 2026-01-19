@@ -33,9 +33,32 @@ export const QuestionnaireCard = ({ questionnaire, buttonConfig }: Questionnaire
   // Get button properties from config or use defaults
   const buttonLabel = buttonConfig?.button_label || "Kezdés";
   const buttonTooltip = buttonConfig?.tooltip;
+  const buttonTargetUrl = buttonConfig?.target_url;
+  const urlTarget = buttonConfig?.url_target || "_blank";
 
   const handleAction = () => {
-    navigate(`/kerdoiv/${id}`);
+    // Check if URL is configured (not /404 or empty)
+    if (!buttonTargetUrl || buttonTargetUrl === '/404') {
+      // Navigate to 404 with state indicating button config is pending
+      navigate('/404', { state: { buttonConfigPending: true } });
+      return;
+    }
+    
+    // Redirect to target URL
+    if (buttonTargetUrl.startsWith("http")) {
+      if (urlTarget === "_blank") {
+        window.open(buttonTargetUrl, "_blank", "noopener,noreferrer");
+      } else {
+        window.location.href = buttonTargetUrl;
+      }
+    } else {
+      // For internal URLs
+      if (urlTarget === "_blank") {
+        window.open(buttonTargetUrl, "_blank");
+      } else {
+        navigate(buttonTargetUrl);
+      }
+    }
   };
 
   const getButtonText = () => {
