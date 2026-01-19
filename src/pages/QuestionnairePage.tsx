@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
-import { useQuestionnaires, Questionnaire } from "@/hooks/useQuestionnaires";
+import { useQuestionnaireConfig, QuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useMedalyseCompletion } from "@/hooks/useMedalyseCompletion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,10 +23,10 @@ const QuestionnairePage = () => {
     startQuestionnaire,
     completeQuestionnaire,
     getCompletedCount,
-  } = useQuestionnaires();
+  } = useQuestionnaireConfig();
   const { toast } = useToast();
   
-  const [questionnaire, setQuestionnaire] = useState<Questionnaire | null>(null);
+  const [questionnaire, setQuestionnaire] = useState<QuestionnaireConfig | null>(null);
   const [isCompleting, setIsCompleting] = useState(false);
 
   // Handle questionnaire completion from medalyse event
@@ -46,13 +46,13 @@ const QuestionnairePage = () => {
 
     try {
       // Mark as completed and get points (completeQuestionnaire returns 0 if already completed)
-      const pointsEarned = completeQuestionnaire(completedQuestionnaireId);
+      const pointsEarned = await completeQuestionnaire(completedQuestionnaireId);
       
       if (pointsEarned > 0) {
         // Award points to user
         const { newAchievements } = await addPoints(
           pointsEarned, 
-          `Kérdőív kitöltése: ${questionnaire.title}`, 
+          `Kérdőív kitöltése: ${questionnaire.name}`, 
           completedQuestionnaireId
         );
         
@@ -155,6 +155,9 @@ const QuestionnairePage = () => {
       ? "Folyamatban" 
       : "Nincs elkezdve";
 
+  // Format estimated time
+  const estimatedTimeText = `${questionnaire.completion_time} perc`;
+
   return (
     <div className="min-h-screen gradient-hero">
       {/* Header */}
@@ -184,7 +187,7 @@ const QuestionnairePage = () => {
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
                 <ClipboardList className="h-6 w-6 text-primary flex-shrink-0" />
-                <CardTitle className="text-2xl">{questionnaire.title}</CardTitle>
+                <CardTitle className="text-2xl">{questionnaire.name}</CardTitle>
               </div>
               <Badge 
                 variant={isCompleted ? "default" : "outline"} 
@@ -202,12 +205,12 @@ const QuestionnairePage = () => {
             <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>{questionnaire.estimatedTime}</span>
+                <span>{estimatedTimeText}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Gift className="h-4 w-4" />
                 <span className={`font-medium ${isCompleted ? "text-green-600" : "text-primary"}`}>
-                  {isCompleted ? `+${questionnaire.rewardPoints} pont jóváírva` : `+${questionnaire.rewardPoints} pont`}
+                  {isCompleted ? `+${questionnaire.points} pont jóváírva` : `+${questionnaire.points} pont`}
                 </span>
               </div>
             </div>
