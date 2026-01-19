@@ -7,17 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, MousePointer2, Loader2, Info, ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useButtonConfigs, ButtonConfig } from "@/hooks/useButtonConfigs";
 import { useAdminRole } from "@/hooks/useAdminRole";
-import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useButtonConfigSync } from "@/hooks/useButtonConfigSync";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+
+interface AdminQuestionnaire {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
 
 interface CombinedConfig {
   questionnaireId: string;
@@ -31,14 +36,43 @@ const AdminButtonConfigs = () => {
   const navigate = useNavigate();
   const { buttonConfigs, loading, refetch, updateButtonConfig, deleteButtonConfig, createButtonConfig } = useButtonConfigs();
   const { isSuperAdmin, loading: roleLoading } = useAdminRole();
-  const { questionnaires, loading: questionnairesLoading } = useQuestionnaireConfig();
   const { syncButtonConfigs, syncCompleted, syncing: autoSyncing } = useButtonConfigSync();
   const [manualSyncing, setManualSyncing] = useState(false);
+  
+  // Fetch ALL questionnaires directly (admin bypass of RLS via service_admin check in policy)
+  const [allQuestionnaires, setAllQuestionnaires] = useState<AdminQuestionnaire[]>([]);
+  const [questionnairesLoading, setQuestionnairesLoading] = useState(true);
 
-  // Refetch button configs after auto-sync completes
+  const fetchAllQuestionnaires = async () => {
+    setQuestionnairesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('questionnaires_config')
+        .select('id, name, is_active')
+        .order('created_at', { ascending: true });
+      
+      if (error) {
+        console.error("Error fetching all questionnaires:", error);
+        setAllQuestionnaires([]);
+      } else {
+        setAllQuestionnaires(data || []);
+      }
+    } finally {
+      setQuestionnairesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin && !roleLoading) {
+      fetchAllQuestionnaires();
+    }
+  }, [isSuperAdmin, roleLoading]);
+
+  // Refetch button configs and questionnaires after auto-sync completes
   useEffect(() => {
     if (syncCompleted) {
       refetch();
+      fetchAllQuestionnaires();
     }
   }, [syncCompleted, refetch]);
 
@@ -58,7 +92,7 @@ const AdminButtonConfigs = () => {
 
   // Combine questionnaires with button configs
   const combinedConfigs = useMemo((): CombinedConfig[] => {
-    return questionnaires.map(q => {
+    return allQuestionnaires.map(q => {
       // Find button config - check both q_ prefixed and legacy formats
       const prefixedId = `q_${q.id}`;
       const config = buttonConfigs.find(bc => 
@@ -74,7 +108,7 @@ const AdminButtonConfigs = () => {
         hasPendingUrl,
       };
     });
-  }, [questionnaires, buttonConfigs]);
+  }, [allQuestionnaires, buttonConfigs]);
 
   const handleManualSync = async () => {
     setManualSyncing(true);

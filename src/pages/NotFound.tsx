@@ -1,6 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
-import { AlertTriangle, Home, Settings } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -41,17 +41,11 @@ const NotFound = () => {
             </p>
           )}
           
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+          <div className="flex justify-center pt-4">
             <Button asChild variant="default" className="gap-2">
-              <Link to="/">
-                <Home className="h-4 w-4" />
-                Főoldal
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="gap-2">
               <Link to="/healthbook">
-                <Settings className="h-4 w-4" />
-                Egészségkönyv
+                <ArrowLeft className="h-4 w-4" />
+                Vissza az Egészségkönyvbe
               </Link>
             </Button>
           </div>
