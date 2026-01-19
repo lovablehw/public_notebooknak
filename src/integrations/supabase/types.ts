@@ -148,6 +148,36 @@ export type Database = {
           },
         ]
       }
+      button_configs: {
+        Row: {
+          button_label: string
+          created_at: string
+          gomb_azonosito: string
+          target_url: string | null
+          tooltip: string | null
+          updated_at: string
+          url_target: Database["public"]["Enums"]["url_target_type"]
+        }
+        Insert: {
+          button_label?: string
+          created_at?: string
+          gomb_azonosito: string
+          target_url?: string | null
+          tooltip?: string | null
+          updated_at?: string
+          url_target?: Database["public"]["Enums"]["url_target_type"]
+        }
+        Update: {
+          button_label?: string
+          created_at?: string
+          gomb_azonosito?: string
+          target_url?: string | null
+          tooltip?: string | null
+          updated_at?: string
+          url_target?: Database["public"]["Enums"]["url_target_type"]
+        }
+        Relationships: []
+      }
       consent_versions: {
         Row: {
           content: string
@@ -631,6 +661,7 @@ export type Database = {
         | "observation_creation"
       admin_role: "super_admin" | "service_admin"
       reward_frequency: "per_event" | "daily" | "once_total"
+      url_target_type: "_blank" | "_self"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -767,6 +798,7 @@ export const Constants = {
       ],
       admin_role: ["super_admin", "service_admin"],
       reward_frequency: ["per_event", "daily", "once_total"],
+      url_target_type: ["_blank", "_self"],
     },
   },
 } as const

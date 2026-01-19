@@ -2,11 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ClipboardList, Clock, Gift } from "lucide-react";
 import { Questionnaire, QuestionnaireStatus } from "@/hooks/useQuestionnaires";
+import { ButtonConfig } from "@/hooks/useButtonConfigs";
 
 interface QuestionnaireCardProps {
   questionnaire: Questionnaire;
+  buttonConfig?: ButtonConfig;
 }
 
 // Status labels in Hungarian
@@ -23,17 +26,28 @@ const statusVariants: Record<QuestionnaireStatus, "secondary" | "outline" | "def
   completed: "default",
 };
 
-export const QuestionnaireCard = ({ questionnaire }: QuestionnaireCardProps) => {
+export const QuestionnaireCard = ({ questionnaire, buttonConfig }: QuestionnaireCardProps) => {
   const navigate = useNavigate();
   const { id, title, description, estimatedTime, rewardPoints, status } = questionnaire;
+
+  // Get button properties from config or use defaults
+  const buttonLabel = buttonConfig?.button_label || "Kezdés";
+  const buttonTooltip = buttonConfig?.tooltip;
 
   const handleAction = () => {
     navigate(`/kerdoiv/${id}`);
   };
 
   const getButtonText = () => {
-    return status === "not_started" ? "Kezdés" : "Folytatás";
+    if (status === "in_progress") return "Folytatás";
+    return buttonLabel;
   };
+
+  const ActionButton = () => (
+    <Button onClick={handleAction} className="w-full mt-auto bg-[#4A9B9B] hover:bg-[#3d8585]">
+      {getButtonText()}
+    </Button>
+  );
 
   return (
     <Card className="shadow-card border-0 animate-fade-in flex flex-col h-full">
@@ -66,10 +80,21 @@ export const QuestionnaireCard = ({ questionnaire }: QuestionnaireCardProps) => 
         {/* Spacer to push button to bottom */}
         <div className="flex-grow" />
 
-        {/* Action button - always at bottom */}
-        <Button onClick={handleAction} className="w-full mt-auto">
-          {getButtonText()}
-        </Button>
+        {/* Action button with optional tooltip */}
+        {buttonTooltip ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <ActionButton />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">{buttonTooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <ActionButton />
+        )}
       </CardContent>
     </Card>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, ClipboardList, Users, Loader2, Link as LinkIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, ClipboardList, Users, Loader2, Link as LinkIcon, MousePointer2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -42,6 +43,7 @@ interface QuestionnairePermission {
 
 const AdminQuestionnaires = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireConfig[]>([]);
   const [groups, setGroups] = useState<UserGroup[]>([]);
   const [permissions, setPermissions] = useState<QuestionnairePermission[]>([]);
@@ -282,13 +284,22 @@ const AdminQuestionnaires = () => {
             </h1>
             <p className="text-muted-foreground">Kérdőívek létrehozása, szerkesztése és jogosultságok kezelése.</p>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Új kérdőív
-              </Button>
-            </DialogTrigger>
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => navigate('/admin/gombok')}
+            >
+              <MousePointer2 className="h-4 w-4" />
+              Gombok Kezelése
+            </Button>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Új kérdőív
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Új kérdőív létrehozása</DialogTitle>
@@ -371,6 +382,7 @@ const AdminQuestionnaires = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Questionnaires Table */}

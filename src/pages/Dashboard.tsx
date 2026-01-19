@@ -5,6 +5,7 @@ import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
 import { useQuestionnaires } from "@/hooks/useQuestionnaires";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useButtonConfigs } from "@/hooks/useButtonConfigs";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const { userConsent, needsConsent, loading: consentLoading } = useConsent();
   const { totalPoints, getNextMilestone, getProgress } = usePoints();
   const { isAdmin } = useAdmin();
+  const { buttonConfigs, loading: buttonConfigsLoading } = useButtonConfigs();
   const { 
     questionnaires, 
     loading: questionnairesLoading, 
@@ -76,13 +78,18 @@ const Dashboard = () => {
   );
 
   // Loading state
-  if (authLoading || consentLoading || profileLoading || questionnairesLoading) {
+  if (authLoading || consentLoading || profileLoading || questionnairesLoading || buttonConfigsLoading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  // Helper to get button config for a questionnaire
+  const getButtonConfigForQuestionnaire = (questionnaireId: string) => {
+    return buttonConfigs.find(bc => bc.gomb_azonosito === questionnaireId);
+  };
 
   const nextMilestone = getNextMilestone();
   const progress = getProgress();
@@ -185,6 +192,7 @@ const Dashboard = () => {
                 <QuestionnaireCard
                   key={questionnaire.id}
                   questionnaire={questionnaire}
+                  buttonConfig={getButtonConfigForQuestionnaire(questionnaire.id)}
                 />
               ))}
             </div>
