@@ -1,14 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Clock, Gift, ExternalLink, Calendar, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ClipboardList, Clock, Gift, Calendar } from "lucide-react";
 import { QuestionnaireConfig, QuestionnaireStatus } from "@/hooks/useQuestionnaireConfig";
+import { ButtonConfig } from "@/hooks/useButtonConfigs";
 import { format, isPast, isValid } from "date-fns";
 import { hu } from "date-fns/locale";
 
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
   onStart: (id: string) => Promise<void>;
+  buttonConfig?: ButtonConfig;
 }
 
 // Status labels in Hungarian
@@ -18,24 +21,27 @@ const statusLabels: Record<QuestionnaireStatus, string> = {
   completed: "Befejezve ✓",
 };
 
-// Status badge variants
-const statusVariants: Record<QuestionnaireStatus, "secondary" | "outline" | "default"> = {
-  not_started: "secondary",
-  in_progress: "outline",
-  completed: "default",
-};
-
-export const QuestionnaireWidget = ({ questionnaire, onStart }: QuestionnaireWidgetProps) => {
+export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: QuestionnaireWidgetProps) => {
   const { id, name, description, completion_time, points, deadline, target_url, status } = questionnaire;
+
+  // Get button properties from config or use defaults
+  const buttonLabel = buttonConfig?.button_label || "Kezdés";
+  const buttonTooltip = buttonConfig?.tooltip;
+  const buttonTargetUrl = buttonConfig?.target_url || target_url;
+  const urlTarget = buttonConfig?.url_target || "_blank";
 
   const handleStart = async () => {
     await onStart(id);
     // Redirect to target URL
-    if (target_url) {
-      if (target_url.startsWith("http")) {
-        window.open(target_url, "_blank", "noopener,noreferrer");
+    if (buttonTargetUrl) {
+      if (buttonTargetUrl.startsWith("http")) {
+        if (urlTarget === "_blank") {
+          window.open(buttonTargetUrl, "_blank", "noopener,noreferrer");
+        } else {
+          window.location.href = buttonTargetUrl;
+        }
       } else {
-        window.location.href = target_url;
+        window.location.href = buttonTargetUrl;
       }
     }
   };
@@ -46,8 +52,19 @@ export const QuestionnaireWidget = ({ questionnaire, onStart }: QuestionnaireWid
   const getButtonText = () => {
     if (isCompleted) return "Befejezve";
     if (isExpired) return "Lejárt";
-    return status === "not_started" ? "Kezdés" : "Folytatás";
+    if (status === "in_progress") return "Folytatás";
+    return buttonLabel;
   };
+
+  const ActionButton = () => (
+    <Button 
+      onClick={handleStart} 
+      className="w-full mt-auto bg-[#4A9B9B] hover:bg-[#3d8585] text-white font-medium py-2.5 rounded-lg"
+      disabled={isCompleted || isExpired}
+    >
+      {getButtonText()}
+    </Button>
+  );
 
   return (
     <Card className={`bg-white shadow-sm border border-border/40 rounded-xl flex flex-col h-full transition-all hover:shadow-md ${isExpired && !isCompleted ? 'opacity-60' : ''}`}>
@@ -111,14 +128,21 @@ export const QuestionnaireWidget = ({ questionnaire, onStart }: QuestionnaireWid
         {/* Spacer to push button to bottom */}
         <div className="flex-grow" />
 
-        {/* Full-width teal action button */}
-        <Button 
-          onClick={handleStart} 
-          className="w-full mt-auto bg-[#4A9B9B] hover:bg-[#3d8585] text-white font-medium py-2.5 rounded-lg"
-          disabled={isCompleted || isExpired}
-        >
-          {getButtonText()}
-        </Button>
+        {/* Full-width teal action button with optional tooltip */}
+        {buttonTooltip ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full">
+                <ActionButton />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">{buttonTooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <ActionButton />
+        )}
       </CardContent>
     </Card>
   );
