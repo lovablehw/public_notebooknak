@@ -26,12 +26,13 @@ export function QuestionnaireGrid({ questionnaires, onStart, buttonConfigMap }: 
     return (
       <div className="flex flex-col gap-3">
         {questionnaires.map((q) => (
-          <QuestionnaireWidget
-            key={q.id}
-            questionnaire={q}
-            onStart={onStart}
-            buttonConfig={buttonConfigMap.get(q.id)}
-          />
+          <div key={q.id} id={`questionnaire-${q.id}`} className="scroll-mt-4">
+            <QuestionnaireWidget
+              questionnaire={q}
+              onStart={onStart}
+              buttonConfig={buttonConfigMap.get(q.id)}
+            />
+          </div>
         ))}
       </div>
     );
@@ -51,18 +52,19 @@ export function QuestionnaireGrid({ questionnaires, onStart, buttonConfigMap }: 
         {/* Top row: 3 items */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {topRow.map((q) => (
-            <QuestionnaireWidget
-              key={q.id}
-              questionnaire={q}
-              onStart={onStart}
-              buttonConfig={buttonConfigMap.get(q.id)}
-            />
+            <div key={q.id} id={`questionnaire-${q.id}`} className="scroll-mt-4">
+              <QuestionnaireWidget
+                questionnaire={q}
+                onStart={onStart}
+                buttonConfig={buttonConfigMap.get(q.id)}
+              />
+            </div>
           ))}
         </div>
         {/* Bottom row: 2 items centered */}
         <div className="flex justify-center gap-4">
           {bottomRow.map((q) => (
-            <div key={q.id} className="w-full max-w-sm lg:w-[calc(33.333%-0.5rem)]">
+            <div key={q.id} id={`questionnaire-${q.id}`} className="w-full max-w-sm lg:w-[calc(33.333%-0.5rem)] scroll-mt-4">
               <QuestionnaireWidget
                 questionnaire={q}
                 onStart={onStart}
@@ -79,12 +81,13 @@ export function QuestionnaireGrid({ questionnaires, onStart, buttonConfigMap }: 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {questionnaires.map((q) => (
-        <QuestionnaireWidget
-          key={q.id}
-          questionnaire={q}
-          onStart={onStart}
-          buttonConfig={buttonConfigMap.get(q.id)}
-        />
+        <div key={q.id} id={`questionnaire-${q.id}`} className="scroll-mt-4">
+          <QuestionnaireWidget
+            questionnaire={q}
+            onStart={onStart}
+            buttonConfig={buttonConfigMap.get(q.id)}
+          />
+        </div>
       ))}
     </div>
   );

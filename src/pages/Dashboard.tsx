@@ -150,9 +150,9 @@ const Dashboard = () => {
         </div>
 
         {/* Points & Badges Section */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div id="dashboard-stats" className="grid md:grid-cols-2 gap-6 scroll-mt-4">
           {/* Points Card */}
-          <Card className="shadow-card border-0 animate-fade-in">
+          <Card id="dashboard-points" className="shadow-card border-0 animate-fade-in scroll-mt-4">
             <CardHeader className="pb-2">
               <CardDescription>Pontjaid</CardDescription>
               <CardTitle className="text-4xl font-light text-primary">{totalPoints}</CardTitle>
@@ -184,11 +184,13 @@ const Dashboard = () => {
           </Card>
 
           {/* Badges Card */}
-          <BadgeDisplay stats={badgeStats} />
+          <div id="dashboard-badges" className="scroll-mt-4">
+            <BadgeDisplay stats={badgeStats} />
+          </div>
         </div>
 
         {/* Questionnaires Section */}
-        <div className="space-y-4">
+        <div id="dashboard-questionnaires" className="space-y-4 scroll-mt-4">
           <h2 className="text-xl font-medium text-foreground">Kérdőívek</h2>
           
           {activeQuestionnaires.length > 0 ? (

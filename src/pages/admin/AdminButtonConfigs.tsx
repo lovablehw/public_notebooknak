@@ -87,7 +87,7 @@ const AdminButtonConfigs = () => {
     button_label: "",
     tooltip: "",
     target_url: "",
-    url_target: "_blank" as "_blank" | "_self",
+    url_target: "_blank" as "_blank" | "_self" | "postmessage",
   });
 
   // Combine questionnaires with button configs
@@ -431,7 +431,7 @@ const AdminButtonConfigs = () => {
                 <Label htmlFor="url_target">Megnyitás módja</Label>
                 <Select
                   value={formData.url_target}
-                  onValueChange={(value: "_blank" | "_self") => 
+                  onValueChange={(value: "_blank" | "_self" | "postmessage") => 
                     setFormData({ ...formData, url_target: value })
                   }
                 >
@@ -441,8 +441,14 @@ const AdminButtonConfigs = () => {
                   <SelectContent>
                     <SelectItem value="_blank">Új ablakban (_blank)</SelectItem>
                     <SelectItem value="_self">Ugyanebben az ablakban (_self)</SelectItem>
+                    <SelectItem value="postmessage">PostMessage (iframe beágyazás)</SelectItem>
                   </SelectContent>
                 </Select>
+                {formData.url_target === "postmessage" && (
+                  <p className="text-xs text-muted-foreground">
+                    PostMessage használata esetén az alkalmazás üzenetet küld a szülő ablaknak az átirányításhoz.
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter>

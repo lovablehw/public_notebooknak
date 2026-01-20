@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+export type UrlTargetType = "_blank" | "_self" | "postmessage";
+
 export interface ButtonConfig {
   gomb_azonosito: string;
   button_label: string;
   tooltip: string | null;
   target_url: string | null;
-  url_target: "_blank" | "_self";
+  url_target: UrlTargetType;
   created_at: string;
   updated_at: string;
 }

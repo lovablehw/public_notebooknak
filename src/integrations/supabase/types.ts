@@ -670,7 +670,7 @@ export type Database = {
         | "observation_creation"
       admin_role: "super_admin" | "service_admin"
       reward_frequency: "per_event" | "daily" | "once_total"
-      url_target_type: "_blank" | "_self"
+      url_target_type: "_blank" | "_self" | "postmessage"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -807,7 +807,7 @@ export const Constants = {
       ],
       admin_role: ["super_admin", "service_admin"],
       reward_frequency: ["per_event", "daily", "once_total"],
-      url_target_type: ["_blank", "_self"],
+      url_target_type: ["_blank", "_self", "postmessage"],
     },
   },
 } as const
