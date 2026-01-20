@@ -204,7 +204,7 @@ export default function AdminRewardRules() {
           </p>
         </div>
 
-        <div className="rounded-md border">
+        <div id="table-reward-rules" className="rounded-md border scroll-mt-4">
           <Table>
             <TableHeader>
               <TableRow>

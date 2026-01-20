@@ -263,7 +263,7 @@ export default function AdminRoles() {
         </form>
 
         {/* Roles table */}
-        <div className="border rounded-lg">
+        <div id="table-roles" className="border rounded-lg scroll-mt-4">
           <Table>
             <TableHeader>
               <TableRow>

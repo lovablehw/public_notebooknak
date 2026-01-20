@@ -84,7 +84,7 @@ export default function AdminConsents() {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-x-auto">
+      <div id="table-consents" className="border rounded-lg overflow-x-auto scroll-mt-4">
         <Table>
           <TableHeader>
             <TableRow>

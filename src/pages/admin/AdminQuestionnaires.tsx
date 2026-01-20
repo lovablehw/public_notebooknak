@@ -386,7 +386,7 @@ const AdminQuestionnaires = () => {
         </div>
 
         {/* Questionnaires Table */}
-        <Card>
+        <Card id="table-questionnaires" className="scroll-mt-4">
           <CardHeader>
             <CardTitle>Kérdőívek</CardTitle>
             <CardDescription>{questionnaires.length} kérdőív konfigurálva</CardDescription>
