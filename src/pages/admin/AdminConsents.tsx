@@ -98,7 +98,7 @@ export default function AdminConsents() {
           </TableHeader>
           <TableBody>
             {filteredConsents?.map((consent) => (
-              <TableRow key={consent.id}>
+              <TableRow key={consent.id} id={`consent-${consent.id}`} className="scroll-mt-4">
                 <TableCell className="font-mono text-xs">
                   {consent.user_id.slice(0, 8)}...
                 </TableCell>

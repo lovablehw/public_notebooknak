@@ -217,7 +217,7 @@ export default function AdminRewardRules() {
             </TableHeader>
             <TableBody>
               {rules.map((rule) => (
-                <TableRow key={rule.id}>
+                <TableRow key={rule.id} id={`rule-${rule.id}`} className="scroll-mt-4">
                   <TableCell className="font-medium">
                     {ACTIVITY_TYPE_LABELS[rule.activity_type]}
                   </TableCell>

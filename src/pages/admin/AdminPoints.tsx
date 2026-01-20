@@ -84,7 +84,7 @@ export default function AdminPoints() {
               </TableHeader>
               <TableBody>
                 {topUsers.map((point, index) => (
-                  <TableRow key={point.userId}>
+                  <TableRow key={point.userId} id={`points-${point.userId}`} className="scroll-mt-4">
                     <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-mono text-xs">
                       {point.userId.slice(0, 8)}...

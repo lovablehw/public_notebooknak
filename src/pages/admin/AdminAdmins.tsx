@@ -194,7 +194,7 @@ export default function AdminAdmins() {
                 </TableRow>
               ) : (
                 admins?.map((admin) => (
-                  <TableRow key={admin.id}>
+                  <TableRow key={admin.id} id={`admin-${admin.id}`} className="scroll-mt-4">
                     <TableCell className="font-medium" title="Az email cím biztonsági okokból részlegesen rejtett">
                       {maskEmail(admin.email)}
                     </TableCell>

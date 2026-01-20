@@ -235,7 +235,7 @@ export default function AdminConsentVersions() {
             </TableHeader>
             <TableBody>
               {versions?.map((version, index) => (
-                <TableRow key={version.id}>
+                <TableRow key={version.id} id={`version-${version.id}`} className="scroll-mt-4">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge variant={index === 0 ? "default" : "secondary"}>

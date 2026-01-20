@@ -153,7 +153,7 @@ export default function AdminAuditLog() {
               </TableHeader>
               <TableBody>
                 {filteredEvents?.map((event) => (
-                  <TableRow key={event.id}>
+                  <TableRow key={event.id} id={`audit-${event.id}`} className="scroll-mt-4">
                     <TableCell className="whitespace-nowrap">
                       {format(new Date(event.created_at), "yyyy.MM.dd HH:mm:ss", { locale: hu })}
                     </TableCell>

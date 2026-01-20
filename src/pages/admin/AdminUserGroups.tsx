@@ -288,7 +288,7 @@ const AdminUserGroups = () => {
                   </TableHeader>
                   <TableBody>
                     {groups.map((g) => (
-                      <TableRow key={g.id}>
+                      <TableRow key={g.id} id={`group-${g.id}`} className="scroll-mt-4">
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{g.name}</span>
