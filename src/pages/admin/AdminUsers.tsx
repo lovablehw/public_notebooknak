@@ -102,7 +102,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg overflow-x-auto">
+      <div id="table-users" className="border rounded-lg overflow-x-auto scroll-mt-4">
         <Table>
           <TableHeader>
             <TableRow>

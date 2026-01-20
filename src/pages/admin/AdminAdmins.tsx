@@ -175,7 +175,7 @@ export default function AdminAdmins() {
         </form>
 
         {/* Admin list */}
-        <div className="rounded-md border">
+        <div id="table-admins" className="rounded-md border scroll-mt-4">
           <Table>
             <TableHeader>
               <TableRow>

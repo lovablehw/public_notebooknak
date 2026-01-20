@@ -267,7 +267,7 @@ const AdminUserGroups = () => {
         </div>
 
         {/* Groups Table */}
-        <Card>
+        <Card id="table-groups" className="scroll-mt-4">
           <CardHeader>
             <CardTitle>Csoportok</CardTitle>
             <CardDescription>{groups.length} csoport</CardDescription>

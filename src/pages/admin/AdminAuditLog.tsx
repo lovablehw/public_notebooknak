@@ -141,7 +141,7 @@ export default function AdminAuditLog() {
           </div>
 
           {/* Table */}
-          <div className="border rounded-lg">
+          <div id="table-audit-log" className="border rounded-lg scroll-mt-4">
             <Table>
               <TableHeader>
                 <TableRow>

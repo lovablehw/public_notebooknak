@@ -222,7 +222,7 @@ export default function AdminConsentVersions() {
           </Button>
         </div>
       ) : (
-        <div className="border rounded-lg">
+        <div id="table-consent-versions" className="border rounded-lg scroll-mt-4">
           <Table>
             <TableHeader>
               <TableRow>

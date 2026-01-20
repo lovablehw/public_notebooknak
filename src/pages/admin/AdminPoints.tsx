@@ -72,7 +72,7 @@ export default function AdminPoints() {
           </div>
 
           {/* Full table */}
-          <div className="border rounded-lg">
+          <div id="table-points" className="border rounded-lg scroll-mt-4">
             <Table>
               <TableHeader>
                 <TableRow>

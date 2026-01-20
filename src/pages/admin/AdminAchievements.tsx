@@ -394,7 +394,7 @@ export default function AdminAchievements() {
           </div>
 
           {/* Table */}
-          <div className="border rounded-lg">
+          <div id="table-achievements" className="border rounded-lg scroll-mt-4">
             <Table>
               <TableHeader>
                 <TableRow>
