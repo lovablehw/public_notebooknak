@@ -1,8 +1,9 @@
 # HealthPass Wellbeing - Műszaki Rendszerleírás
 
-> **Verzió:** 1.0  
-> **Dátum:** 2025. január 19.  
-> **Platform:** Lovable Cloud (Supabase backend)
+> **Verzió:** 2.0  
+> **Dátum:** 2026. január 20.  
+> **Platform:** Lovable Cloud (Supabase backend)  
+> **Projekt azonosító:** gxpctxtiwclorvksofru
 
 ---
 
@@ -19,6 +20,7 @@
 9. [Külső Integrációk](#9-külső-integrációk)
 10. [Biztonsági Megfontolások](#10-biztonsági-megfontolások)
 11. [Telepítési Konfiguráció](#11-telepítési-konfiguráció)
+12. [Hook Referencia](#12-hook-referencia)
 
 ---
 
@@ -26,23 +28,44 @@
 
 ### 1.1 Alkalmazás Célja
 
-A HealthPass Wellbeing egy egészségügyi webalkalmazás, amely:
-- Kérdőívek kitöltését teszi lehetővé felhasználóknak
+A HealthPass Wellbeing egy közösségi jóllét és dohányzás-prevenciós platform, amely:
+- **NEM** orvosi eszköz és nem tartalmaz diagnózist, kezelési javaslatot vagy kockázatértékelést
+- Kérdőívek kitöltését teszi lehetővé felhasználóknak kutatási célokra
 - Egészségügyi dokumentumok feltöltését és kezelését biztosítja
 - Gamifikációs elemekkel (pontok, kitüntetések) ösztönzi az aktív részvételt
 - GDPR-kompatibilis beleegyezés-kezelést valósít meg
 - Medalyse integrációval labor- és viselhető eszköz adatokat jelenít meg
 
-### 1.2 Technológiai Stack
+### 1.2 Platform Modulok
 
-| Réteg | Technológia |
-|-------|-------------|
-| **Frontend** | React 19, TypeScript, Vite |
-| **Stílusok** | Tailwind CSS, shadcn/ui komponensek |
-| **Állapotkezelés** | TanStack Query (React Query), React Context |
-| **Backend** | Supabase (PostgreSQL, GoTrue Auth, Edge Functions) |
-| **Hitelesítés** | Supabase Auth + Keycloak OIDC (on-prem) |
-| **Routing** | React Router DOM v6 |
+| Modul | Leírás | Útvonal |
+|-------|--------|---------|
+| **SurveyStore** | Kérdőívek kitöltése, pont gyűjtés | `/dashboard`, `/kerdoiv/:id` |
+| **HealthBook** | Személyes egészségügyi adatok tárolása | `/healthbook/*` |
+| **HealthGuide** | Biztonságos, nem-orvosi értelmezések (jövőbeli) | - |
+| **HealthPass** | Személyes asszisztens (jövőbeli) | - |
+| **HealthMarket** | Jóllét ajánlatok jutalmakért (jövőbeli) | - |
+
+### 1.3 Technológiai Stack
+
+| Réteg | Technológia | Verzió |
+|-------|-------------|--------|
+| **Frontend** | React, TypeScript, Vite | 19.x |
+| **Stílusok** | Tailwind CSS, shadcn/ui | - |
+| **Állapotkezelés** | TanStack Query, React Context | 5.x |
+| **Backend** | Supabase (PostgreSQL, GoTrue Auth) | - |
+| **Hitelesítés** | Supabase Auth + Keycloak OIDC (on-prem) | - |
+| **Routing** | React Router DOM | 6.x |
+| **Űrlapkezelés** | React Hook Form + Zod | 7.x |
+
+### 1.4 Nyelvi Követelmény
+
+**KRITIKUS:** Minden felhasználói felület szövege kizárólag MAGYAR nyelvű. Ez vonatkozik:
+- Minden komponensre és oldalra
+- Toast üzenetekre és hibaüzenetekre
+- Validációs üzenetekre
+- Címkékre és gombokra
+- Adatbázisból jövő metaadatokra
 
 ---
 
@@ -53,7 +76,7 @@ A HealthPass Wellbeing egy egészségügyi webalkalmazás, amely:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                           App.tsx                                │
-│                    (Router, AuthProvider)                        │
+│         (QueryClientProvider, AuthProvider, BrowserRouter)       │
 └─────────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
@@ -65,7 +88,8 @@ A HealthPass Wellbeing egy egészségügyi webalkalmazás, amely:
 │ /             │     │ /dashboard    │     │ /admin/*      │
 │ /login        │     │ /healthbook/* │     │               │
 │ /register     │     │ /settings     │     │               │
-│ /consent      │     │ /points       │     │               │
+│ /consent      │     │ /pontok       │     │               │
+│ /cookie-...   │     │ /kerdoiv/:id  │     │               │
 └───────────────┘     └───────────────┘     └───────────────┘
         │                     │                     │
         │                     ▼                     │
@@ -81,26 +105,58 @@ A HealthPass Wellbeing egy egészségügyi webalkalmazás, amely:
                     └───────────────┘
 ```
 
-### 2.2 Szolgáltatás Függőségek
+### 2.2 Hook Függőségi Gráf
 
 ```
-useAuth ──────────────┐
-    │                 │
-    ├── useConsent    │
-    ├── usePoints     │
-    ├── useAdminRole  │
-    │       │         │
-    │       ├── AdminLayout
-    │       │
-    ├── useQuestionnaireConfig
-    │       │
-    │       └── QuestionnaireWidget
-    │
-    ├── useActivityRewards ─── usePoints
-    │
-    ├── useUploadRewards ──── usePoints
-    │
-    └── useObservations ───── supabase.rpc()
+┌─────────────────────────────────────────────────────────────────┐
+│                         useAuth                                  │
+│        (User, Session, SignIn, SignOut, SignUp)                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+    ┌───────────┬─────────────┼─────────────┬───────────┐
+    ▼           ▼             ▼             ▼           ▼
+┌─────────┐ ┌─────────┐ ┌─────────────┐ ┌─────────┐ ┌─────────┐
+│useConsent│ │usePoints│ │useAdminRole │ │useAdmin │ │useQuest-│
+│          │ │         │ │             │ │         │ │ionnaire │
+└─────────┘ └────┬────┘ └─────────────┘ └─────────┘ │Config   │
+                 │                                   └────┬────┘
+    ┌────────────┼────────────┐                          │
+    ▼            ▼            ▼                          ▼
+┌─────────┐ ┌─────────┐ ┌─────────────┐         ┌─────────────┐
+│useActi- │ │useUpload│ │useObserva-  │         │useMedalyse- │
+│vityRe-  │ │Rewards  │ │tions        │         │Completion   │
+│wards    │ │         │ │             │         │             │
+└─────────┘ └─────────┘ └─────────────┘         └─────────────┘
+```
+
+### 2.3 Adatfolyam Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Frontend (React)                              │
+├─────────────────────────────────────────────────────────────────┤
+│  Hooks (useAuth, usePoints, useConsent, ...)                     │
+│       │                                                          │
+│       ▼                                                          │
+│  Supabase Client (@/integrations/supabase/client)                │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ HTTPS
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Supabase Backend                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │ PostgREST   │  │ GoTrue Auth │  │ PostgreSQL              │  │
+│  │ (REST API)  │  │ (Sessions)  │  │ (RLS Policies)          │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │                 Database Functions (RPC)                     ││
+│  │  - add_user_points()      - award_activity_points()         ││
+│  │  - get_user_questionnaires()  - award_upload_points()       ││
+│  │  - is_admin() / is_super_admin() / is_service_admin()       ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -155,129 +211,216 @@ interface AuthContextType {
 - `age_range`: "Nincs megadva"
 - `smoking_status`: "Nincs megadva"
 
+**Automatikus csoport hozzárendelés:**
+- Trigger: `add_user_to_default_group()`
+- Minden új felhasználó az `all_users` csoportba kerül
+
 ### 3.3 Beleegyezés Kapu (Consent Gate)
 
 **Fájl:** `src/components/RequireConsent.tsx`
 
 Védett útvonalak előtt ellenőrzi:
 1. Van-e bejelentkezett felhasználó
-2. Rendelkezik-e érvényes beleegyezéssel (`health_data_processing = true` ÉS `research_participation = true`)
+2. Rendelkezik-e érvényes beleegyezéssel:
+   - `health_data_processing = true` **ÉS**
+   - `research_participation = true`
 
 Ha bármelyik feltétel nem teljesül → `/consent` átirányítás
 
-### 3.4 Admin Szerepkörök
+### 3.4 Admin Szerepkör Hierarchia
 
-**Táblázat:** `admin_roles`
+```
+┌─────────────────────────────────────────┐
+│            super_admin                   │
+│  (Minden jogosultság + szerepkör kezelés)│
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│           service_admin                  │
+│  (Kérdőív, csoport, jutalom kezelés)     │
+└────────────────────┬────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────┐
+│           admin (admin_users)            │
+│  (Alapvető admin hozzáférés)             │
+└─────────────────────────────────────────┘
+```
 
-| Szerepkör | Jogosultságok |
-|-----------|---------------|
-| `super_admin` | Minden admin funkció + szerepkör kezelés |
-| `service_admin` | Kérdőív konfiguráció, felhasználói csoportok kezelése |
+**Ellenőrző függvények (SQL):**
 
-**Ellenőrző függvények:**
-
-| Függvény | Leírás |
-|----------|--------|
-| `is_super_admin()` | Csak super_admin szerepkör |
-| `is_service_admin()` | super_admin VAGY service_admin |
-| `is_admin()` | admin_users táblában szerepel |
-| `has_admin_role(user_id, role)` | Adott szerepkör ellenőrzése |
+| Függvény | Leírás | Használat |
+|----------|--------|-----------|
+| `is_super_admin()` | Csak super_admin | Szerepkör kezelés |
+| `is_service_admin()` | super_admin VAGY service_admin | Kérdőív/csoport kezelés |
+| `is_admin()` | admin_users táblában szerepel | Általános admin |
+| `has_admin_role(user_id, role)` | Adott szerepkör ellenőrzése | Specifikus ellenőrzés |
 
 ---
 
 ## 4. Adatbázis Séma
 
-### 4.1 Fő Táblák és Kapcsolatok
+### 4.1 Felhasználói Adatok
 
 ```
 ┌─────────────────────┐
-│   auth.users        │ (Supabase managed)
+│   auth.users        │ (Supabase managed - NEM MÓDOSÍTHATÓ)
 └─────────┬───────────┘
           │ id
           ▼
 ┌─────────────────────┐     ┌─────────────────────┐
 │     profiles        │     │    admin_roles      │
-│  - display_name     │     │  - role (enum)      │
-│  - age_range        │     │  - user_id          │
-│  - smoking_status   │     └─────────────────────┘
-└─────────────────────┘
-          │
-          ├──────────────────┬──────────────────┐
-          ▼                  ▼                  ▼
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  user_consents  │  │   user_points   │  │user_achievements│
-│  - consent_v_id │  │  - points       │  │  - achievement_ │
-│  - research_... │  │  - reason       │  │     id          │
-│  - health_data_ │  │  - questionnaire│  │  - unlocked_at  │
-└─────────────────┘  │     _id         │  └─────────────────┘
-         │           └─────────────────┘           │
-         ▼                                         ▼
-┌─────────────────┐                      ┌─────────────────┐
-│consent_versions │                      │  achievements   │
-│  - version      │                      │  - name         │
-│  - title        │                      │  - points_req   │
-│  - content      │                      │  - icon         │
-└─────────────────┘                      └─────────────────┘
+│  - id (= auth.uid)  │     │  - role (enum)      │
+│  - display_name     │     │  - user_id          │
+│  - age_range        │     └─────────────────────┘
+│  - smoking_status   │
+│  - created_at       │     ┌─────────────────────┐
+│  - updated_at       │     │    admin_users      │
+└─────────────────────┘     │  - email            │
+                            │  - user_id (linked) │
+                            └─────────────────────┘
 ```
 
-### 4.2 Kérdőív Jogosultsági Rendszer
+### 4.2 Beleegyezés Rendszer
 
 ```
 ┌─────────────────────┐
-│questionnaires_config│
-│  - name             │
-│  - description      │
-│  - completion_time  │
-│  - points           │
-│  - target_url       │
-│  - deadline         │
-│  - is_active        │
+│  consent_versions   │
+│  - id               │
+│  - version (text)   │
+│  - title            │
+│  - content          │
+│  - effective_date   │
 └─────────┬───────────┘
-          │ id
+          │
           ▼
-┌─────────────────────┐     ┌─────────────────┐
-│questionnaire_       │◄────│   user_groups   │
-│  permissions        │     │  - name         │
-│  - questionnaire_id │     │  - description  │
-│  - group_id         │     └────────┬────────┘
-│  - is_active        │              │
-└─────────────────────┘              ▼
-                              ┌─────────────────┐
-                              │user_group_      │
-                              │  members        │
-                              │  - user_id      │
-                              │  - group_id     │
-                              └─────────────────┘
+┌─────────────────────────────────────┐
+│         user_consents               │
+│  - user_id                          │
+│  - consent_version_id (FK)          │
+│  - research_participation (bool)    │
+│  - health_data_processing (bool)    │
+│  - communication_preferences (bool) │
+│  - consented_at                     │
+│  - withdrawn_at (nullable)          │
+│  - ip_address                       │
+│  - user_agent                       │
+└─────────────────────────────────────┘
 ```
 
-### 4.3 Gamifikációs Táblák
+### 4.3 Kérdőív Jogosultsági Rendszer
 
 ```
-┌─────────────────────┐
-│    reward_rules     │
-│  - activity_type    │
-│  - points           │
-│  - frequency        │
-│  - is_active        │
-└─────────────────────┘
-
-┌─────────────────────┐     ┌─────────────────┐
-│user_activity_counts │     │  upload_rewards │
-│  - user_id          │     │  - user_id      │
-│  - activity_type    │     │  - upload_type  │
-│  - total_count      │     │  - upload_date  │
-│  - last_activity    │     │  - points_award │
-└─────────────────────┘     └─────────────────┘
-
-┌─────────────────────┐
-│  badge_conditions   │
-│  - achievement_id   │
-│  - activity_type    │
-│  - required_count   │
-└─────────────────────┘
+┌─────────────────────────────────────┐
+│       questionnaires_config         │
+│  - id                               │
+│  - name                             │
+│  - description                      │
+│  - completion_time (perc)           │
+│  - points                           │
+│  - target_url                       │
+│  - deadline                         │
+│  - is_active                        │
+└─────────────┬───────────────────────┘
+              │ id
+              ▼
+┌─────────────────────────┐     ┌─────────────────────────┐
+│questionnaire_permissions│────▶│      user_groups        │
+│  - questionnaire_id (FK)│     │  - id                   │
+│  - group_id (FK)        │     │  - name                 │
+└─────────────────────────┘     │  - description          │
+                                └───────────┬─────────────┘
+                                            │
+                                            ▼
+                                ┌─────────────────────────┐
+                                │   user_group_members    │
+                                │  - user_id              │
+                                │  - group_id (FK)        │
+                                └─────────────────────────┘
 ```
 
-### 4.4 Enum Típusok
+### 4.4 Kérdőív Haladás Követés
+
+```
+┌─────────────────────────────────────┐
+│    user_questionnaire_progress      │
+│  - id                               │
+│  - user_id                          │
+│  - questionnaire_id (FK)            │
+│  - status (not_started/in_progress/ │
+│            completed)               │
+│  - started_at                       │
+│  - completed_at                     │
+│  - created_at                       │
+│  - updated_at                       │
+└─────────────────────────────────────┘
+      │
+      │ UNIQUE CONSTRAINT: (user_id, questionnaire_id)
+```
+
+### 4.5 Gamifikációs Rendszer
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                      reward_rules                              │
+│  - activity_type (enum)                                        │
+│  - points                                                      │
+│  - frequency (per_event/daily/once_total)                      │
+│  - is_active                                                   │
+└───────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────┐     ┌─────────────────────────┐
+│      user_points        │     │    upload_rewards       │
+│  - user_id              │     │  - user_id              │
+│  - points               │     │  - upload_type          │
+│  - reason               │     │  - upload_date          │
+│  - questionnaire_id     │     │  - points_awarded       │
+│  - created_at           │     └─────────────────────────┘
+└─────────────────────────┘
+
+┌─────────────────────────┐     ┌─────────────────────────┐
+│user_activity_counts     │     │     achievements        │
+│  - user_id              │     │  - id                   │
+│  - activity_type        │     │  - name                 │
+│  - total_count          │     │  - description          │
+│  - last_activity_date   │     │  - icon                 │
+└─────────────────────────┘     │  - points_required      │
+                                │  - min_points_threshold │
+                                └───────────┬─────────────┘
+                                            │
+                                            ▼
+                                ┌─────────────────────────┐
+                                │   badge_conditions      │
+                                │  - achievement_id (FK)  │
+                                │  - activity_type        │
+                                │  - required_count       │
+                                └─────────────────────────┘
+
+┌─────────────────────────┐
+│   user_achievements     │
+│  - user_id              │
+│  - achievement_id (FK)  │
+│  - unlocked_at          │
+└─────────────────────────┘
+```
+
+### 4.6 Gomb Konfigurációk
+
+```
+┌─────────────────────────────────────┐
+│        button_configs               │
+│  - gomb_azonosito (PK, text)        │  ← "q_{questionnaire_id}" formátum
+│  - button_label                     │
+│  - tooltip                          │
+│  - target_url                       │
+│  - url_target (_blank/_self)        │
+│  - created_at                       │
+│  - updated_at                       │
+└─────────────────────────────────────┘
+```
+
+### 4.7 Enum Típusok
 
 ```sql
 -- Tevékenység típusok
@@ -301,13 +444,19 @@ CREATE TYPE reward_frequency AS ENUM (
   'daily',        -- Naponta egyszer
   'once_total'    -- Összesen egyszer
 );
+
+-- URL target típusok
+CREATE TYPE url_target_type AS ENUM (
+  '_blank',       -- Új ablak
+  '_self'         -- Ugyanaz az ablak
+);
 ```
 
 ---
 
 ## 5. Szolgáltatás Logika (Service Logic)
 
-### 5.1 Kérdőív Elérhetőség Logika
+### 5.1 Kérdőív Elérhetőségi Logika
 
 **RPC Függvény:** `get_user_questionnaires()`
 
@@ -318,162 +467,284 @@ JOIN questionnaire_permissions qp ON qc.id = qp.questionnaire_id
 JOIN user_group_members ugm ON qp.group_id = ugm.group_id
 WHERE ugm.user_id = auth.uid()
   AND qc.is_active = true
-  AND (qp.is_active IS NULL OR qp.is_active = true)
   AND (qc.deadline IS NULL OR qc.deadline > now())
 ORDER BY qc.created_at DESC
 ```
 
-**Szűrési feltételek:**
-1. Felhasználó csoporttagsága (`user_group_members`)
-2. Csoport-kérdőív hozzárendelés (`questionnaire_permissions`)
-3. Kérdőív aktív státusza (`is_active = true`)
-4. Hozzárendelés aktív státusza (`qp.is_active = true`)
-5. Határidő nem járt le (`deadline > now()`)
+**Szűrési feltételek (sorrendben):**
 
-### 5.2 Pontjóváírás Logika
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Felhasználó csoporttagsága (user_group_members)               │
+│    └─► user_id = auth.uid()                                      │
+├─────────────────────────────────────────────────────────────────┤
+│ 2. Csoport-kérdőív hozzárendelés (questionnaire_permissions)     │
+│    └─► group_id kapcsolat                                        │
+├─────────────────────────────────────────────────────────────────┤
+│ 3. Kérdőív aktív státusza                                        │
+│    └─► is_active = true                                          │
+├─────────────────────────────────────────────────────────────────┤
+│ 4. Határidő nem járt le                                          │
+│    └─► deadline IS NULL OR deadline > now()                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 Kérdőív Kitöltés Munkafolyamat
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Felhasználó                                   │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Dashboard - QuestionnaireWidget kattintás                     │
+│    └─► button_configs alapján gomb megjelenítés                  │
+│    └─► /kerdoiv/:id navigáció                                    │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. QuestionnairePage betöltés                                    │
+│    └─► useQuestionnaireConfig() - kérdőív adatok                 │
+│    └─► useButtonConfigs() - gomb konfiguráció                    │
+│    └─► useMedalyseCompletion() - esemény figyelő                 │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. "Kitöltés" gomb - startQuestionnaire()                        │
+│    └─► user_questionnaire_progress UPSERT                        │
+│    └─► status: 'in_progress', started_at: now()                  │
+│    └─► target_url megnyitása (iframe/új ablak)                   │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. Medalyse webkomponens kitöltés                                │
+│    └─► Külső szolgáltató kezeli a kérdőívet                      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. Kitöltés befejezése - Esemény fogadás                         │
+│    └─► "medalyse:questionnaireCompleted" CustomEvent VAGY        │
+│    └─► window.postMessage({ type: "QUESTIONNAIRE_COMPLETED" })   │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 6. useMedalyseCompletion callback                                │
+│    └─► Origin ellenőrzés (TRUSTED_MEDALYSE_ORIGINS)              │
+│    └─► completeQuestionnaire(id) - státusz frissítés             │
+│    └─► addPoints() - pont jóváírás                               │
+│    └─► Toast megjelenítés (siker/achievement)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**KRITIKUS:** Manuális "Befejezés" gomb TILOS! A kitöltés kizárólag eseményvezérelt.
+
+### 5.3 Pontjóváírás Logika
 
 **RPC Függvény:** `award_activity_points(activity_type, description)`
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                  award_activity_points()                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │ reward_rules      │
-                    │ lekérdezés        │
-                    │ (activity_type)   │
-                    └─────────┬─────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-       ┌──────────┐    ┌──────────┐    ┌──────────┐
-       │per_event │    │  daily   │    │once_total│
-       │  Mindig  │    │ Naponta  │    │ Egyszer  │
-       │jóváírás  │    │ egyszer  │    │összesen  │
-       └────┬─────┘    └────┬─────┘    └────┬─────┘
-            │               │               │
-            └───────────────┼───────────────┘
-                            ▼
-                  ┌───────────────────┐
-                  │ user_activity_    │
-                  │ counts frissítés  │
-                  └─────────┬─────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                  award_activity_points()                         │
+└───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
-                  ┌───────────────────┐
-                  │ user_points       │
-                  │ beszúrás          │
-                  └─────────┬─────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Hitelesítés ellenőrzés                                        │
+│    └─► auth.uid() IS NOT NULL                                    │
+└───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
-                  ┌───────────────────┐
-                  │ Kitüntetések      │
-                  │ ellenőrzése       │
-                  │ (achievements)    │
-                  └─────────┬─────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Validáció                                                     │
+│    └─► p_description max 500 karakter                            │
+│    └─► reward_rules lekérdezés (activity_type, is_active)        │
+└───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
-                  ┌───────────────────┐
-                  │ user_achievements │
-                  │ beszúrás (ha új)  │
-                  └───────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. Frekvencia ellenőrzés                                         │
+├─────────────────────────────────────────────────────────────────┤
+│ per_event    → Mindig jóváírás                                   │
+│ daily        → last_activity_date < today → jóváírás             │
+│ once_total   → total_count = 0 → jóváírás                        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. user_activity_counts frissítés                                │
+│    └─► total_count++, last_activity_date = today                 │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼ (ha v_can_reward = true)
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. user_points beszúrás                                          │
+│    └─► points = reward_rules.points                              │
+│    └─► reason = leírás (magyar)                                  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 6. Kitüntetés ellenőrzés                                         │
+│    └─► achievements WHERE NOT IN user_achievements               │
+│    └─► min_points_threshold ellenőrzés                           │
+│    └─► badge_conditions ellenőrzés (activity_type, count)        │
+│    └─► Feloldás ha minden feltétel teljesül                      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 7. JSON visszatérés                                              │
+│    └─► success, points_awarded, total_points, new_achievements   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Visszatérési érték:**
-```typescript
-{
-  success: boolean;
-  points_awarded?: number;
-  total_points?: number;
-  new_achievements?: Achievement[];
-  error?: string;
-  already_rewarded?: boolean;
-}
-```
-
-### 5.3 Feltöltés Jutalom Logika
+### 5.4 Feltöltés Jutalom Logika
 
 **RPC Függvény:** `award_upload_points(upload_type, points)`
 
-- Napi korlátozás típusonként
-- `upload_rewards` táblában követés
-- Alapértelmezett pont: 30
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  award_upload_points()                           │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. Validáció                                                     │
+│    └─► upload_type: max 50 karakter, alphanumerikus              │
+│    └─► points: 0 < points <= 1000                                │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. Napi limit ellenőrzés                                         │
+│    └─► upload_rewards WHERE user_id AND upload_type              │
+│    └─► AND upload_date = CURRENT_DATE                            │
+│    └─► Ha létezik → already_rewarded = true                      │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼ (ha nem rewarded)
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. upload_rewards beszúrás                                       │
+│    └─► user_id, upload_type, upload_date, points_awarded         │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. add_user_points() meghívása                                   │
+│    └─► reason: "Dokumentum feltöltés: {upload_type}"             │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### 5.4 Beleegyezés Kezelés
-
-**Munkafolyamat:**
+### 5.5 Beleegyezés Kezelés
 
 ```
-Bejelentkezés
-     │
-     ▼
-┌─────────────────┐
-│ useConsent()    │
-│ fetchConsentData│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐     ┌─────────────────┐
-│consent_versions │────▶│ Legújabb verzió │
-│ lekérdezés      │     │ azonosítás      │
-└─────────────────┘     └────────┬────────┘
-                                 │
-                                 ▼
-                        ┌─────────────────┐
-                        │user_consents    │
-                        │ ellenőrzés      │
-                        └────────┬────────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-            ┌───────────────┐         ┌───────────────┐
-            │Van érvényes   │         │Nincs érvényes │
-            │beleegyezés    │         │beleegyezés    │
-            └───────┬───────┘         └───────┬───────┘
-                    │                         │
-                    ▼                         ▼
-            ┌───────────────┐         ┌───────────────┐
-            │ Dashboard     │         │ /consent      │
-            │ megjelenítés  │         │ átirányítás   │
-            └───────────────┘         └───────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Bejelentkezés                                 │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ useConsent() - fetchConsentData()                                │
+│    └─► consent_versions ORDER BY effective_date DESC LIMIT 1     │
+│    └─► user_consents WHERE user_id AND consent_version_id        │
+│        AND withdrawn_at IS NULL                                  │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+            ┌───────────────┼───────────────┐
+            ▼                               ▼
+┌───────────────────────┐       ┌───────────────────────┐
+│ Van érvényes          │       │ Nincs érvényes        │
+│ beleegyezés           │       │ beleegyezés           │
+│ (health_data +        │       │                       │
+│  research = true)     │       │                       │
+└───────────┬───────────┘       └───────────┬───────────┘
+            │                               │
+            ▼                               ▼
+┌───────────────────────┐       ┌───────────────────────┐
+│ RequireConsent        │       │ /consent átirányítás  │
+│ → children render     │       │                       │
+└───────────────────────┘       └───────────────────────┘
+```
+
+### 5.6 Automatikus Szinkronizáció
+
+**Trigger:** `sync_button_config_after_questionnaire_insert()`
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ questionnaires_config INSERT                                     │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ button_configs INSERT                                            │
+│    └─► gomb_azonosito: 'q_' || NEW.id                            │
+│    └─► button_label: 'Kezdés'                                    │
+│    └─► target_url: '/404' (placeholder)                          │
+│    └─► url_target: '_blank'                                      │
+│    └─► ON CONFLICT DO NOTHING                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Hook:** `useButtonConfigSync()` (super_admin)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. questionnaires_config lekérdezés                              │
+│ 2. button_configs lekérdezés                                     │
+│ 3. Hiányzó konfigok beszúrása ('q_' prefix)                      │
+│ 4. all_users csoporthoz automatikus hozzárendelés                │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 6. Állapotkezelés (State Management)
 
-### 6.1 Globális Állapotok
+### 6.1 Globális Állapot Források
 
-| Hook | Perzisztencia | Frissítési Mód |
-|------|---------------|----------------|
-| `useAuth` | Supabase Session (localStorage) | Auth események |
-| `useConsent` | Supabase DB | Manuális refetch |
-| `usePoints` | Supabase DB | Manuális refetch |
-| `useObservations` | localStorage (user_id prefix) | Azonnali |
+| Hook | Adatforrás | Perzisztencia | Frissítési Mód |
+|------|------------|---------------|----------------|
+| `useAuth` | Supabase Auth | localStorage (session) | Auth események |
+| `useConsent` | user_consents tábla | Supabase DB | Manuális refetch |
+| `usePoints` | user_points tábla | Supabase DB | Manuális refetch |
+| `useQuestionnaireConfig` | questionnaires_config | Supabase DB | Manuális refetch |
+| `useObservations` | localStorage | localStorage | Azonnali |
+| `useAdminRole` | admin_roles tábla | Supabase DB | useEffect |
 
 ### 6.2 React Query Cache Konfiguráció
 
 ```typescript
-// Admin data hooks
-queryKey: ["admin", "profiles"]
-queryKey: ["admin", "consents"]
-queryKey: ["admin", "points"]
-queryKey: ["admin", "achievements"]
-queryKey: ["admin", "audit-events", limit]
-queryKey: ["admin", "dashboard-stats"]
+// QueryClient inicializálás
+const queryClient = new QueryClient();
+
+// Cache kulcsok (queryKey)
+["admin", "profiles"]
+["admin", "consents"]
+["admin", "points"]
+["admin", "achievements"]
+["admin", "user-achievements", userId]
+["admin", "consent-versions"]
+["admin", "audit-events", limit]
+["admin", "dashboard-stats"]
+["button-configs"]
 ```
 
 ### 6.3 Komponens Állapot Áramlás
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     AuthProvider                             │
-│  ┌─────────────────────────────────────────────────────────┐│
-│  │ user, session, loading, authError                       ││
-│  └─────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     AuthProvider (Context)                       │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ user, session, loading, authError                           ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
                               │
          ┌────────────────────┼────────────────────┐
          ▼                    ▼                    ▼
@@ -485,9 +756,35 @@ queryKey: ["admin", "dashboard-stats"]
 └─────────────────┘  └─────────────────┘  └─────────────────┘
          │                    │                    │
          ▼                    ▼                    ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    UI Komponensek                            │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    UI Komponensek                                │
+│  Dashboard, HealthBook, Settings, Admin Pages                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 6.4 Megfigyelések (Observations) Tárolás
+
+```typescript
+// LocalStorage kulcs formátum
+`observations_${user.id}`
+
+// Adatstruktúra
+interface Observation {
+  id: string;           // UUID
+  date: string;         // ISO date
+  category: ObservationCategory;
+  value: string;        // Kategória-specifikus érték
+  note: string;         // Szabad szöveges megjegyzés
+  createdAt: string;    // ISO timestamp
+}
+
+type ObservationCategory = 
+  | 'mood'      // Hangulat
+  | 'energy'    // Energia
+  | 'sleep'     // Alvás
+  | 'headache'  // Fejfájás
+  | 'pain'      // Fájdalom
+  | 'note';     // Általános jegyzet
 ```
 
 ---
@@ -496,17 +793,19 @@ queryKey: ["admin", "dashboard-stats"]
 
 ### 7.1 Supabase RPC Függvények
 
-| Függvény | Paraméterek | Visszatérés |
-|----------|-------------|-------------|
-| `get_user_questionnaires` | - | `questionnaires_config[]` |
-| `add_user_points` | `p_points, p_reason, p_questionnaire_id` | `JSON` |
-| `award_activity_points` | `p_activity_type, p_description` | `JSON` |
-| `award_upload_points` | `p_upload_type, p_points` | `JSON` |
-| `check_is_admin` | - | `boolean` |
-| `is_super_admin` | - | `boolean` |
-| `is_service_admin` | - | `boolean` |
-| `has_admin_role` | `_user_id, _role` | `boolean` |
-| `log_audit_event` | `p_event_type, p_metadata` | `void` |
+| Függvény | Paraméterek | Visszatérés | Jogosultság |
+|----------|-------------|-------------|-------------|
+| `get_user_questionnaires` | - | `SETOF questionnaires_config` | auth.uid() |
+| `add_user_points` | `p_points, p_reason, p_questionnaire_id?` | `JSON` | auth.uid() |
+| `award_activity_points` | `p_activity_type, p_description?` | `JSON` | auth.uid() |
+| `award_upload_points` | `p_upload_type, p_points?` | `JSON` | auth.uid() |
+| `check_is_admin` | - | `boolean` | auth.uid() |
+| `is_admin` | - | `boolean` | auth.uid() |
+| `is_super_admin` | - | `boolean` | auth.uid() |
+| `is_service_admin` | - | `boolean` | auth.uid() |
+| `has_admin_role` | `_user_id, _role` | `boolean` | public |
+| `log_audit_event` | `p_event_type, p_metadata?` | `void` | is_admin() |
+| `get_admin_list_masked` | - | `TABLE(...)` | is_service_admin() |
 
 ### 7.2 Adatmodellek (TypeScript)
 
@@ -521,6 +820,7 @@ interface QuestionnaireConfig {
   target_url: string;
   deadline: string | null;
   is_active: boolean;
+  created_at: string;
   // Kliens oldali kiegészítések
   status: QuestionnaireStatus;
   started_at?: string;
@@ -529,15 +829,29 @@ interface QuestionnaireConfig {
 
 type QuestionnaireStatus = 'not_started' | 'in_progress' | 'completed';
 
+// Gomb konfiguráció
+interface ButtonConfig {
+  gomb_azonosito: string;  // PK, 'q_{questionnaire_id}' formátum
+  button_label: string;
+  tooltip: string | null;
+  target_url: string | null;
+  url_target: '_blank' | '_self';
+  created_at: string;
+  updated_at: string;
+}
+
 // Felhasználói beleegyezés
 interface UserConsent {
   id: string;
+  user_id: string;
   consent_version_id: string;
   research_participation: boolean;
   health_data_processing: boolean;
   communication_preferences: boolean;
   consented_at: string;
   withdrawn_at: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
 }
 
 // Kitüntetés
@@ -548,6 +862,31 @@ interface Achievement {
   icon: string;
   points_required: number;
   min_points_threshold: number | null;
+}
+
+// Kitüntetés feltétel
+interface BadgeCondition {
+  id: string;
+  achievement_id: string;
+  activity_type: ActivityType;
+  required_count: number;
+}
+
+// Tevékenység típus
+type ActivityType =
+  | 'questionnaire_completion'
+  | 'lab_upload'
+  | 'discharge_upload'
+  | 'patient_summary_upload'
+  | 'observation_creation';
+
+// Jutalom szabály
+interface RewardRule {
+  id: string;
+  activity_type: ActivityType;
+  points: number;
+  frequency: 'per_event' | 'daily' | 'once_total';
+  is_active: boolean;
 }
 
 // Megfigyelés (lokális)
@@ -569,35 +908,93 @@ type ObservationCategory =
   | 'note';
 ```
 
-### 7.3 Audit Események
+### 7.3 RPC Visszatérési Formátumok
 
-| Eseménytípus | Metaadat |
-|--------------|----------|
-| `user_registered` | `{ email }` |
-| `consent_submitted` | `{ version_id, consents }` |
-| `questionnaire_completed` | `{ questionnaire_id, points }` |
-| `points_added` | `{ points, reason }` |
-| `admin_added` | `{ target_email }` |
-| `admin_removed` | `{ target_email }` |
+```typescript
+// add_user_points / award_activity_points
+interface PointsResult {
+  success: boolean;
+  total_points?: number;
+  points_awarded?: number;
+  new_achievements?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    points_required?: number;
+  }>;
+  error?: string;
+  already_rewarded?: boolean;
+}
+
+// award_upload_points
+interface UploadRewardResult {
+  success: boolean;
+  points_awarded?: number;
+  add_points_result?: PointsResult;
+  error?: string;
+  already_rewarded?: boolean;
+}
+```
+
+### 7.4 Audit Események
+
+| Eseménytípus | Metaadat | Kiváltó |
+|--------------|----------|---------|
+| `user_registered` | `{ email }` | Regisztráció |
+| `consent_submitted` | `{ version_id, consents }` | Beleegyezés |
+| `consent_withdrawn` | `{ version_id }` | Visszavonás |
+| `questionnaire_completed` | `{ questionnaire_id, points }` | Kitöltés |
+| `points_added` | `{ points, reason }` | Pont jóváírás |
+| `admin_added` | `{ target_email }` | Admin hozzáadás |
+| `admin_removed` | `{ target_email }` | Admin törlés |
+| `role_assigned` | `{ user_id, role }` | Szerepkör |
+| `role_removed` | `{ user_id, role }` | Szerepkör törlés |
 
 ---
 
 ## 8. Gamifikációs Rendszer
 
-### 8.1 Tevékenység Típusok és Alapértelmezett Pontok
+### 8.1 Tevékenység Típusok
 
-| Tevékenység | Magyar Címke | Frekvencia |
-|-------------|--------------|------------|
-| `questionnaire_completion` | Kérdőív kitöltése | per_event |
-| `lab_upload` | Laboreredmény feltöltése | daily |
-| `discharge_upload` | Zárójelentés feltöltése | daily |
-| `patient_summary_upload` | Betegösszefoglaló feltöltése | daily |
-| `observation_creation` | Saját megfigyelés rögzítése | per_event |
+| Tevékenység | Magyar Címke | Alapértelmezett Pont | Frekvencia |
+|-------------|--------------|---------------------|------------|
+| `questionnaire_completion` | Kérdőív kitöltése | kérdőív.points | per_event |
+| `lab_upload` | Laboreredmény feltöltése | 30 | daily |
+| `discharge_upload` | Zárójelentés feltöltése | 30 | daily |
+| `patient_summary_upload` | Betegösszefoglaló feltöltése | 30 | daily |
+| `observation_creation` | Saját megfigyelés rögzítése | 10 | per_event |
 
-### 8.2 Kitüntetés Feloldási Logika
+### 8.2 Frekvencia Szabályok
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     per_event                                    │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Minden eseménynél jóváírás                                  ││
+│  │ user_activity_counts.total_count++ minden alkalommal        ││
+│  │ Nincs napi vagy összesített limit                           ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│                       daily                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Naponta egyszer jóváírás típusonként                        ││
+│  │ last_activity_date < CURRENT_DATE → jóváírás                ││
+│  │ Újabb próbálkozás → already_rewarded = true                 ││
+│  └─────────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────────┤
+│                     once_total                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Összesen egyszer jóváírás (első alkalom)                    ││
+│  │ total_count = 0 → jóváírás                                  ││
+│  │ Minden további → already_rewarded = true                    ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 8.3 Kitüntetés Feloldási Logika
 
 ```sql
--- Kitüntetés feloldás ellenőrzése
 FOR v_achievement IN 
   SELECT a.* FROM achievements a
   WHERE NOT EXISTS (
@@ -605,24 +1002,58 @@ FOR v_achievement IN
     WHERE ua.user_id = v_user_id AND ua.achievement_id = a.id
   )
 LOOP
-  -- 1. Pontküszöb ellenőrzés
+  v_all_conditions_met := true;
+  
+  -- 1. Minimális pontküszöb ellenőrzés
   IF v_achievement.min_points_threshold IS NOT NULL 
      AND v_total_points < v_achievement.min_points_threshold THEN
-    CONTINUE;
+    v_all_conditions_met := false;
   END IF;
   
   -- 2. Legacy points_required ellenőrzés
   IF v_achievement.points_required > 0 
      AND v_total_points < v_achievement.points_required THEN
-    CONTINUE;
+    v_all_conditions_met := false;
   END IF;
   
   -- 3. Tevékenység alapú feltételek (badge_conditions)
-  -- Minden feltételnek teljesülnie kell
+  IF v_all_conditions_met THEN
+    FOR v_condition IN 
+      SELECT bc.*, COALESCE(uac.total_count, 0) as user_count
+      FROM badge_conditions bc
+      LEFT JOIN user_activity_counts uac 
+        ON uac.user_id = v_user_id AND uac.activity_type = bc.activity_type
+      WHERE bc.achievement_id = v_achievement.id
+    LOOP
+      IF v_condition.user_count < v_condition.required_count THEN
+        v_all_conditions_met := false;
+        EXIT;
+      END IF;
+    END LOOP;
+  END IF;
   
-  -- Feloldás, ha minden feltétel teljesül
-  INSERT INTO user_achievements (user_id, achievement_id) ...
+  -- Feloldás ha minden feltétel teljesül
+  IF v_all_conditions_met THEN
+    INSERT INTO user_achievements (user_id, achievement_id)
+    VALUES (v_user_id, v_achievement.id);
+  END IF;
 END LOOP;
+```
+
+### 8.4 Pont Védelem (RLS)
+
+```sql
+-- user_points tábla - csak backend módosíthatja
+CREATE POLICY "Only backend can insert points" ON user_points
+FOR INSERT WITH CHECK (false);
+
+-- user_achievements tábla - csak backend módosíthatja
+CREATE POLICY "Only backend can insert achievements" ON user_achievements
+FOR INSERT WITH CHECK (false);
+
+-- upload_rewards tábla - csak backend módosíthatja
+CREATE POLICY "Only backend can insert upload rewards" ON upload_rewards
+FOR INSERT WITH CHECK (false);
 ```
 
 ---
@@ -639,11 +1070,36 @@ const TRUSTED_MEDALYSE_ORIGINS = [
   "https://medalyse.com",
   "https://app.medalyse.com",
   "https://questionnaire.medalyse.com",
-  // Fejlesztői mód: window.location.origin
+  // Fejlesztői módban: window.location.origin is
 ];
 ```
 
-**Kommunikáció:** `window.postMessage` API
+**Kommunikációs Protokoll:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. CustomEvent (webkomponens)                                    │
+│    └─► Esemény: "medalyse:questionnaireCompleted"                │
+│    └─► Detail: { questionnaireId: string }                       │
+├─────────────────────────────────────────────────────────────────┤
+│ 2. postMessage (iframe)                                          │
+│    └─► Origin ellenőrzés (TRUSTED_MEDALYSE_ORIGINS)              │
+│    └─► Data: { type: "QUESTIONNAIRE_COMPLETED",                  │
+│                questionnaireId: string }                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Duplikált feldolgozás megelőzése:**
+```typescript
+const hasCompletedRef = useRef(false);
+
+const handleCompletion = useCallback((completedId: string) => {
+  if (completedId === questionnaireId && !hasCompletedRef.current) {
+    hasCompletedRef.current = true;
+    onComplete(completedId);
+  }
+}, [questionnaireId, onComplete]);
+```
 
 ### 9.2 Keycloak OIDC (On-Premises)
 
@@ -657,7 +1113,20 @@ GOTRUE_EXTERNAL_KEYCLOAK_SECRET=${SECRET}
 GOTRUE_EXTERNAL_KEYCLOAK_URL=${REALM_URL}
 ```
 
-### 9.3 Cookie Consent Integráció
+**Bejelentkezési folyamat:**
+```typescript
+const signInWithKeycloak = async () => {
+  const redirectUri = window.appConfig?.KEYCLOAK_REDIRECT_URI || 
+    `${window.location.origin}/auth`;
+  
+  return supabase.auth.signInWithOAuth({
+    provider: 'keycloak',
+    options: { redirectTo: redirectUri }
+  });
+};
+```
+
+### 9.3 Cookie Consent
 
 **Tárolás:** `localStorage.cookieConsent`
 
@@ -674,7 +1143,7 @@ GOTRUE_EXTERNAL_KEYCLOAK_URL=${REALM_URL}
 
 ### 10.1 Row-Level Security (RLS) Politikák
 
-Minden táblán engedélyezett RLS a következő mintával:
+Minden táblán engedélyezett RLS. Tipikus minták:
 
 ```sql
 -- Felhasználó saját adatai
@@ -685,29 +1154,63 @@ FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Admins can view all" ON table_name
 FOR SELECT USING (is_admin());
 
--- Csak backend módosítás
+-- Csak backend módosítás (pont rendszer)
 CREATE POLICY "Only backend can modify" ON table_name
 FOR INSERT WITH CHECK (false);
+
+-- Super admin teljes hozzáférés
+CREATE POLICY "Super admins can manage" ON table_name
+FOR ALL USING (is_super_admin());
 ```
 
 ### 10.2 SECURITY DEFINER Függvények
 
-A következő függvények SECURITY DEFINER módban futnak (tulajdonos jogosultságaival):
-- `is_super_admin()`
-- `is_service_admin()`
+A következő függvények SECURITY DEFINER módban futnak:
+- `is_super_admin()`, `is_service_admin()`, `is_admin()`
 - `has_admin_role()`
-- `add_user_points()`
-- `award_activity_points()`
-- `award_upload_points()`
+- `add_user_points()`, `award_activity_points()`, `award_upload_points()`
 - `log_audit_event()`
+- `get_user_questionnaires()`
+- `add_user_to_default_group()`
+- `sync_button_config_after_questionnaire_insert()`
 
-### 10.3 Input Validáció
+Mindegyik tartalmaz: `SET search_path TO 'public'`
 
-A backend RPC függvények validálják:
-- Pont értékek (pozitív, max 1000)
-- Szöveges mezők hossza (max 500 karakter)
-- ID formátumok (alphanumerikus)
-- Duplikált bejegyzések megelőzése
+### 10.3 Input Validáció (Backend RPC)
+
+| Mező | Validáció |
+|------|-----------|
+| `p_points` | 0 < points <= 1000 |
+| `p_reason` | max 500 karakter, nem üres |
+| `p_questionnaire_id` | max 100 karakter, `^[a-zA-Z0-9_-]+$` |
+| `p_upload_type` | max 50 karakter, `^[a-zA-Z0-9_-]+$` |
+| `p_description` | max 500 karakter |
+| `p_event_type` | max 100 karakter, `^[a-zA-Z0-9_]+$` |
+| `p_metadata` | max 10KB |
+
+### 10.4 Duplikált Pont Megelőzés
+
+```sql
+-- Kérdőív duplikált jóváírás ellenőrzés
+IF p_questionnaire_id IS NOT NULL THEN
+  IF EXISTS (
+    SELECT 1 FROM user_points 
+    WHERE user_id = v_user_id 
+    AND questionnaire_id = p_questionnaire_id
+  ) THEN
+    RETURN json_build_object('success', false, 
+      'error', 'Points already awarded for this questionnaire');
+  END IF;
+END IF;
+
+-- Feltöltés napi limit ellenőrzés
+SELECT EXISTS (
+  SELECT 1 FROM upload_rewards 
+  WHERE user_id = v_user_id 
+  AND upload_type = p_upload_type
+  AND upload_date = CURRENT_DATE
+) INTO v_already_rewarded;
+```
 
 ---
 
@@ -716,10 +1219,10 @@ A backend RPC függvények validálják:
 ### 11.1 Környezeti Változók
 
 ```env
-# Supabase (automatikusan generált)
-VITE_SUPABASE_URL=
-VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_SUPABASE_PROJECT_ID=
+# Supabase (automatikusan generált - NEM SZERKESZTENDŐ)
+VITE_SUPABASE_URL=https://gxpctxtiwclorvksofru.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
+VITE_SUPABASE_PROJECT_ID=gxpctxtiwclorvksofru
 
 # Admin konfiguráció
 VITE_ADMIN_EMAILS=admin@example.com
@@ -728,16 +1231,30 @@ VITE_ADMIN_EMAILS=admin@example.com
 KEYCLOAK_REDIRECT_URI=
 ```
 
-### 11.2 Runtime Konfiguráció (On-Prem)
+### 11.2 Automatikusan Generált Fájlok
+
+**NEM SZERKESZTENDŐ:**
+- `supabase/config.toml`
+- `src/integrations/supabase/client.ts`
+- `src/integrations/supabase/types.ts`
+- `.env`
+
+### 11.3 Runtime Konfiguráció (On-Prem)
 
 ```typescript
-// window.appConfig injektálás
+// window.appConfig injektálás (index.html vagy külső script)
 interface AppConfig {
   KEYCLOAK_REDIRECT_URI?: string;
 }
+
+declare global {
+  interface Window {
+    appConfig?: AppConfig;
+  }
+}
 ```
 
-### 11.3 Docker Compose Szolgáltatások
+### 11.4 Docker Compose Szolgáltatások (On-Prem)
 
 | Szolgáltatás | Port | Leírás |
 |--------------|------|--------|
@@ -752,6 +1269,64 @@ interface AppConfig {
 
 ---
 
+## 12. Hook Referencia
+
+### 12.1 Hitelesítés és Jogosultság
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useAuth` | `useAuth.tsx` | Felhasználó, session, bejelentkezés/kijelentkezés |
+| `useAdmin` | `useAdmin.tsx` | Admin státusz ellenőrzés (RPC) |
+| `useAdminGuard` | `useAdmin.tsx` | Admin route védelem + átirányítás |
+| `useAdminRole` | `useAdminRole.tsx` | Szerepkör lekérdezés (super/service admin) |
+| `useConsent` | `useConsent.tsx` | Beleegyezés kezelés |
+
+### 12.2 Adatlekérdezés
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useQuestionnaireConfig` | `useQuestionnaireConfig.tsx` | Kérdőívek + haladás |
+| `useButtonConfigs` | `useButtonConfigs.tsx` | Gomb konfigurációk CRUD |
+| `usePoints` | `usePoints.tsx` | Pontok és kitüntetések |
+| `useObservations` | `useObservations.tsx` | Megfigyelések (localStorage) |
+
+### 12.3 Gamifikáció
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useActivityRewards` | `useActivityRewards.tsx` | Tevékenység pont jóváírás |
+| `useUploadRewards` | `useUploadRewards.tsx` | Feltöltés pont jóváírás |
+
+### 12.4 Integráció
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useMedalyseCompletion` | `useMedalyseCompletion.tsx` | Medalyse esemény figyelés |
+| `useButtonConfigSync` | `useButtonConfigSync.tsx` | Konfig szinkronizáció |
+| `useLegacyQuestionnaireSeed` | `useLegacyQuestionnaireSeed.tsx` | Legacy kérdőív seedelés |
+
+### 12.5 Admin Adatok
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useAdminProfiles` | `useAdminData.tsx` | Profilok + pontok + consent |
+| `useAdminConsents` | `useAdminData.tsx` | Beleegyezések listája |
+| `useAdminPoints` | `useAdminData.tsx` | Pont statisztikák |
+| `useAdminAchievements` | `useAdminData.tsx` | Kitüntetések + unlock count |
+| `useAdminUserAchievements` | `useAdminData.tsx` | Felhasználó kitüntetései |
+| `useAdminConsentVersions` | `useAdminData.tsx` | Consent verziók |
+| `useAdminAuditEvents` | `useAdminData.tsx` | Audit napló |
+| `useAdminDashboardStats` | `useAdminData.tsx` | Dashboard statisztikák |
+
+### 12.6 Utility
+
+| Hook | Fájl | Leírás |
+|------|------|--------|
+| `useIsMobile` | `use-mobile.tsx` | Mobil viewport detektálás |
+| `useToast` | `use-toast.ts` | Toast notification kezelés |
+
+---
+
 ## Mellékletek
 
 ### A. Útvonal Táblázat
@@ -760,36 +1335,52 @@ interface AppConfig {
 |---------|-----------|---------|--------|
 | `/` | Landing | Publikus | Kezdőlap |
 | `/login` | Login | Publikus | Bejelentkezés |
+| `/auth` | Login | Publikus | OAuth callback |
 | `/register` | Register | Publikus | Regisztráció |
+| `/jelszo-visszaallitas` | PasswordResetRequest | Publikus | Jelszó reset kérés |
+| `/jelszo-uj` | PasswordResetConfirm | Publikus | Új jelszó beállítás |
 | `/consent` | Consent | Auth | Beleegyezés |
+| `/cookie-szabalyzat` | CookiePolicy | Publikus | Cookie szabályzat |
 | `/dashboard` | Dashboard | Auth + Consent | Főoldal |
 | `/healthbook` | HealthBook | Auth + Consent | Egészségkönyv |
 | `/healthbook/labor` | HealthBookLabor | Auth + Consent | Labor adatok |
-| `/healthbook/viselhetok` | HealthBookWearables | Auth + Consent | Viselhető eszközök |
+| `/healthbook/viselheto-eszkozok` | HealthBookWearables | Auth + Consent | Viselhető eszközök |
 | `/healthbook/dokumentumok` | HealthBookDocuments | Auth + Consent | Dokumentumok |
+| `/kerdoiv/:id` | QuestionnairePage | Auth + Consent | Kérdőív kitöltés |
 | `/pontok` | PointsHistory | Auth + Consent | Pont előzmények |
 | `/settings` | Settings | Auth + Consent | Beállítások |
-| `/cookie-szabalyzat` | CookiePolicy | Publikus | Cookie szabályzat |
-| `/admin/*` | AdminLayout | Auth + Admin | Admin felület |
+| `/reset` | ResetSession | Auth + Consent | Session reset |
 
-### B. Admin Oldalak
+### B. Admin Útvonalak
 
 | Útvonal | Jogosultság | Funkció |
 |---------|-------------|---------|
 | `/admin` | is_admin | Dashboard |
 | `/admin/felhasznalok` | is_admin | Felhasználók |
 | `/admin/hozzajarulasok` | is_admin | Beleegyezések |
-| `/admin/hozzajarulas-verziok` | is_admin | Beleegyezés verziók |
+| `/admin/hozzajarulasi-verziok` | is_admin | Beleegyezés verziók |
 | `/admin/pontok` | is_admin | Pontok |
+| `/admin/pontszabalyok` | is_service_admin | Pont szabályok |
 | `/admin/kerdoivek` | is_service_admin | Kérdőívek |
-| `/admin/felhasznalo-csoportok` | is_service_admin | Csoportok |
-| `/admin/jutalom-szabalyok` | is_service_admin | Jutalom szabályok |
-| `/admin/eredmenyek` | is_admin | Kitüntetések |
+| `/admin/csoportok` | is_service_admin | Felhasználói csoportok |
+| `/admin/kituntetesek` | is_admin | Kitüntetések |
 | `/admin/feltoltesek` | is_admin | Feltöltések |
-| `/admin/adminok` | is_admin | Adminok |
+| `/admin/admins` | is_admin | Admin felhasználók |
 | `/admin/szerepkorok` | is_super_admin | Szerepkörök |
-| `/admin/audit-log` | is_admin | Audit napló |
+| `/admin/gombok` | is_super_admin | Gomb konfigurációk |
+| `/admin/naplo` | is_admin | Audit napló |
+
+### C. Adatbázis Triggerek
+
+| Trigger | Tábla | Esemény | Függvény |
+|---------|-------|---------|----------|
+| `add_user_to_default_group` | auth.users | INSERT | Új felhasználó → all_users csoport |
+| `sync_button_config_after_questionnaire_insert` | questionnaires_config | INSERT | Automatikus button_config létrehozás |
+| `link_admin_user_id` | auth.users | INSERT | Admin email → user_id összekapcsolás |
 
 ---
 
 *Dokumentum vége*
+
+**Utolsó frissítés:** 2026. január 20.  
+**Verzió:** 2.0
