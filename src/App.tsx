@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RequireConsent } from "@/components/RequireConsent";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { ScrollToAnchor } from "@/components/ScrollToAnchor";
+import { ActivityLoggerProvider } from "@/components/ActivityLoggerProvider";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -47,46 +49,49 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth" element={<Login />} />
-            <Route path="/jelszo-visszaallitas" element={<PasswordResetRequest />} />
-            <Route path="/jelszo-uj" element={<PasswordResetConfirm />} />
-            <Route path="/consent" element={<Consent />} />
-            <Route path="/cookie-szabalyzat" element={<CookiePolicy />} />
-            
-            {/* Protected routes - require auth + consent */}
-            <Route path="/dashboard" element={<RequireConsent><Dashboard /></RequireConsent>} />
-            <Route path="/healthbook" element={<RequireConsent><HealthBook /></RequireConsent>} />
-            <Route path="/healthbook/labor" element={<RequireConsent><HealthBookLabor /></RequireConsent>} />
-            <Route path="/healthbook/dokumentumok" element={<RequireConsent><HealthBookDocuments /></RequireConsent>} />
-            <Route path="/healthbook/viselheto-eszkozok" element={<RequireConsent><HealthBookWearables /></RequireConsent>} />
-            <Route path="/pontok" element={<RequireConsent><PointsHistory /></RequireConsent>} />
-            <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
-            <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
-            <Route path="/kerdoiv/:id" element={<RequireConsent><QuestionnairePage /></RequireConsent>} />
-            
-            {/* Admin routes - require auth + consent */}
-            <Route path="/admin" element={<RequireConsent><AdminDashboard /></RequireConsent>} />
-            <Route path="/admin/felhasznalok" element={<RequireConsent><AdminUsers /></RequireConsent>} />
-            <Route path="/admin/hozzajarulasok" element={<RequireConsent><AdminConsents /></RequireConsent>} />
-            <Route path="/admin/pontok" element={<RequireConsent><AdminPoints /></RequireConsent>} />
-            <Route path="/admin/pontszabalyok" element={<RequireConsent><AdminRewardRules /></RequireConsent>} />
-            <Route path="/admin/kituntetesek" element={<RequireConsent><AdminAchievements /></RequireConsent>} />
-            <Route path="/admin/hozzajarulasi-verziok" element={<RequireConsent><AdminConsentVersions /></RequireConsent>} />
-            <Route path="/admin/naplo" element={<RequireConsent><AdminAuditLog /></RequireConsent>} />
-            <Route path="/admin/feltoltesek" element={<RequireConsent><AdminUploads /></RequireConsent>} />
-            <Route path="/admin/admins" element={<RequireConsent><AdminAdmins /></RequireConsent>} />
-            <Route path="/admin/kerdoivek" element={<RequireConsent><AdminQuestionnaires /></RequireConsent>} />
-            <Route path="/admin/csoportok" element={<RequireConsent><AdminUserGroups /></RequireConsent>} />
-            <Route path="/admin/szerepkorok" element={<RequireConsent><AdminRoles /></RequireConsent>} />
-            <Route path="/admin/gombok" element={<RequireConsent><AdminButtonConfigs /></RequireConsent>} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <ScrollToAnchor />
+          <ActivityLoggerProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<Login />} />
+              <Route path="/jelszo-visszaallitas" element={<PasswordResetRequest />} />
+              <Route path="/jelszo-uj" element={<PasswordResetConfirm />} />
+              <Route path="/consent" element={<Consent />} />
+              <Route path="/cookie-szabalyzat" element={<CookiePolicy />} />
+              
+              {/* Protected routes - require auth + consent */}
+              <Route path="/dashboard" element={<RequireConsent><Dashboard /></RequireConsent>} />
+              <Route path="/healthbook" element={<RequireConsent><HealthBook /></RequireConsent>} />
+              <Route path="/healthbook/labor" element={<RequireConsent><HealthBookLabor /></RequireConsent>} />
+              <Route path="/healthbook/dokumentumok" element={<RequireConsent><HealthBookDocuments /></RequireConsent>} />
+              <Route path="/healthbook/viselheto-eszkozok" element={<RequireConsent><HealthBookWearables /></RequireConsent>} />
+              <Route path="/pontok" element={<RequireConsent><PointsHistory /></RequireConsent>} />
+              <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
+              <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
+              <Route path="/kerdoiv/:id" element={<RequireConsent><QuestionnairePage /></RequireConsent>} />
+              
+              {/* Admin routes - require auth + consent */}
+              <Route path="/admin" element={<RequireConsent><AdminDashboard /></RequireConsent>} />
+              <Route path="/admin/felhasznalok" element={<RequireConsent><AdminUsers /></RequireConsent>} />
+              <Route path="/admin/hozzajarulasok" element={<RequireConsent><AdminConsents /></RequireConsent>} />
+              <Route path="/admin/pontok" element={<RequireConsent><AdminPoints /></RequireConsent>} />
+              <Route path="/admin/pontszabalyok" element={<RequireConsent><AdminRewardRules /></RequireConsent>} />
+              <Route path="/admin/kituntetesek" element={<RequireConsent><AdminAchievements /></RequireConsent>} />
+              <Route path="/admin/hozzajarulasi-verziok" element={<RequireConsent><AdminConsentVersions /></RequireConsent>} />
+              <Route path="/admin/naplo" element={<RequireConsent><AdminAuditLog /></RequireConsent>} />
+              <Route path="/admin/feltoltesek" element={<RequireConsent><AdminUploads /></RequireConsent>} />
+              <Route path="/admin/admins" element={<RequireConsent><AdminAdmins /></RequireConsent>} />
+              <Route path="/admin/kerdoivek" element={<RequireConsent><AdminQuestionnaires /></RequireConsent>} />
+              <Route path="/admin/csoportok" element={<RequireConsent><AdminUserGroups /></RequireConsent>} />
+              <Route path="/admin/szerepkorok" element={<RequireConsent><AdminRoles /></RequireConsent>} />
+              <Route path="/admin/gombok" element={<RequireConsent><AdminButtonConfigs /></RequireConsent>} />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ActivityLoggerProvider>
           <CookieConsentBanner />
         </BrowserRouter>
       </TooltipProvider>

@@ -147,4 +147,18 @@
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
+
+  /* Anchor highlight animation for deep linking */
+  .anchor-highlight {
+    animation: anchor-pulse 2s ease-out;
+  }
+
+  @keyframes anchor-pulse {
+    0% {
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.4);
+    }
+    100% {
+      box-shadow: 0 0 0 0px hsl(var(--primary) / 0);
+    }
+  }
 }

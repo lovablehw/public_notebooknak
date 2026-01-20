@@ -217,8 +217,8 @@ const HealthBook = () => {
         </div>
 
         {/* Activity, Achievements, Badges Section */}
-        <div className="grid md:grid-cols-3 gap-4 animate-fade-in">
-          <Card className="shadow-card border-0">
+        <div id="healthbook-stats" className="grid md:grid-cols-3 gap-4 animate-fade-in scroll-mt-4">
+          <Card id="healthbook-completed" className="shadow-card border-0 scroll-mt-4">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2"><ClipboardList className="h-4 w-4" />Kitöltött felmérések</CardDescription>
               <CardTitle className="text-3xl font-light text-primary">{totalCompletedCount}</CardTitle>
@@ -226,7 +226,7 @@ const HealthBook = () => {
             <CardContent><p className="text-xs text-muted-foreground">Az eddig kitöltött kérdőíveid száma.</p></CardContent>
           </Card>
 
-          <Card className="shadow-card border-0">
+          <Card id="healthbook-activity" className="shadow-card border-0 scroll-mt-4">
             <CardHeader className="pb-2">
               <CardDescription className="flex items-center gap-2"><Calendar className="h-4 w-4" />Legutóbbi aktivitás</CardDescription>
               <CardTitle className="text-xl font-light text-foreground">
@@ -237,7 +237,8 @@ const HealthBook = () => {
           </Card>
 
           <Card 
-            className="shadow-card border-0 cursor-pointer hover:bg-accent/50 transition-colors group"
+            id="healthbook-points"
+            className="shadow-card border-0 cursor-pointer hover:bg-accent/50 transition-colors group scroll-mt-4"
             onClick={() => navigate("/pontok")}
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate("/pontok")}
@@ -255,10 +256,12 @@ const HealthBook = () => {
         </div>
 
         {/* Badges */}
-        <BadgeDisplay stats={badgeStats} />
+        <div id="healthbook-badges" className="scroll-mt-4">
+          <BadgeDisplay stats={badgeStats} />
+        </div>
 
         {/* Available Questionnaires - Database-driven Widget Grid */}
-        <Card className="shadow-card border-0 animate-fade-in">
+        <Card id="healthbook-available" className="shadow-card border-0 animate-fade-in scroll-mt-4">
           <CardHeader>
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -285,7 +288,7 @@ const HealthBook = () => {
         </Card>
 
         {/* Questionnaire History */}
-        <Card className="shadow-card border-0 animate-fade-in">
+        <Card id="healthbook-history" className="shadow-card border-0 animate-fade-in scroll-mt-4">
           <CardHeader>
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
@@ -340,7 +343,7 @@ const HealthBook = () => {
         </Card>
 
         {/* Self-observations Calendar */}
-        <Card className="shadow-card border-0 animate-fade-in">
+        <Card id="healthbook-observations" className="shadow-card border-0 animate-fade-in scroll-mt-4">
           <Collapsible open={isObservationsOpen} onOpenChange={setIsObservationsOpen}>
             <CardHeader>
               <CollapsibleTrigger className="w-full">
@@ -372,9 +375,10 @@ const HealthBook = () => {
         </Card>
 
         {/* Widget Cards - Clickable */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
+        <div id="healthbook-modules" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in scroll-mt-4">
           <Card 
-            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group"
+            id="healthbook-labor"
+            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group scroll-mt-4"
             onClick={() => navigate("/healthbook/labor")}
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate("/healthbook/labor")}
@@ -395,7 +399,8 @@ const HealthBook = () => {
           </Card>
 
           <Card 
-            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group"
+            id="healthbook-wearables"
+            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group scroll-mt-4"
             onClick={() => navigate("/healthbook/viselheto-eszkozok")}
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate("/healthbook/viselheto-eszkozok")}
@@ -413,7 +418,8 @@ const HealthBook = () => {
           </Card>
 
           <Card 
-            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group"
+            id="healthbook-documents"
+            className="shadow-card border-0 flex flex-col cursor-pointer hover:bg-accent/50 transition-colors group scroll-mt-4"
             onClick={() => navigate("/healthbook/dokumentumok")}
             tabIndex={0}
             onKeyDown={(e) => e.key === "Enter" && navigate("/healthbook/dokumentumok")}

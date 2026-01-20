@@ -9,7 +9,15 @@ import { format, isPast, isValid } from "date-fns";
 import { hu } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useActivityLogger } from "@/hooks/useActivityLogger";
 
+/**
+ * Request parent window redirect via postMessage.
+ * Used when the app is embedded in an iframe and needs to communicate with parent.
+ */
+function requestParentRedirect(targetUrl: string) {
+  window.parent.postMessage({ action: 'redirect', url: targetUrl }, '*');
+}
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
   onStart: (id: string) => Promise<void | boolean>;
@@ -27,6 +35,7 @@ export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: Qu
   const { id, name, description, completion_time, points, deadline, target_url, status } = questionnaire;
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { logButtonClick } = useActivityLogger();
 
   // Get button properties from config or use defaults
   // Button config takes precedence over questionnaire's target_url
@@ -34,14 +43,24 @@ export const QuestionnaireWidget = ({ questionnaire, onStart, buttonConfig }: Qu
   const buttonTooltip = buttonConfig?.tooltip;
   const buttonTargetUrl = buttonConfig?.target_url || target_url;
   const urlTarget = buttonConfig?.url_target || "_blank";
+  const gombAzonosito = buttonConfig?.gomb_azonosito || `q_${id}`;
 
   const handleStart = async () => {
+    // Log button click for activity tracking
+    logButtonClick(gombAzonosito, buttonLabel);
+    
     await onStart(id);
     
     // Check if URL is configured (not /404 or empty)
     if (!buttonTargetUrl || buttonTargetUrl === '/404') {
       // Navigate to 404 with state indicating button config is pending
       navigate('/404', { state: { buttonConfigPending: true } });
+      return;
+    }
+    
+    // Handle postmessage redirection (for iframe embedding)
+    if (urlTarget === "postmessage") {
+      requestParentRedirect(buttonTargetUrl);
       return;
     }
     
