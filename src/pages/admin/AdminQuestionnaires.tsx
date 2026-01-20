@@ -411,7 +411,7 @@ const AdminQuestionnaires = () => {
                     {questionnaires.map((q) => {
                       const qPermissions = getQuestionnairePermissions(q.id);
                       return (
-                        <TableRow key={q.id}>
+                        <TableRow key={q.id} id={`questionnaire-${q.id}`} className="scroll-mt-4">
                           <TableCell>
                             <div>
                               <p className="font-medium">{q.name}</p>

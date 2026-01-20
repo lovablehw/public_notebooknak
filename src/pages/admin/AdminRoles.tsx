@@ -276,7 +276,7 @@ export default function AdminRoles() {
             <TableBody>
               {adminRoles && adminRoles.length > 0 ? (
                 adminRoles.map((roleRecord) => (
-                  <TableRow key={roleRecord.id}>
+                  <TableRow key={roleRecord.id} id={`role-${roleRecord.id}`} className="scroll-mt-4">
                     <TableCell className="font-mono text-sm">
                       {maskUserId(roleRecord.user_id)}
                     </TableCell>

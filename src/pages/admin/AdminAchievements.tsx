@@ -407,7 +407,7 @@ export default function AdminAchievements() {
               </TableHeader>
               <TableBody>
                 {achievements?.map((achievement) => (
-                  <TableRow key={achievement.id}>
+                  <TableRow key={achievement.id} id={`achievement-${achievement.id}`} className="scroll-mt-4">
                     <TableCell className="text-2xl">{achievement.icon}</TableCell>
                     <TableCell className="font-medium">
                       {achievementNames[achievement.name] || achievement.name}

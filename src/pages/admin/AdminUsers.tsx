@@ -116,7 +116,7 @@ export default function AdminUsers() {
           </TableHeader>
           <TableBody>
             {filteredProfiles?.map((profile) => (
-              <TableRow key={profile.id}>
+              <TableRow key={profile.id} id={`user-${profile.id}`} className="scroll-mt-4">
                 <TableCell className="font-mono text-xs">
                   {profile.id.slice(0, 8)}...
                 </TableCell>

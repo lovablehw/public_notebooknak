@@ -304,7 +304,7 @@ const AdminButtonConfigs = () => {
                   </TableHeader>
                   <TableBody>
                     {combinedConfigs.map((item) => (
-                      <TableRow key={item.questionnaireId}>
+                      <TableRow key={item.questionnaireId} id={`button-${item.questionnaireId}`} className="scroll-mt-4">
                         <TableCell>
                           <div>
                             <span className="font-medium block">{item.questionnaireName}</span>
