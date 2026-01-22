@@ -13,20 +13,7 @@ import {
   ScrollText,
   Loader2,
   Plus,
-  AlertCircle
 } from "lucide-react";
-import { format } from "date-fns";
-import { hu } from "date-fns/locale";
-
-// Event type translations for non-IT friendly display
-const eventTypeLabels: Record<string, string> = {
-  user_registered: "Új regisztráció",
-  consent_submitted: "Hozzájárulás megadva",
-  questionnaire_completed: "Kérdőív kitöltve",
-  points_added: "Pont jóváírva",
-  admin_added: "Adminisztrátor hozzáadva",
-  admin_removed: "Adminisztrátor eltávolítva",
-};
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useAdminDashboardStats();
@@ -212,43 +199,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Recent events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Legutóbbi események</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {hasEvents ? (
-            <div className="space-y-2">
-              {stats?.recentEvents?.map((event) => (
-                <div 
-                  key={event.id} 
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                >
-                  <div>
-                    <span className="font-medium">
-                      {eventTypeLabels[event.event_type] || event.event_type}
-                    </span>
-                    {event.actor_email && (
-                      <span className="text-sm text-muted-foreground ml-2">
-                        ({event.actor_email})
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {format(new Date(event.created_at), "yyyy.MM.dd HH:mm", { locale: hu })}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <ScrollText className="h-12 w-12 text-muted-foreground/30 mb-3" />
-              <p className="text-muted-foreground">Még nincs esemény rögzítve.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </AdminLayout>
   );
 }
