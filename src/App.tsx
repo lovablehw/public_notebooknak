@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { RequireConsent } from "@/components/RequireConsent";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ScrollToAnchor } from "@/components/ScrollToAnchor";
+import { ScrollPersistence } from "@/components/ScrollPersistence";
 import { ActivityLoggerProvider } from "@/components/ActivityLoggerProvider";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
@@ -50,6 +51,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ScrollToAnchor />
+          <ScrollPersistence />
           <ActivityLoggerProvider>
             <Routes>
               {/* Public routes */}
