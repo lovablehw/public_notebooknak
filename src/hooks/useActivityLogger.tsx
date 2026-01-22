@@ -4,13 +4,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
+ * Fetches the Hungarian button label from button_configs table.
+ * Returns the label if found, otherwise returns null.
+ */
+async function fetchButtonLabel(gombAzonosito: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('button_configs')
+      .select('button_label')
+      .eq('gomb_azonosito', gombAzonosito)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data.button_label;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Hook for logging user activities to the audit_events table.
  * Uses the SECURITY DEFINER function log_audit_event for secure logging.
  * 
  * Logs:
  * - page_load: When route changes (logs document.title)
- * - button_click: When questionnaire buttons are clicked (logs gomb_azonosito)
+ * - button_click: When questionnaire buttons are clicked (logs gomb_azonosito and button_label)
  * - auth_login / auth_logout: Auth state changes
+ * 
+ * NOTE: Logging is available for ALL authenticated users, not just admins.
  */
 export function useActivityLogger() {
   const location = useLocation();
@@ -42,6 +66,7 @@ export function useActivityLogger() {
             page_title: document.title,
             page_path: currentPath,
             page_hash: location.hash || null,
+            timestamp: new Date().toISOString(),
           },
         });
       } catch (error) {
@@ -53,17 +78,24 @@ export function useActivityLogger() {
     return () => clearTimeout(timeoutId);
   }, [location.pathname, location.hash, user, session]);
 
-  // Log button click events
+  // Log button click events with enriched label from button_configs
   const logButtonClick = useCallback(async (gombAzonosito: string, buttonLabel?: string) => {
     if (!user || !session) return;
 
     try {
+      // Fetch the Hungarian label from button_configs if not provided
+      let enrichedLabel = buttonLabel;
+      if (!enrichedLabel) {
+        enrichedLabel = await fetchButtonLabel(gombAzonosito);
+      }
+
       await supabase.rpc('log_audit_event', {
         p_event_type: 'button_click',
         p_metadata: {
           gomb_azonosito: gombAzonosito,
-          button_label: buttonLabel || null,
+          button_label: enrichedLabel || gombAzonosito,
           page_path: location.pathname,
+          timestamp: new Date().toISOString(),
         },
       });
     } catch (error) {
