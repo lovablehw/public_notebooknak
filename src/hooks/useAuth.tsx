@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -21,6 +21,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  
+  // Track if initial session check is complete to prevent re-mounts on visibility change
+  const isInitializedRef = useRef(false);
+  // Track visibility state to perform background refresh only
+  const wasHiddenRef = useRef(false);
 
   useEffect(() => {
     // Check for OAuth error in URL params (e.g., access_denied from Keycloak)
@@ -43,9 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        // Only update state if there's an actual change to prevent unnecessary re-renders
+        setSession(prevSession => {
+          if (prevSession?.access_token === session?.access_token) {
+            return prevSession;
+          }
+          return session;
+        });
+        setUser(prevUser => {
+          if (prevUser?.id === session?.user?.id) {
+            return prevUser;
+          }
+          return session?.user ?? null;
+        });
+        
+        if (!isInitializedRef.current) {
+          setLoading(false);
+          isInitializedRef.current = true;
+        }
         
         // Clear any auth errors on successful sign in
         if (event === 'SIGNED_IN') {
@@ -59,9 +79,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      isInitializedRef.current = true;
     });
 
-    return () => subscription.unsubscribe();
+    // Handle visibility change for background session refresh
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        wasHiddenRef.current = true;
+      } else if (document.visibilityState === "visible" && wasHiddenRef.current) {
+        wasHiddenRef.current = false;
+        
+        // Perform background session refresh without triggering loading state
+        // This prevents full page re-mount when window regains focus
+        supabase.auth.getSession().then(({ data: { session: refreshedSession } }) => {
+          if (refreshedSession) {
+            // Only update if token actually changed (silent refresh)
+            setSession(prevSession => {
+              if (prevSession?.access_token === refreshedSession.access_token) {
+                return prevSession;
+              }
+              return refreshedSession;
+            });
+            setUser(prevUser => {
+              if (prevUser?.id === refreshedSession.user?.id) {
+                return prevUser;
+              }
+              return refreshedSession.user;
+            });
+          }
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   const clearAuthError = () => setAuthError(null);
