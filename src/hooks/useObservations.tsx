@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "./use-toast";
 
 // Observation categories for the calendar/general observations
 // These are also available through challenge observations
@@ -35,7 +34,6 @@ export interface Observation {
  */
 export function useObservations() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [observations, setObservations] = useState<Observation[]>([]);
   const [loading, setLoading] = useState(true);
 

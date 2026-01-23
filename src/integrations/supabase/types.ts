@@ -281,6 +281,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          observation_categories: Json | null
           required_observation_types: string[]
           show_daily_counter: boolean
           show_health_risks: boolean
@@ -295,6 +296,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          observation_categories?: Json | null
           required_observation_types?: string[]
           show_daily_counter?: boolean
           show_health_risks?: boolean
@@ -309,6 +311,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          observation_categories?: Json | null
           required_observation_types?: string[]
           show_daily_counter?: boolean
           show_health_risks?: boolean
