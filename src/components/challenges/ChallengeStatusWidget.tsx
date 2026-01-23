@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { 
   UserChallenge, 
-  ChallengeType, 
   UserObservation,
   ChallengeHealthRisk,
+  ChallengeMode,
 } from "@/hooks/useChallenges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,27 @@ import { HealthRiskIndicators } from "./HealthRiskIndicators";
 import { BadgeShelf } from "./BadgeShelf";
 import { ChallengeChart } from "./ChallengeChart";
 import { ObservationLogger } from "./ObservationLogger";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
-  Flame, Target, TrendingUp, PlusCircle, BarChart3, Award, ChevronDown, ChevronUp
+  Flame, Target, TrendingUp, PlusCircle, BarChart3, Award, ChevronDown, ChevronUp,
+  MoreVertical, Pause, Play, XCircle, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +49,10 @@ interface ChallengeStatusWidgetProps {
     note?: string,
     observationDate?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  onPauseChallenge?: (userChallengeId: string) => Promise<boolean>;
+  onResumeChallenge?: (userChallengeId: string) => Promise<boolean>;
+  onCancelChallenge?: (userChallengeId: string) => Promise<boolean>;
+  onRestartChallenge?: (challengeTypeId: string, mode?: ChallengeMode) => Promise<boolean>;
 }
 
 export function ChallengeStatusWidget({
@@ -38,13 +61,43 @@ export function ChallengeStatusWidget({
   getDaysSmokeFree,
   getHealthRiskFade,
   onLogObservation,
+  onPauseChallenge,
+  onResumeChallenge,
+  onCancelChallenge,
+  onRestartChallenge,
 }: ChallengeStatusWidgetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  
   const daysSmokeFree = getDaysSmokeFree(challenge);
   const challengeType = challenge.challenge_type;
   const requiredCategories = challengeType?.required_observation_types || [];
   const unlockedCount = challenge.unlocked_milestones?.length || 0;
   const totalMilestones = challenge.milestones?.length || 0;
+  const isPaused = challenge.status === "paused";
+
+  const handlePause = async () => {
+    if (!onPauseChallenge) return;
+    setIsActionLoading(true);
+    await onPauseChallenge(challenge.id);
+    setIsActionLoading(false);
+  };
+
+  const handleResume = async () => {
+    if (!onResumeChallenge) return;
+    setIsActionLoading(true);
+    await onResumeChallenge(challenge.id);
+    setIsActionLoading(false);
+  };
+
+  const handleCancel = async () => {
+    if (!onCancelChallenge) return;
+    setIsActionLoading(true);
+    await onCancelChallenge(challenge.id);
+    setIsActionLoading(false);
+    setShowCancelDialog(false);
+  };
 
   // Get the main metric for collapsed view
   const getMainMetric = () => {
@@ -77,30 +130,104 @@ export function ChallengeStatusWidget({
   const mainMetric = getMainMetric();
 
   return (
-    <Card className="shadow-card border-0 animate-fade-in w-full">
+    <Card className={cn(
+      "shadow-card border-0 animate-fade-in w-full",
+      isPaused && "opacity-75"
+    )}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Flame className="h-6 w-6 text-primary" />
-              <CardTitle className="text-xl font-medium">Kihívás: {challengeType?.name}</CardTitle>
+              <Flame className={cn("h-6 w-6", isPaused ? "text-muted-foreground" : "text-primary")} />
+              <CardTitle className="text-xl font-medium">
+                Kihívás: {challengeType?.name}
+              </CardTitle>
+              {isPaused && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-warning bg-warning/10 px-2 py-1 rounded-full">
+                  <Pause className="h-3 w-3" />
+                  Szüneteltetve
+                </span>
+              )}
             </div>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="gap-2">
-                {isExpanded ? (
-                  <>Bezárás <ChevronUp className="h-4 w-4" /></>
-                ) : (
-                  <>Részletek <ChevronDown className="h-4 w-4" /></>
-                )}
-              </Button>
-            </CollapsibleTrigger>
+            <div className="flex items-center gap-2">
+              {/* Challenge Actions Menu */}
+              <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={isActionLoading}>
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">Kihívás műveletek</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {isPaused ? (
+                      <DropdownMenuItem 
+                        onClick={handleResume}
+                        className="gap-2"
+                      >
+                        <Play className="h-4 w-4" />
+                        Folytatás
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem 
+                        onClick={handlePause}
+                        className="gap-2"
+                      >
+                        <Pause className="h-4 w-4" />
+                        Szüneteltetés
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem 
+                        className="gap-2 text-destructive focus:text-destructive"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Abbahagyás
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Kihívás abbahagyása</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Biztosan abba szeretnéd hagyni a "{challengeType?.name}" kihívást? 
+                      Az eddigi előrehaladásod megmarad, és bármikor újrakezdheted.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Mégsem</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleCancel}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Abbahagyom
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  {isExpanded ? (
+                    <>Bezárás <ChevronUp className="h-4 w-4" /></>
+                  ) : (
+                    <>Részletek <ChevronDown className="h-4 w-4" /></>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+            </div>
           </div>
           <CardDescription>
-            {challenge.current_mode === "quitting" 
-              ? "Leszokás módban vagy - minden nap számít!" 
-              : challenge.current_mode === "reduction" 
-                ? "Csökkentési módban vagy - fokozatos haladás"
-                : "Követési módban"
+            {isPaused 
+              ? "A kihívás szünetel - folytatáshoz kattints a menüre"
+              : challenge.current_mode === "quitting" 
+                ? "Leszokás módban vagy - minden nap számít!" 
+                : challenge.current_mode === "reduction" 
+                  ? "Csökkentési módban vagy - fokozatos haladás"
+                  : "Követési módban"
             }
           </CardDescription>
         </CardHeader>
