@@ -42,7 +42,7 @@ const HealthBook = () => {
     getCompletedCount: getDbCompletedCount,
     getUniqueCompletedCount: getDbUniqueCompletedCount,
   } = useQuestionnaireConfig();
-  const { observations, loading: observationsLoading, addObservation, getCategoryLabel } = useObservations();
+  const { observations, loading: observationsLoading, addObservation, getCategoryLabel, refetch: refetchObservations } = useObservations();
   const { 
     challengeTypes, 
     activeChallenge, 
@@ -52,6 +52,7 @@ const HealthBook = () => {
     logObservation,
     getDaysSmokeFree,
     getHealthRiskFade,
+    refetch: refetchChallenges,
   } = useChallenges();
   const { isAdmin } = useAdmin();
   const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig, refetch: refetchButtonConfigs } = useButtonConfigs();
@@ -104,14 +105,36 @@ const HealthBook = () => {
     navigate("/");
   };
 
+  // Unified handler for calendar observations - uses the same RPC as challenge observations
+  // After adding, it refetches both observations and challenge data for sync
   const handleAddObservation = async (date: string, category: ObservationCategory, value: string, note: string) => {
     const success = await addObservation(date, category, value, note);
     if (success) {
       toast({ title: "Mentve", description: "A megfigyelésedet elmentettük." });
+      // Sync challenge data if there's an active challenge
+      if (activeChallenge) {
+        await refetchChallenges();
+      }
     } else {
       toast({ title: "Hiba", description: "Nem sikerült menteni a megfigyelést.", variant: "destructive" });
     }
     return success;
+  };
+  
+  // Wrapper for challenge observation logging that also syncs calendar
+  const handleLogObservation = async (
+    category: string,
+    value: string,
+    numericValue?: number,
+    note?: string,
+    observationDate?: string
+  ) => {
+    const result = await logObservation(category, value, numericValue, note, observationDate);
+    if (result.success) {
+      // Sync calendar observations
+      await refetchObservations();
+    }
+    return result;
   };
 
   // Database-driven questionnaires (permission-based)
@@ -237,7 +260,7 @@ const HealthBook = () => {
               observations={challengeObservations}
               getDaysSmokeFree={getDaysSmokeFree}
               getHealthRiskFade={getHealthRiskFade}
-              onLogObservation={logObservation}
+              onLogObservation={handleLogObservation}
             />
           ) : challengeTypes.length > 0 ? (
             <ChallengeJoinPrompt
