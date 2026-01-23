@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
@@ -21,7 +21,7 @@ import { ChallengeJoinPrompt } from "@/components/challenges/ChallengeJoinPrompt
 import { 
   Heart, LogOut, Loader2, Settings, BookOpen, ClipboardList, Calendar, Star,
   FlaskConical, Watch, Shield, Eye, 
-  FileText, Upload, ChevronDown, ChevronUp, ExternalLink, Trophy,
+  FileText, ChevronDown, ChevronUp, ExternalLink, Trophy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -55,7 +55,7 @@ const HealthBook = () => {
     refetch: refetchChallenges,
   } = useChallenges();
   const { isAdmin } = useAdmin();
-  const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig, refetch: refetchButtonConfigs } = useButtonConfigs();
+  const { buttonConfigs, refetch: refetchButtonConfigs } = useButtonConfigs();
   const navigate = useNavigate();
   const { toast } = useToast();
 

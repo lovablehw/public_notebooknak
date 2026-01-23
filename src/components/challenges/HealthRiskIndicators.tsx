@@ -27,7 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Skull,
 };
 
-// Health risk descriptions (in Hungarian)
+// Health risk descriptions (in Hungarian) with professional medical information
 const HEALTH_RISK_DESCRIPTIONS: Record<string, { title: string; description: string }> = {
   "COPD": {
     title: "Krónikus obstruktív tüdőbetegség (COPD)",
@@ -44,6 +44,14 @@ const HEALTH_RISK_DESCRIPTIONS: Record<string, { title: string; description: str
   "Rák": {
     title: "Daganatos betegségek kockázata",
     description: "A dohányzás több mint 15 típusú rákot okozhat, beleértve a tüdő-, száj-, garat-, nyelőcső-, hasnyálmirigy- és hólyagrákot. A leszokás folyamatosan csökkenti a kockázatot az évek múlásával.",
+  },
+  "Stroke": {
+    title: "Agyi érkatasztrófa (Stroke) kockázata",
+    description: "A dohányzás megduplázza a stroke kockázatát az erek károsítása és vérrögök kialakulásának elősegítése révén. A leszokás után 2-5 éven belül a kockázat jelentősen csökken, és 15 év után megegyezik a nemdohányzókéval.",
+  },
+  "Szívbetegség": {
+    title: "Szívbetegségek kockázata",
+    description: "A dohányzás az érelmeszesedés és koszorúér-betegség egyik fő oka. Minden elszívott cigaretta emeli a vérnyomást és károsítja az ereket. A leszokás után már 1 napon belül csökken a szívroham kockázata, 1 év után pedig felére csökken.",
   },
 };
 
