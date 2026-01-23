@@ -167,28 +167,34 @@ export function ChallengeStatusWidget({
                     </div>
                     <div className="space-y-4">
                       {requiredCategories.includes("cigarette_count") && (
-                        <ChallengeChart
-                          observations={observations}
-                          category="cigarette_count"
-                          label="Napi cigarettaszám"
-                          daysToShow={14}
-                        />
+                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                          <ChallengeChart
+                            observations={observations}
+                            category="cigarette_count"
+                            label="Napi cigarettaszám"
+                            daysToShow={14}
+                          />
+                        </div>
                       )}
                       {requiredCategories.includes("craving_level") && (
-                        <ChallengeChart
-                          observations={observations}
-                          category="craving_level"
-                          label="Sóvárgás mértéke"
-                          daysToShow={14}
-                        />
+                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                          <ChallengeChart
+                            observations={observations}
+                            category="craving_level"
+                            label="Sóvárgás mértéke"
+                            daysToShow={14}
+                          />
+                        </div>
                       )}
                       {requiredCategories.includes("weight") && (
-                        <ChallengeChart
-                          observations={observations}
-                          category="weight"
-                          label="Súly (kg)"
-                          daysToShow={30}
-                        />
+                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                          <ChallengeChart
+                            observations={observations}
+                            category="weight"
+                            label="Súly (kg)"
+                            daysToShow={30}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
