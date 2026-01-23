@@ -99,9 +99,9 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
               <button
                 key={risk.id}
                 onClick={() => setSelectedRisk(risk)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer ${getBgClass()}`}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer ${getBgClass()}`}
               >
-                <div className="relative">
+                <div className="relative flex items-center justify-center">
                   <IconComponent 
                     className={`h-8 w-8 transition-colors ${getColorClass()}`} 
                   />
