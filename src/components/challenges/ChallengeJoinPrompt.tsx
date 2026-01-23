@@ -40,7 +40,7 @@ export function ChallengeJoinPrompt({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className={`grid gap-4 ${challengeTypes.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
           {challengeTypes.map((challengeType) => {
             const IconComponent = ICON_MAP[challengeType.icon] || Target;
             

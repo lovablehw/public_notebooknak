@@ -63,7 +63,7 @@ export function ChallengeStatusWidget({
 
       <CardContent className="space-y-6">
         {/* Top Row: Header + Health Risks */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 ${challengeType?.show_health_risks ? 'lg:grid-cols-3' : ''}`}>
           {/* Left: Status and Stats */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header with status */}
@@ -103,7 +103,7 @@ export function ChallengeStatusWidget({
         </div>
 
         {/* Middle Section: Charts and Logging in 2 columns */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className={`grid gap-6 ${requiredCategories.length > 0 ? 'lg:grid-cols-2' : ''}`}>
           {/* Left: Observation Logger */}
           <div>
             <div className="flex items-center gap-2 mb-4">
