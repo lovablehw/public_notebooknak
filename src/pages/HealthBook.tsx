@@ -17,15 +17,85 @@ import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 import { QuestionnaireGrid } from "@/components/dashboard/QuestionnaireGrid";
 import { ObservationCalendar } from "@/components/observations/ObservationCalendar";
 import { ChallengeStatusWidget } from "@/components/challenges/ChallengeStatusWidget";
-import { ChallengeJoinPrompt } from "@/components/challenges/ChallengeJoinPrompt";
 import { 
   Heart, LogOut, Loader2, Settings, BookOpen, ClipboardList, Calendar, Star,
   FlaskConical, Watch, Shield, Eye, 
-  FileText, ChevronDown, ChevronUp, ExternalLink, Trophy,
+  FileText, ChevronDown, ChevronUp, ExternalLink, Trophy, Sparkles, Target, Cigarette,
+  LucideIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { hu } from "date-fns/locale";
+import { ChallengeType, ChallengeMode } from "@/hooks/useChallenges";
+import { ChallengeJoinModal } from "@/components/challenges/ChallengeJoinModal";
+
+// Icon map for challenge types
+const ICON_MAP: Record<string, LucideIcon> = {
+  Cigarette,
+  Target,
+  Trophy,
+};
+
+// Inline join prompt cards for challenges container
+function ChallengeJoinPromptCards({ 
+  challengeTypes, 
+  onJoin 
+}: { 
+  challengeTypes: ChallengeType[]; 
+  onJoin: (challengeTypeId: string, mode: ChallengeMode) => Promise<boolean>;
+}) {
+  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  if (challengeTypes.length === 0) return null;
+
+  return (
+    <>
+      <div className={`grid gap-4 ${challengeTypes.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
+        {challengeTypes.map((challengeType) => {
+          const IconComponent = ICON_MAP[challengeType.icon] || Target;
+          
+          return (
+            <div
+              key={challengeType.id}
+              className="bg-background rounded-lg border border-border p-4 hover:border-primary/50 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+                  <IconComponent className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-foreground">{challengeType.name}</h4>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {challengeType.description}
+                  </p>
+                  <Button
+                    size="sm"
+                    className="mt-3 w-full"
+                    onClick={() => {
+                      setSelectedChallenge(challengeType);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    Csatlakozás
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <ChallengeJoinModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        challengeType={selectedChallenge}
+        onJoin={onJoin}
+        loading={false}
+      />
+    </>
+  );
+}
 
 const HealthBook = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -257,48 +327,75 @@ const HealthBook = () => {
           </div>
         </div>
 
-        {/* Challenge Engine Widget - Full Width Below Timeline */}
-        <div className="animate-fade-in space-y-4">
-          {/* Active Challenges */}
-          {activeChallenges.map(challenge => (
-            <ChallengeStatusWidget
-              key={challenge.id}
-              challenge={challenge}
-              observations={challengeObservations}
-              getDaysSmokeFree={getDaysSmokeFree}
-              getHealthRiskFade={getHealthRiskFade}
-              onLogObservation={handleLogObservation}
-              onPauseChallenge={pauseChallenge}
-              onResumeChallenge={resumeChallenge}
-              onCancelChallenge={cancelChallenge}
-              onRestartChallenge={restartChallenge}
-            />
-          ))}
-          
-          {/* Paused Challenges */}
-          {pausedChallenges.map(challenge => (
-            <ChallengeStatusWidget
-              key={challenge.id}
-              challenge={challenge}
-              observations={challengeObservations}
-              getDaysSmokeFree={getDaysSmokeFree}
-              getHealthRiskFade={getHealthRiskFade}
-              onLogObservation={handleLogObservation}
-              onPauseChallenge={pauseChallenge}
-              onResumeChallenge={resumeChallenge}
-              onCancelChallenge={cancelChallenge}
-              onRestartChallenge={restartChallenge}
-            />
-          ))}
-          
-          {/* Join Prompt - show available challenge types user hasn't joined */}
-          {availableChallengeTypes.length > 0 && (
-            <ChallengeJoinPrompt
-              challengeTypes={availableChallengeTypes}
-              onJoin={joinChallenge}
-            />
-          )}
-        </div>
+        {/* Challenge Engine Widget - Unified Container */}
+        {(activeChallenges.length > 0 || pausedChallenges.length > 0 || availableChallengeTypes.length > 0) && (
+          <Card className="shadow-card border-0 animate-fade-in">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg font-medium">Kihívások</CardTitle>
+              </div>
+              <CardDescription>
+                Kövesd nyomon az aktív kihívásaidat és csatlakozz újakhoz.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Active and Paused Challenges Grid */}
+              {(activeChallenges.length > 0 || pausedChallenges.length > 0) && (
+                <div className={`grid gap-4 ${
+                  activeChallenges.length + pausedChallenges.length === 1 
+                    ? 'grid-cols-1' 
+                    : activeChallenges.length + pausedChallenges.length === 2
+                      ? 'md:grid-cols-2'
+                      : 'md:grid-cols-2 lg:grid-cols-3'
+                }`}>
+                  {/* Active Challenges */}
+                  {activeChallenges.map(challenge => (
+                    <ChallengeStatusWidget
+                      key={challenge.id}
+                      challenge={challenge}
+                      observations={challengeObservations}
+                      getDaysSmokeFree={getDaysSmokeFree}
+                      getHealthRiskFade={getHealthRiskFade}
+                      onLogObservation={handleLogObservation}
+                      onPauseChallenge={pauseChallenge}
+                      onResumeChallenge={resumeChallenge}
+                      onCancelChallenge={cancelChallenge}
+                      onRestartChallenge={restartChallenge}
+                    />
+                  ))}
+                  
+                  {/* Paused Challenges */}
+                  {pausedChallenges.map(challenge => (
+                    <ChallengeStatusWidget
+                      key={challenge.id}
+                      challenge={challenge}
+                      observations={challengeObservations}
+                      getDaysSmokeFree={getDaysSmokeFree}
+                      getHealthRiskFade={getHealthRiskFade}
+                      onLogObservation={handleLogObservation}
+                      onPauseChallenge={pauseChallenge}
+                      onResumeChallenge={resumeChallenge}
+                      onCancelChallenge={cancelChallenge}
+                      onRestartChallenge={restartChallenge}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Join New Challenges Section */}
+              {availableChallengeTypes.length > 0 && (
+                <div className="pt-2 border-t border-border/50">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Csatlakozz új kihíváshoz</h4>
+                  <ChallengeJoinPromptCards
+                    challengeTypes={availableChallengeTypes}
+                    onJoin={joinChallenge}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
 
         {/* Activity, Achievements, Badges Section */}
