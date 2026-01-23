@@ -178,6 +178,145 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_health_risks: {
+        Row: {
+          challenge_type_id: string
+          created_at: string
+          display_order: number
+          fade_end_days: number
+          fade_start_days: number
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          challenge_type_id: string
+          created_at?: string
+          display_order?: number
+          fade_end_days?: number
+          fade_start_days?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          challenge_type_id?: string
+          created_at?: string
+          display_order?: number
+          fade_end_days?: number
+          fade_start_days?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_health_risks_challenge_type_id_fkey"
+            columns: ["challenge_type_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_milestones: {
+        Row: {
+          challenge_type_id: string
+          created_at: string
+          days_required: number | null
+          description: string
+          display_order: number
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          points_awarded: number
+          target_value: number | null
+        }
+        Insert: {
+          challenge_type_id: string
+          created_at?: string
+          days_required?: number | null
+          description: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          points_awarded?: number
+          target_value?: number | null
+        }
+        Update: {
+          challenge_type_id?: string
+          created_at?: string
+          days_required?: number | null
+          description?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          points_awarded?: number
+          target_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_milestones_challenge_type_id_fkey"
+            columns: ["challenge_type_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_types: {
+        Row: {
+          created_at: string
+          default_mode: Database["public"]["Enums"]["challenge_mode"]
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          required_observation_types: string[]
+          show_daily_counter: boolean
+          show_health_risks: boolean
+          show_streak_counter: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_mode?: Database["public"]["Enums"]["challenge_mode"]
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          required_observation_types?: string[]
+          show_daily_counter?: boolean
+          show_health_risks?: boolean
+          show_streak_counter?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_mode?: Database["public"]["Enums"]["challenge_mode"]
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          required_observation_types?: string[]
+          show_daily_counter?: boolean
+          show_health_risks?: boolean
+          show_streak_counter?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consent_versions: {
         Row: {
           content: string
@@ -423,6 +562,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_challenges: {
+        Row: {
+          challenge_type_id: string
+          completed_at: string | null
+          created_at: string
+          current_mode: Database["public"]["Enums"]["challenge_mode"]
+          current_streak_days: number
+          id: string
+          last_zero_logged_at: string | null
+          longest_streak_days: number
+          quit_date: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_type_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_mode?: Database["public"]["Enums"]["challenge_mode"]
+          current_streak_days?: number
+          id?: string
+          last_zero_logged_at?: string | null
+          longest_streak_days?: number
+          quit_date?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["challenge_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_type_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_mode?: Database["public"]["Enums"]["challenge_mode"]
+          current_streak_days?: number
+          id?: string
+          last_zero_logged_at?: string | null
+          longest_streak_days?: number
+          quit_date?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["challenge_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_type_id_fkey"
+            columns: ["challenge_type_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_consents: {
         Row: {
           communication_preferences: boolean
@@ -523,6 +718,78 @@ export type Database = {
         }
         Relationships: []
       }
+      user_milestone_unlocks: {
+        Row: {
+          id: string
+          milestone_id: string
+          unlocked_at: string
+          user_challenge_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          milestone_id: string
+          unlocked_at?: string
+          user_challenge_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          milestone_id?: string
+          unlocked_at?: string
+          user_challenge_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_milestone_unlocks_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_milestone_unlocks_user_challenge_id_fkey"
+            columns: ["user_challenge_id"]
+            isOneToOne: false
+            referencedRelation: "user_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_observations: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          note: string | null
+          numeric_value: number | null
+          observation_date: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          numeric_value?: number | null
+          observation_date: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          numeric_value?: number | null
+          observation_date?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       user_points: {
         Row: {
           created_at: string
@@ -615,6 +882,10 @@ export type Database = {
         Args: { p_points?: number; p_upload_type: string }
         Returns: Json
       }
+      check_challenge_milestones: {
+        Args: { p_user_challenge_id: string }
+        Returns: Json
+      }
       check_is_admin: { Args: never; Returns: boolean }
       get_admin_list_masked: {
         Args: never
@@ -660,6 +931,16 @@ export type Database = {
         Args: { p_event_type: string; p_metadata?: Json }
         Returns: undefined
       }
+      log_challenge_observation: {
+        Args: {
+          p_category: string
+          p_note?: string
+          p_numeric_value?: number
+          p_observation_date?: string
+          p_value: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       activity_type:
@@ -669,6 +950,8 @@ export type Database = {
         | "patient_summary_upload"
         | "observation_creation"
       admin_role: "super_admin" | "service_admin"
+      challenge_mode: "tracking" | "reduction" | "quitting" | "maintenance"
+      challenge_status: "active" | "completed" | "paused" | "cancelled"
       reward_frequency: "per_event" | "daily" | "once_total"
       url_target_type: "_blank" | "_self" | "postmessage"
     }
@@ -806,6 +1089,8 @@ export const Constants = {
         "observation_creation",
       ],
       admin_role: ["super_admin", "service_admin"],
+      challenge_mode: ["tracking", "reduction", "quitting", "maintenance"],
+      challenge_status: ["active", "completed", "paused", "cancelled"],
       reward_frequency: ["per_event", "daily", "once_total"],
       url_target_type: ["_blank", "_self", "postmessage"],
     },

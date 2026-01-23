@@ -5,6 +5,7 @@ import { useConsent } from "@/hooks/useConsent";
 import { usePoints } from "@/hooks/usePoints";
 import { useQuestionnaireConfig } from "@/hooks/useQuestionnaireConfig";
 import { useObservations, ObservationCategory } from "@/hooks/useObservations";
+import { useChallenges } from "@/hooks/useChallenges";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useButtonConfigs } from "@/hooks/useButtonConfigs";
 import { useLegacyQuestionnaireSeed } from "@/hooks/useLegacyQuestionnaireSeed";
@@ -15,6 +16,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
 import { QuestionnaireGrid } from "@/components/dashboard/QuestionnaireGrid";
 import { ObservationCalendar } from "@/components/observations/ObservationCalendar";
+import { ChallengeStatusWidget } from "@/components/challenges/ChallengeStatusWidget";
+import { ChallengeJoinPrompt } from "@/components/challenges/ChallengeJoinPrompt";
 import { 
   Heart, LogOut, Loader2, Settings, BookOpen, ClipboardList, Calendar, Star,
   FlaskConical, Watch, Shield, Eye, 
@@ -40,6 +43,16 @@ const HealthBook = () => {
     getUniqueCompletedCount: getDbUniqueCompletedCount,
   } = useQuestionnaireConfig();
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel } = useObservations();
+  const { 
+    challengeTypes, 
+    activeChallenge, 
+    observations: challengeObservations,
+    loading: challengesLoading,
+    joinChallenge,
+    logObservation,
+    getDaysSmokeFree,
+    getHealthRiskFade,
+  } = useChallenges();
   const { isAdmin } = useAdmin();
   const { buttonConfigs, loading: buttonConfigsLoading, getButtonConfig, refetch: refetchButtonConfigs } = useButtonConfigs();
   const navigate = useNavigate();
@@ -132,7 +145,7 @@ const HealthBook = () => {
     hasOptionalConsent: userConsent?.communication_preferences || false,
   };
 
-  if (authLoading || consentLoading || questionnairesLoading || observationsLoading) {
+  if (authLoading || consentLoading || questionnairesLoading || observationsLoading || challengesLoading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -174,6 +187,22 @@ const HealthBook = () => {
             Itt láthatod a kitöltött felméréseid történetét, a saját megfigyeléseidet és egészségügyi adataidat.
           </p>
         </div>
+
+        {/* Challenge Engine Widget */}
+        {activeChallenge ? (
+          <ChallengeStatusWidget
+            challenge={activeChallenge}
+            observations={challengeObservations}
+            getDaysSmokeFree={getDaysSmokeFree}
+            getHealthRiskFade={getHealthRiskFade}
+            onLogObservation={logObservation}
+          />
+        ) : challengeTypes.length > 0 ? (
+          <ChallengeJoinPrompt
+            challengeTypes={challengeTypes}
+            onJoin={joinChallenge}
+          />
+        ) : null}
 
         {/* Timeline Placeholder */}
         {/* Medalyse Timeline - mobile: minimal chrome, desktop: card */}
