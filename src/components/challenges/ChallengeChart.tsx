@@ -23,26 +23,37 @@ export function ChallengeChart({
   showTrendLine = true,
 }: ChallengeChartProps) {
   const chartData = useMemo(() => {
-    // Get date range
+    // Filter observations for this category with numeric values
+    const categoryObservations = observations
+      .filter(o => o.category === category && o.numeric_value !== null)
+      .sort((a, b) => a.observation_date.localeCompare(b.observation_date));
+    
+    if (categoryObservations.length === 0) {
+      return [];
+    }
+    
+    // Get date range from first entry to today
+    const firstEntryDate = parseISO(categoryObservations[0].observation_date);
     const endDate = new Date();
-    const startDate = subDays(endDate, daysToShow - 1);
+    
+    // Calculate days between first entry and today
+    const daysDiff = Math.ceil((endDate.getTime() - firstEntryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const actualDaysToShow = Math.min(Math.max(daysDiff, 7), daysToShow); // At least 7 days, max daysToShow
     
     // Create a map of date -> value
     const valueMap = new Map<string, number>();
-    observations
-      .filter(o => o.category === category && o.numeric_value !== null)
-      .forEach(o => {
-        const dateKey = o.observation_date;
-        // If multiple entries for same day, use the latest
-        if (!valueMap.has(dateKey)) {
-          valueMap.set(dateKey, o.numeric_value!);
-        }
-      });
+    categoryObservations.forEach(o => {
+      const dateKey = o.observation_date;
+      // If multiple entries for same day, use the latest
+      if (!valueMap.has(dateKey)) {
+        valueMap.set(dateKey, o.numeric_value!);
+      }
+    });
     
-    // Generate data points for each day
+    // Generate data points starting from first entry date
     const data: Array<{ date: string; value: number | null; displayDate: string }> = [];
-    for (let i = 0; i < daysToShow; i++) {
-      const date = subDays(endDate, daysToShow - 1 - i);
+    for (let i = 0; i < actualDaysToShow; i++) {
+      const date = subDays(endDate, actualDaysToShow - 1 - i);
       const dateKey = format(date, "yyyy-MM-dd");
       data.push({
         date: dateKey,
