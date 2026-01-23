@@ -99,9 +99,9 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
               <button
                 key={risk.id}
                 onClick={() => setSelectedRisk(risk)}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer ${getBgClass()}`}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer w-24 min-h-[88px] ${getBgClass()}`}
               >
-                <div className="relative flex items-center justify-center">
+                <div className="relative flex items-center justify-center h-8">
                   <IconComponent 
                     className={`h-8 w-8 transition-colors ${getColorClass()}`} 
                   />
@@ -113,7 +113,7 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
                     </div>
                   )}
                 </div>
-                <span className="text-xs font-medium text-center max-w-[80px] leading-tight">
+                <span className="text-xs font-medium text-center leading-tight">
                   {risk.name}
                 </span>
               </button>
