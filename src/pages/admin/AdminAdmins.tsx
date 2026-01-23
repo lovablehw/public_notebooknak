@@ -21,20 +21,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-/**
- * Masks an email address for display to reduce exposure risk.
- * Example: "admin@example.com" -> "a***n@example.com"
- */
-function maskEmail(email: string): string {
-  const [localPart, domain] = email.split("@");
-  if (!domain || localPart.length <= 2) {
-    // Very short emails: just show first char + asterisks
-    return localPart.charAt(0) + "***@" + (domain || "***");
-  }
-  // Show first and last character of local part
-  const firstChar = localPart.charAt(0);
-  const lastChar = localPart.charAt(localPart.length - 1);
-  return `${firstChar}***${lastChar}@${domain}`;
+// Interface for masked admin data returned by the secure RPC function
+interface MaskedAdmin {
+  id: string;
+  masked_email: string;
+  created_at: string;
+  has_user_id: boolean;
 }
 
 export default function AdminAdmins() {
@@ -42,15 +34,14 @@ export default function AdminAdmins() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Use the secure RPC function that returns masked emails instead of raw data
+  // This prevents email exposure even if a super admin account is compromised
   const { data: admins, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users-masked"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("admin_users")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("get_admin_list_masked");
       if (error) throw error;
-      return data;
+      return data as MaskedAdmin[];
     },
   });
 
@@ -75,7 +66,7 @@ export default function AdminAdmins() {
         description: "Az új admin sikeresen hozzáadva. A felhasználó a következő bejelentkezéskor kapja meg az admin jogosultságot.",
       });
       setNewEmail("");
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-masked"] });
       queryClient.invalidateQueries({ queryKey: ["admin-audit-events"] });
     },
     onError: (error: Error) => {
@@ -90,17 +81,17 @@ export default function AdminAdmins() {
   });
 
   const removeAdminMutation = useMutation({
-    mutationFn: async ({ id, email }: { id: string; email: string }) => {
+    mutationFn: async ({ id, maskedEmail }: { id: string; maskedEmail: string }) => {
       const { error } = await supabase
         .from("admin_users")
         .delete()
         .eq("id", id);
       if (error) throw error;
       
-      // Log audit event via secure RPC function
+      // Log audit event via secure RPC function - only log masked email for privacy
       await supabase.rpc("log_audit_event", {
         p_event_type: "admin_removed",
-        p_metadata: { email },
+        p_metadata: { masked_email: maskedEmail },
       });
     },
     onSuccess: () => {
@@ -108,8 +99,7 @@ export default function AdminAdmins() {
         title: "Admin eltávolítva",
         description: "Az admin sikeresen eltávolítva.",
       });
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-audit-events"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users-masked"] });
     },
     onError: () => {
       toast({
@@ -196,7 +186,7 @@ export default function AdminAdmins() {
                 admins?.map((admin) => (
                   <TableRow key={admin.id} id={`admin-${admin.id}`} className="scroll-mt-4">
                     <TableCell className="font-medium" title="Az email cím biztonsági okokból részlegesen rejtett">
-                      {maskEmail(admin.email)}
+                      {admin.masked_email}
                     </TableCell>
                     <TableCell>
                       {format(new Date(admin.created_at), "yyyy. MMM d.", { locale: hu })}
@@ -216,14 +206,14 @@ export default function AdminAdmins() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Admin eltávolítása</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Biztosan eltávolítja <strong>{maskEmail(admin.email)}</strong> admin jogosultságát?
+                              Biztosan eltávolítja <strong>{admin.masked_email}</strong> admin jogosultságát?
                               Ez a művelet nem vonható vissza.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Mégse</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => removeAdminMutation.mutate({ id: admin.id, email: admin.email })}
+                              onClick={() => removeAdminMutation.mutate({ id: admin.id, maskedEmail: admin.masked_email })}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               Eltávolítás
