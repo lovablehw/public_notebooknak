@@ -66,7 +66,7 @@ export function ChallengeStatusWidget({
   onCancelChallenge,
   onRestartChallenge,
 }: ChallengeStatusWidgetProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Default collapsed for cleaner UI
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   
@@ -264,80 +264,74 @@ export function ChallengeStatusWidget({
             </div>
           </div>
 
-          {/* Collapsible Content: Charts, Logger, Health Risks, Badges */}
-          <CollapsibleContent className="space-y-6">
-            {/* Logger + Charts Row */}
-            <div className={cn(
-              "grid gap-6",
-              requiredCategories.length > 0 ? "lg:grid-cols-3" : ""
-            )}>
-              {/* Left 2/3: Logger + Charts */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Observation Logger */}
-                <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
-                  <div className="flex items-center gap-2 mb-4">
-                    <PlusCircle className="h-5 w-5 text-primary" />
-                    <h3 className="font-medium">Napi rögzítés</h3>
-                  </div>
-                  <ObservationLogger
-                    requiredCategories={requiredCategories}
-                    onLog={onLogObservation}
-                  />
-                </div>
-
-                {/* Progress Charts */}
-                {requiredCategories.length > 0 && (
-                  <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
-                    <div className="flex items-center gap-2 mb-4">
-                      <BarChart3 className="h-5 w-5 text-primary" />
-                      <h3 className="font-medium">Haladás</h3>
-                    </div>
-                    <div className="space-y-4">
-                      {requiredCategories.includes("cigarette_count") && (
-                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                          <ChallengeChart
-                            observations={observations}
-                            category="cigarette_count"
-                            label="Napi cigarettaszám"
-                            daysToShow={14}
-                          />
-                        </div>
-                      )}
-                      {requiredCategories.includes("craving_level") && (
-                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                          <ChallengeChart
-                            observations={observations}
-                            category="craving_level"
-                            label="Sóvárgás mértéke"
-                            daysToShow={14}
-                          />
-                        </div>
-                      )}
-                      {requiredCategories.includes("weight") && (
-                        <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                          <ChallengeChart
-                            observations={observations}
-                            category="weight"
-                            label="Súly (kg)"
-                            daysToShow={30}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+          {/* Collapsible Content: Logger, Charts, Health Risks, Badges */}
+          <CollapsibleContent className="space-y-6 pt-4 border-t border-border/30">
+            {/* Observation Logger - Full Width */}
+            <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+              <div className="flex items-center gap-2 mb-4">
+                <PlusCircle className="h-5 w-5 text-primary" />
+                <h3 className="font-medium">Napi rögzítés</h3>
               </div>
-
-              {/* Right 1/3: Health Risks (only for challenges with risks) */}
-              {challengeType?.show_health_risks && (
-                <div className="lg:col-span-1">
-                  <HealthRiskIndicators 
-                    challenge={challenge}
-                    getHealthRiskFade={getHealthRiskFade}
-                  />
-                </div>
-              )}
+              <ObservationLogger
+                requiredCategories={requiredCategories}
+                onLog={onLogObservation}
+              />
             </div>
+
+            {/* Progress Charts - Full Width, Stacked */}
+            {requiredCategories.length > 0 && (
+              <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <h3 className="font-medium">Haladás</h3>
+                </div>
+                <div className="space-y-4">
+                  {requiredCategories.includes("cigarette_count") && (
+                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                      <ChallengeChart
+                        observations={observations}
+                        category="cigarette_count"
+                        label="Napi cigarettaszám"
+                        daysToShow={14}
+                        challengeId={challenge.id}
+                      />
+                    </div>
+                  )}
+                  {requiredCategories.includes("craving_level") && (
+                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                      <ChallengeChart
+                        observations={observations}
+                        category="craving_level"
+                        label="Sóvárgás mértéke"
+                        daysToShow={14}
+                        challengeId={challenge.id}
+                      />
+                    </div>
+                  )}
+                  {requiredCategories.includes("weight") && (
+                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                      <ChallengeChart
+                        observations={observations}
+                        category="weight"
+                        label="Súly (kg)"
+                        daysToShow={30}
+                        challengeId={challenge.id}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Health Risks - Full Width */}
+            {challengeType?.show_health_risks && (
+              <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+                <HealthRiskIndicators 
+                  challenge={challenge}
+                  getHealthRiskFade={getHealthRiskFade}
+                />
+              </div>
+            )}
 
             {/* Bottom: Milestones / Rewards Section */}
             <div className="border-t pt-6">

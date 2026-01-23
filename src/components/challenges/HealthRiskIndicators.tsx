@@ -75,8 +75,8 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
           {isQuitting && " csökkenése"}
         </h4>
         
-        {/* Horizontal icon layout for top-line widget */}
-        <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+        {/* Horizontal icon layout - structured grid for consistent alignment */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 justify-items-center">
           {healthRisks.map((risk) => {
             const fadePercent = isQuitting ? getHealthRiskFade(challenge, risk) : 0;
             const IconComponent = ICON_MAP[risk.icon] || AlertTriangle;
@@ -99,21 +99,21 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
               <button
                 key={risk.id}
                 onClick={() => setSelectedRisk(risk)}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer w-24 min-h-[88px] ${getBgClass()}`}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer w-20 h-[88px] ${getBgClass()}`}
               >
-                <div className="relative flex items-center justify-center h-8">
+                <div className="relative flex items-center justify-center h-8 w-8">
                   <IconComponent 
-                    className={`h-8 w-8 transition-colors ${getColorClass()}`} 
+                    className={`h-7 w-7 transition-colors ${getColorClass()}`} 
                   />
                   {isQuitting && fadePercent > 0 && (
                     <div 
-                      className="absolute -bottom-1 -right-1 text-xs font-bold bg-background rounded-full px-1"
+                      className="absolute -bottom-1 -right-1 text-[10px] font-bold bg-background rounded-full px-1 shadow-sm"
                     >
                       -{fadePercent}%
                     </div>
                   )}
                 </div>
-                <span className="text-xs font-medium text-center leading-tight">
+                <span className="text-[11px] font-medium text-center leading-tight line-clamp-2 max-w-full px-1">
                   {risk.name}
                 </span>
               </button>
