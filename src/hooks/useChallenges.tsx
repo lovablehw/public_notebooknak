@@ -136,10 +136,13 @@ export function useChallenges() {
   const fetchUserChallenges = useCallback(async () => {
     if (!user) return;
     
-    // Fetch user challenges (active and paused)
+    // Fetch user challenges (active and paused) with challenge_types joined
     const { data: challenges, error: challengesError } = await supabase
       .from("user_challenges")
-      .select("*")
+      .select(`
+        *,
+        challenge_types (*)
+      `)
       .eq("user_id", user.id)
       .in("status", ["active", "paused"]);
     
@@ -180,17 +183,17 @@ export function useChallenges() {
     
     const unlockedMilestoneIds = new Set(unlockedMilestones?.map(u => u.milestone_id) || []);
     
-    // Combine data
+    // Combine data - use joined challenge_types from query
     const enrichedChallenges: UserChallenge[] = challenges.map(c => ({
       ...c,
-      challenge_type: challengeTypes.find(ct => ct.id === c.challenge_type_id),
+      challenge_type: c.challenge_types as unknown as ChallengeType,
       milestones: milestones?.filter(m => m.challenge_type_id === c.challenge_type_id) || [],
       health_risks: healthRisks?.filter(hr => hr.challenge_type_id === c.challenge_type_id) || [],
       unlocked_milestones: Array.from(unlockedMilestoneIds),
     }));
     
     setUserChallenges(enrichedChallenges);
-  }, [user, challengeTypes]);
+  }, [user]);
 
   // Fetch observations
   const fetchObservations = useCallback(async () => {
@@ -389,12 +392,12 @@ export function useChallenges() {
     loadData();
   }, [fetchChallengeTypes]);
 
-  // Load user-specific data when user changes or challenge types are loaded
+  // Load user-specific data when user changes
   useEffect(() => {
-    if (user && challengeTypes.length > 0) {
+    if (user) {
       Promise.all([fetchUserChallenges(), fetchObservations()]);
     }
-  }, [user, challengeTypes, fetchUserChallenges, fetchObservations]);
+  }, [user, fetchUserChallenges, fetchObservations]);
 
   // Pause a challenge
   const pauseChallenge = useCallback(async (userChallengeId: string) => {
