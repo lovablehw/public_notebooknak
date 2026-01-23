@@ -58,6 +58,53 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Validates that a color string is a safe CSS color value
+// Accepts: hex (#fff, #ffffff), rgb/rgba, hsl/hsla, and named CSS colors
+const isValidCssColor = (color: string): boolean => {
+  if (!color || typeof color !== 'string') return false;
+  
+  const trimmed = color.trim();
+  
+  // Hex colors: #fff, #ffffff, #ffffffff
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(trimmed)) {
+    return true;
+  }
+  
+  // RGB/RGBA: rgb(0,0,0), rgba(0,0,0,0.5), with optional spaces
+  if (/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+))?\s*\)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // HSL/HSLA: hsl(0, 0%, 0%), hsla(0, 0%, 0%, 0.5)
+  if (/^hsla?\(\s*\d{1,3}(\.\d+)?\s*,?\s*\d{1,3}(\.\d+)?%?\s*,?\s*\d{1,3}(\.\d+)?%?\s*(,?\s*(0|1|0?\.\d+|\d{1,3}%))?\s*\)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // Modern HSL syntax: hsl(0 0% 0% / 0.5)
+  if (/^hsla?\(\s*\d{1,3}(\.\d+)?\s+\d{1,3}(\.\d+)?%\s+\d{1,3}(\.\d+)?%(\s*\/\s*(0|1|0?\.\d+|\d{1,3}%))?\s*\)$/.test(trimmed)) {
+    return true;
+  }
+  
+  // CSS named colors (common subset) - no special characters allowed
+  const namedColors = [
+    'transparent', 'currentcolor', 'inherit',
+    'black', 'white', 'red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink',
+    'gray', 'grey', 'brown', 'cyan', 'magenta', 'lime', 'navy', 'teal', 'olive',
+    'maroon', 'aqua', 'fuchsia', 'silver', 'coral', 'crimson', 'indigo', 'violet'
+  ];
+  if (namedColors.includes(trimmed.toLowerCase())) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Sanitizes a CSS property key to prevent injection
+const sanitizeCssKey = (key: string): string => {
+  // Only allow alphanumeric characters, hyphens, and underscores
+  return key.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -75,8 +122,14 @@ ${prefix} [data-chart=${id}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const sanitizedKey = sanitizeCssKey(key);
+    // Only output the CSS variable if the color is valid
+    if (color && isValidCssColor(color)) {
+      return `  --color-${sanitizedKey}: ${color};`;
+    }
+    return null;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
