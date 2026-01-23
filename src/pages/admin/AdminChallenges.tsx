@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -23,6 +24,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Tabs,
@@ -30,9 +32,16 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, X, Plus, Trash2, Target, Trophy, AlertTriangle, Flame } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Target, Trophy, AlertTriangle, Flame, Award, HeartPulse, Wind, Activity, Skull } from "lucide-react";
 
 interface ChallengeType {
   id: string;
@@ -80,7 +89,19 @@ const OBSERVATION_TYPE_LABELS: Record<string, string> = {
   energy: "Energiaszint",
   sleep: "Alvásminőség",
   note: "Megjegyzés",
+  resisted_lighting: "Ellenállás rögzítés",
 };
+
+const OBSERVATION_TYPES = [
+  { value: "cigarette_count", label: "Napi cigaretta" },
+  { value: "craving_level", label: "Sóvárgás mértéke" },
+  { value: "weight", label: "Súly (kg)" },
+  { value: "mood", label: "Hangulat" },
+  { value: "energy", label: "Energiaszint" },
+  { value: "sleep", label: "Alvásminőség" },
+  { value: "note", label: "Megjegyzés" },
+  { value: "resisted_lighting", label: "Ellenállás rögzítés" },
+];
 
 const MODE_LABELS: Record<string, string> = {
   tracking: "Követés",
@@ -88,6 +109,18 @@ const MODE_LABELS: Record<string, string> = {
   quitting: "Leszokás",
   maintenance: "Fenntartás",
 };
+
+const ICON_OPTIONS = [
+  { value: "Award", label: "Díj", icon: Award },
+  { value: "Trophy", label: "Trófea", icon: Trophy },
+  { value: "Target", label: "Célpont", icon: Target },
+  { value: "Flame", label: "Láng", icon: Flame },
+  { value: "HeartPulse", label: "Szív", icon: HeartPulse },
+  { value: "Wind", label: "Tüdő", icon: Wind },
+  { value: "AlertTriangle", label: "Figyelmeztetés", icon: AlertTriangle },
+  { value: "Activity", label: "Aktivitás", icon: Activity },
+  { value: "Skull", label: "Koponya", icon: Skull },
+];
 
 export default function AdminChallenges() {
   const { isAdmin, loading: adminLoading } = useAdmin();
@@ -102,9 +135,35 @@ export default function AdminChallenges() {
   const [loading, setLoading] = useState(true);
   const [selectedChallengeType, setSelectedChallengeType] = useState<string | null>(null);
 
+  // Create new challenge type
+  const [showCreateChallenge, setShowCreateChallenge] = useState(false);
+  const [newChallengeForm, setNewChallengeForm] = useState({
+    name: "",
+    description: "",
+    icon: "Flame",
+    required_observation_types: [] as string[],
+    default_mode: "tracking",
+    show_daily_counter: true,
+    show_streak_counter: true,
+    show_health_risks: false,
+  });
+
   // Edit states
+  const [editingType, setEditingType] = useState<ChallengeType | null>(null);
   const [editingMilestone, setEditingMilestone] = useState<ChallengeMilestone | null>(null);
   const [editingRisk, setEditingRisk] = useState<ChallengeHealthRisk | null>(null);
+  
+  const [typeForm, setTypeForm] = useState({
+    name: "",
+    description: "",
+    icon: "Flame",
+    required_observation_types: [] as string[],
+    default_mode: "tracking",
+    show_daily_counter: true,
+    show_streak_counter: true,
+    show_health_risks: false,
+  });
+
   const [milestoneForm, setMilestoneForm] = useState({
     name: "",
     description: "",
@@ -113,8 +172,10 @@ export default function AdminChallenges() {
     points_awarded: 0,
     display_order: 0,
   });
+  
   const [riskForm, setRiskForm] = useState({
     name: "",
+    description: "",
     icon: "AlertTriangle",
     fade_start_days: 1,
     fade_end_days: 365,
@@ -167,6 +228,89 @@ export default function AdminChallenges() {
     }
   };
 
+  // Challenge type handlers
+  const handleCreateChallenge = async () => {
+    if (!isServiceAdmin || !newChallengeForm.name.trim()) {
+      toast({ title: "Hiányzó adatok", description: "Add meg a kihívás nevét!", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("challenge_types").insert({
+        name: newChallengeForm.name,
+        description: newChallengeForm.description || null,
+        icon: newChallengeForm.icon,
+        required_observation_types: newChallengeForm.required_observation_types,
+        default_mode: newChallengeForm.default_mode as "tracking" | "reduction" | "quitting" | "maintenance",
+        show_daily_counter: newChallengeForm.show_daily_counter,
+        show_streak_counter: newChallengeForm.show_streak_counter,
+        show_health_risks: newChallengeForm.show_health_risks,
+        is_active: true,
+      });
+
+      if (error) throw error;
+      
+      toast({ title: "Létrehozva", description: "Az új kihívás típus sikeresen létrejött." });
+      setShowCreateChallenge(false);
+      setNewChallengeForm({
+        name: "",
+        description: "",
+        icon: "Flame",
+        required_observation_types: [],
+        default_mode: "tracking",
+        show_daily_counter: true,
+        show_streak_counter: true,
+        show_health_risks: false,
+      });
+      fetchData();
+    } catch (error) {
+      console.error("Error creating challenge type:", error);
+      toast({ title: "Hiba", description: "Nem sikerült létrehozni a kihívást.", variant: "destructive" });
+    }
+  };
+
+  const handleEditType = (ct: ChallengeType) => {
+    setEditingType(ct);
+    setTypeForm({
+      name: ct.name,
+      description: ct.description || "",
+      icon: ct.icon,
+      required_observation_types: ct.required_observation_types,
+      default_mode: ct.default_mode,
+      show_daily_counter: ct.show_daily_counter,
+      show_streak_counter: ct.show_streak_counter,
+      show_health_risks: ct.show_health_risks,
+    });
+  };
+
+  const handleSaveType = async () => {
+    if (!editingType || !isServiceAdmin) return;
+
+    try {
+      const { error } = await supabase
+        .from("challenge_types")
+        .update({
+          name: typeForm.name,
+          description: typeForm.description || null,
+          icon: typeForm.icon,
+          required_observation_types: typeForm.required_observation_types as string[],
+          default_mode: typeForm.default_mode as "tracking" | "reduction" | "quitting" | "maintenance",
+          show_daily_counter: typeForm.show_daily_counter,
+          show_streak_counter: typeForm.show_streak_counter,
+          show_health_risks: typeForm.show_health_risks,
+        })
+        .eq("id", editingType.id);
+
+      if (error) throw error;
+      toast({ title: "Mentve" });
+      setEditingType(null);
+      fetchData();
+    } catch (error) {
+      console.error("Error saving challenge type:", error);
+      toast({ title: "Hiba", variant: "destructive" });
+    }
+  };
+
   const handleToggleChallengeType = async (ct: ChallengeType) => {
     if (!isServiceAdmin) {
       toast({ title: "Nincs jogosultság", variant: "destructive" });
@@ -185,6 +329,23 @@ export default function AdminChallenges() {
     } catch (error) {
       console.error("Error toggling challenge type:", error);
       toast({ title: "Hiba", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteType = async (id: string) => {
+    if (!isServiceAdmin) return;
+
+    try {
+      const { error } = await supabase.from("challenge_types").delete().eq("id", id);
+      if (error) throw error;
+      toast({ title: "Törölve" });
+      if (selectedChallengeType === id) {
+        setSelectedChallengeType(null);
+      }
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting challenge type:", error);
+      toast({ title: "Hiba", description: "Lehet, hogy tartoznak hozzá mérföldkövek vagy kockázatok.", variant: "destructive" });
     }
   };
 
@@ -234,7 +395,7 @@ export default function AdminChallenges() {
       const { error } = await supabase.from("challenge_milestones").insert({
         challenge_type_id: selectedChallengeType,
         name: "Új mérföldkő",
-        description: "Mérföldkő leírása",
+        description: "Biológiai változás leírása ide kerül",
         icon: "Award",
         days_required: 7,
         points_awarded: 50,
@@ -269,6 +430,7 @@ export default function AdminChallenges() {
     setEditingRisk(risk);
     setRiskForm({
       name: risk.name,
+      description: "",
       icon: risk.icon,
       fade_start_days: risk.fade_start_days,
       fade_end_days: risk.fade_end_days,
@@ -356,14 +518,22 @@ export default function AdminChallenges() {
   return (
     <AdminLayout title="Kihívások">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Flame className="h-6 w-6 text-primary" />
-            Kihívások kezelése
-          </h1>
-          <p className="text-muted-foreground">
-            Kihívás típusok, mérföldkövek és egészségügyi kockázatok konfigurálása
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Flame className="h-6 w-6 text-primary" />
+              Kihívások kezelése
+            </h1>
+            <p className="text-muted-foreground">
+              Kihívás típusok, mérföldkövek és egészségügyi kockázatok konfigurálása
+            </p>
+          </div>
+          {isServiceAdmin && (
+            <Button onClick={() => setShowCreateChallenge(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Új kihívás
+            </Button>
+          )}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -374,7 +544,7 @@ export default function AdminChallenges() {
             </TabsTrigger>
             <TabsTrigger value="milestones" className="gap-1">
               <Trophy className="h-4 w-4" />
-              Mérföldkövek
+              Mérföldkövek (Jutalmak)
             </TabsTrigger>
             <TabsTrigger value="risks" className="gap-1">
               <AlertTriangle className="h-4 w-4" />
@@ -391,13 +561,24 @@ export default function AdminChallenges() {
                     <TableHead>Név</TableHead>
                     <TableHead>Megfigyelés típusok</TableHead>
                     <TableHead>Alapértelmezett mód</TableHead>
+                    <TableHead className="text-center">Kockázatok</TableHead>
                     <TableHead className="text-center">Aktív</TableHead>
+                    <TableHead className="text-right">Műveletek</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {challengeTypes.map((ct) => (
                     <TableRow key={ct.id}>
-                      <TableCell className="font-medium">{ct.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div>
+                          {ct.name}
+                          {ct.description && (
+                            <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate">
+                              {ct.description}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {ct.required_observation_types.map((type) => (
@@ -409,14 +590,40 @@ export default function AdminChallenges() {
                       </TableCell>
                       <TableCell>{MODE_LABELS[ct.default_mode] || ct.default_mode}</TableCell>
                       <TableCell className="text-center">
+                        {ct.show_health_risks ? (
+                          <Badge variant="default" className="text-xs">Igen</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">Nem</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Switch
                           checked={ct.is_active}
                           onCheckedChange={() => handleToggleChallengeType(ct)}
                           disabled={!isServiceAdmin}
                         />
                       </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditType(ct)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {isServiceAdmin && (
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteType(ct.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
+                  {challengeTypes.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Nincsenek kihívás típusok. Hozz létre egyet az "Új kihívás" gombbal!
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -428,6 +635,7 @@ export default function AdminChallenges() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Kihívás típus kiválasztása</CardTitle>
+                <CardDescription>A mérföldkövek (jutalmak) mindig egy konkrét kihíváshoz tartoznak</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -448,7 +656,10 @@ export default function AdminChallenges() {
             {selectedType && (
               <>
                 <div className="flex justify-between items-center">
-                  <h3 className="font-medium">{selectedType.name} - Mérföldkövek</h3>
+                  <div>
+                    <h3 className="font-medium">{selectedType.name} - Mérföldkövek (Jutalmak)</h3>
+                    <p className="text-sm text-muted-foreground">Adj hozzá biológiai változásokat és jutalmakat minden mérföldkőhöz</p>
+                  </div>
                   {isServiceAdmin && (
                     <Button size="sm" onClick={handleAddMilestone}>
                       <Plus className="h-4 w-4 mr-1" />
@@ -461,8 +672,8 @@ export default function AdminChallenges() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Név</TableHead>
-                        <TableHead>Leírás</TableHead>
+                        <TableHead>Név (Badge)</TableHead>
+                        <TableHead>Biológiai változás leírása</TableHead>
                         <TableHead className="text-center">Napok</TableHead>
                         <TableHead className="text-center">Pontok</TableHead>
                         <TableHead className="text-right">Műveletek</TableHead>
@@ -471,8 +682,19 @@ export default function AdminChallenges() {
                     <TableBody>
                       {filteredMilestones.map((m) => (
                         <TableRow key={m.id}>
-                          <TableCell className="font-medium">{m.name}</TableCell>
-                          <TableCell className="max-w-xs truncate">{m.description}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const iconOption = ICON_OPTIONS.find(i => i.value === m.icon);
+                                const IconComponent = iconOption?.icon || Award;
+                                return <IconComponent className="h-4 w-4 text-primary" />;
+                              })()}
+                              {m.name}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <span className="text-sm text-muted-foreground">{m.description}</span>
+                          </TableCell>
                           <TableCell className="text-center">{m.days_required || "–"}</TableCell>
                           <TableCell className="text-center text-primary">+{m.points_awarded}</TableCell>
                           <TableCell className="text-right">
@@ -492,13 +714,59 @@ export default function AdminChallenges() {
                       {filteredMilestones.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center text-muted-foreground">
-                            Nincsenek mérföldkövek
+                            Nincsenek mérföldkövek. Adj hozzá az "Új mérföldkő" gombbal!
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Quick add common milestones */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Gyors hozzáadás</CardTitle>
+                    <CardDescription>Tipikus mérföldkövek hozzáadása egy kattintással</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { days: 7, name: "1 hét", desc: "Vérnyomás normalizálódni kezd" },
+                        { days: 14, name: "2 hét", desc: "Tüdőkapacitás javul" },
+                        { days: 21, name: "21 nap", desc: "Szaglás és ízérzés helyreáll" },
+                        { days: 30, name: "1 hónap", desc: "Köhögés jelentősen csökken" },
+                        { days: 90, name: "3 hónap", desc: "Légzési funkció 30%-kal javul" },
+                        { days: 365, name: "1 év", desc: "Szívroham kockázat felére csökken" },
+                      ].map((preset) => (
+                        <Button
+                          key={preset.days}
+                          variant="outline"
+                          size="sm"
+                          disabled={!isServiceAdmin || filteredMilestones.some(m => m.days_required === preset.days)}
+                          onClick={async () => {
+                            try {
+                              await supabase.from("challenge_milestones").insert({
+                                challenge_type_id: selectedChallengeType,
+                                name: preset.name,
+                                description: preset.desc,
+                                icon: "Award",
+                                days_required: preset.days,
+                                points_awarded: preset.days >= 365 ? 500 : preset.days >= 30 ? 200 : preset.days >= 21 ? 100 : 50,
+                                display_order: filteredMilestones.length + 1,
+                              });
+                              toast({ title: `${preset.name} hozzáadva` });
+                              fetchData();
+                            } catch (error) {
+                              toast({ title: "Hiba", variant: "destructive" });
+                            }
+                          }}
+                        >
+                          {preset.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
@@ -509,6 +777,7 @@ export default function AdminChallenges() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Kihívás típus kiválasztása</CardTitle>
+                <CardDescription>Konfiguráld a betegség kockázatokat és azok csökkenési időtartamát</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
@@ -529,7 +798,10 @@ export default function AdminChallenges() {
             {selectedType && (
               <>
                 <div className="flex justify-between items-center">
-                  <h3 className="font-medium">{selectedType.name} - Egészségügyi kockázatok</h3>
+                  <div>
+                    <h3 className="font-medium">{selectedType.name} - Egészségügyi kockázatok</h3>
+                    <p className="text-sm text-muted-foreground">Add meg a betegségeket és a "fade" időtartamot (hány nap alatt csökken a kockázat)</p>
+                  </div>
                   {isServiceAdmin && (
                     <Button size="sm" onClick={handleAddRisk}>
                       <Plus className="h-4 w-4 mr-1" />
@@ -542,16 +814,25 @@ export default function AdminChallenges() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Név</TableHead>
-                        <TableHead className="text-center">Csökkenés kezdete</TableHead>
-                        <TableHead className="text-center">Csökkenés vége</TableHead>
+                        <TableHead>Betegség / Kockázat</TableHead>
+                        <TableHead className="text-center">Fade kezdete (nap)</TableHead>
+                        <TableHead className="text-center">Fade vége (nap)</TableHead>
                         <TableHead className="text-right">Műveletek</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredRisks.map((r) => (
                         <TableRow key={r.id}>
-                          <TableCell className="font-medium">{r.name}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const iconOption = ICON_OPTIONS.find(i => i.value === r.icon);
+                                const IconComponent = iconOption?.icon || AlertTriangle;
+                                return <IconComponent className="h-4 w-4 text-destructive" />;
+                              })()}
+                              {r.name}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">{r.fade_start_days} nap</TableCell>
                           <TableCell className="text-center">{r.fade_end_days} nap</TableCell>
                           <TableCell className="text-right">
@@ -571,41 +852,313 @@ export default function AdminChallenges() {
                       {filteredRisks.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            Nincsenek egészségügyi kockázatok
+                            Nincsenek egészségügyi kockázatok. Adj hozzá az "Új kockázat" gombbal!
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Quick add common risks */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Gyors hozzáadás</CardTitle>
+                    <CardDescription>Tipikus egészségügyi kockázatok hozzáadása (dohányzáshoz)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { name: "COPD", icon: "Wind", fadeStart: 14, fadeEnd: 3650 },
+                        { name: "Tüdőrák", icon: "Skull", fadeStart: 365, fadeEnd: 3650 },
+                        { name: "Szív-érrendszeri", icon: "HeartPulse", fadeStart: 1, fadeEnd: 365 },
+                        { name: "Stroke", icon: "Activity", fadeStart: 30, fadeEnd: 1825 },
+                      ].map((preset) => (
+                        <Button
+                          key={preset.name}
+                          variant="outline"
+                          size="sm"
+                          disabled={!isServiceAdmin || filteredRisks.some(r => r.name === preset.name)}
+                          onClick={async () => {
+                            try {
+                              await supabase.from("challenge_health_risks").insert({
+                                challenge_type_id: selectedChallengeType,
+                                name: preset.name,
+                                icon: preset.icon,
+                                fade_start_days: preset.fadeStart,
+                                fade_end_days: preset.fadeEnd,
+                                display_order: filteredRisks.length + 1,
+                              });
+                              toast({ title: `${preset.name} hozzáadva` });
+                              fetchData();
+                            } catch (error) {
+                              toast({ title: "Hiba", variant: "destructive" });
+                            }
+                          }}
+                        >
+                          {preset.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
         </Tabs>
 
+        {/* Create Challenge Dialog */}
+        <Dialog open={showCreateChallenge} onOpenChange={setShowCreateChallenge}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Új kihívás létrehozása</DialogTitle>
+              <DialogDescription>Hozz létre egy új kihívás típust, amelyhez mérföldköveket és kockázatokat adhatsz</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-challenge-name">Név *</Label>
+                <Input
+                  id="new-challenge-name"
+                  value={newChallengeForm.name}
+                  onChange={(e) => setNewChallengeForm({ ...newChallengeForm, name: e.target.value })}
+                  placeholder="pl. Dohányzás leszokás"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-challenge-desc">Leírás</Label>
+                <Textarea
+                  id="new-challenge-desc"
+                  value={newChallengeForm.description}
+                  onChange={(e) => setNewChallengeForm({ ...newChallengeForm, description: e.target.value })}
+                  placeholder="A kihívás rövid leírása..."
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Szükséges megfigyelés típusok</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {OBSERVATION_TYPES.map((type) => (
+                    <div key={type.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`new-obs-${type.value}`}
+                        checked={newChallengeForm.required_observation_types.includes(type.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNewChallengeForm({
+                              ...newChallengeForm,
+                              required_observation_types: [...newChallengeForm.required_observation_types, type.value],
+                            });
+                          } else {
+                            setNewChallengeForm({
+                              ...newChallengeForm,
+                              required_observation_types: newChallengeForm.required_observation_types.filter(t => t !== type.value),
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`new-obs-${type.value}`} className="text-sm cursor-pointer">
+                        {type.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Alapértelmezett mód</Label>
+                  <Select
+                    value={newChallengeForm.default_mode}
+                    onValueChange={(value) => setNewChallengeForm({ ...newChallengeForm, default_mode: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tracking">Követés</SelectItem>
+                      <SelectItem value="reduction">Csökkentés</SelectItem>
+                      <SelectItem value="quitting">Leszokás</SelectItem>
+                      <SelectItem value="maintenance">Fenntartás</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Ikon</Label>
+                  <Select
+                    value={newChallengeForm.icon}
+                    onValueChange={(value) => setNewChallengeForm({ ...newChallengeForm, icon: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ICON_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <div className="flex items-center gap-2">
+                            <opt.icon className="h-4 w-4" />
+                            {opt.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="new-show-risks"
+                    checked={newChallengeForm.show_health_risks}
+                    onCheckedChange={(checked) => setNewChallengeForm({ ...newChallengeForm, show_health_risks: checked })}
+                  />
+                  <Label htmlFor="new-show-risks">Egészségügyi kockázatok megjelenítése</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="new-show-streak"
+                    checked={newChallengeForm.show_streak_counter}
+                    onCheckedChange={(checked) => setNewChallengeForm({ ...newChallengeForm, show_streak_counter: checked })}
+                  />
+                  <Label htmlFor="new-show-streak">Sorozat számláló megjelenítése</Label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setShowCreateChallenge(false)}>
+                  <X className="h-4 w-4 mr-1" />
+                  Mégse
+                </Button>
+                <Button onClick={handleCreateChallenge}>
+                  <Save className="h-4 w-4 mr-1" />
+                  Létrehozás
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Challenge Type Dialog */}
+        <Dialog open={!!editingType} onOpenChange={() => setEditingType(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Kihívás típus szerkesztése</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-type-name">Név</Label>
+                <Input
+                  id="edit-type-name"
+                  value={typeForm.name}
+                  onChange={(e) => setTypeForm({ ...typeForm, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-type-desc">Leírás</Label>
+                <Textarea
+                  id="edit-type-desc"
+                  value={typeForm.description}
+                  onChange={(e) => setTypeForm({ ...typeForm, description: e.target.value })}
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Szükséges megfigyelés típusok</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {OBSERVATION_TYPES.map((type) => (
+                    <div key={type.value} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-obs-${type.value}`}
+                        checked={typeForm.required_observation_types.includes(type.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setTypeForm({
+                              ...typeForm,
+                              required_observation_types: [...typeForm.required_observation_types, type.value],
+                            });
+                          } else {
+                            setTypeForm({
+                              ...typeForm,
+                              required_observation_types: typeForm.required_observation_types.filter(t => t !== type.value),
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`edit-obs-${type.value}`} className="text-sm cursor-pointer">
+                        {type.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="edit-show-risks"
+                    checked={typeForm.show_health_risks}
+                    onCheckedChange={(checked) => setTypeForm({ ...typeForm, show_health_risks: checked })}
+                  />
+                  <Label htmlFor="edit-show-risks">Egészségügyi kockázatok megjelenítése</Label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setEditingType(null)}>
+                  <X className="h-4 w-4 mr-1" />
+                  Mégse
+                </Button>
+                <Button onClick={handleSaveType}>
+                  <Save className="h-4 w-4 mr-1" />
+                  Mentés
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Edit Milestone Dialog */}
         <Dialog open={!!editingMilestone} onOpenChange={() => setEditingMilestone(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Mérföldkő szerkesztése</DialogTitle>
+              <DialogTitle>Mérföldkő (Jutalom) szerkesztése</DialogTitle>
+              <DialogDescription>Add meg a badge nevet és a biológiai változás leírását</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="milestone-name">Név</Label>
+                <Label htmlFor="milestone-name">Badge név</Label>
                 <Input
                   id="milestone-name"
                   value={milestoneForm.name}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, name: e.target.value })}
+                  placeholder="pl. 1 hét, 21 nap, 1 év"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="milestone-desc">Leírás (biológiai változás)</Label>
+                <Label htmlFor="milestone-desc">Biológiai változás leírása (Life-science)</Label>
                 <Textarea
                   id="milestone-desc"
                   value={milestoneForm.description}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, description: e.target.value })}
-                  rows={2}
+                  placeholder="pl. A szaglás és ízérzés helyreáll"
+                  rows={3}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Ikon</Label>
+                <Select
+                  value={milestoneForm.icon}
+                  onValueChange={(value) => setMilestoneForm({ ...milestoneForm, icon: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ICON_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2">
+                          <opt.icon className="h-4 w-4" />
+                          {opt.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -648,19 +1201,42 @@ export default function AdminChallenges() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Kockázat szerkesztése</DialogTitle>
+              <DialogDescription>Konfiguráld a betegség nevét és a "fade" időtartamot</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="risk-name">Név</Label>
+                <Label htmlFor="risk-name">Betegség / Kockázat neve</Label>
                 <Input
                   id="risk-name"
                   value={riskForm.name}
                   onChange={(e) => setRiskForm({ ...riskForm, name: e.target.value })}
+                  placeholder="pl. COPD, Tüdőrák, Szív-érrendszeri"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Ikon</Label>
+                <Select
+                  value={riskForm.icon}
+                  onValueChange={(value) => setRiskForm({ ...riskForm, icon: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ICON_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2">
+                          <opt.icon className="h-4 w-4" />
+                          {opt.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="risk-start">Csökkenés kezdete (nap)</Label>
+                  <Label htmlFor="risk-start">Fade kezdete (füstmentes nap)</Label>
                   <Input
                     id="risk-start"
                     type="number"
@@ -668,9 +1244,10 @@ export default function AdminChallenges() {
                     value={riskForm.fade_start_days}
                     onChange={(e) => setRiskForm({ ...riskForm, fade_start_days: parseInt(e.target.value) || 1 })}
                   />
+                  <p className="text-xs text-muted-foreground">Ennyi nap után kezd csökkenni a kockázat</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="risk-end">Csökkenés vége (nap)</Label>
+                  <Label htmlFor="risk-end">Fade vége (füstmentes nap)</Label>
                   <Input
                     id="risk-end"
                     type="number"
@@ -678,6 +1255,7 @@ export default function AdminChallenges() {
                     value={riskForm.fade_end_days}
                     onChange={(e) => setRiskForm({ ...riskForm, fade_end_days: parseInt(e.target.value) || 365 })}
                   />
+                  <p className="text-xs text-muted-foreground">Ennyi nap után normalizálódik teljesen</p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-4">

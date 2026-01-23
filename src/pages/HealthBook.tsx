@@ -188,22 +188,6 @@ const HealthBook = () => {
           </p>
         </div>
 
-        {/* Challenge Engine Widget */}
-        {activeChallenge ? (
-          <ChallengeStatusWidget
-            challenge={activeChallenge}
-            observations={challengeObservations}
-            getDaysSmokeFree={getDaysSmokeFree}
-            getHealthRiskFade={getHealthRiskFade}
-            onLogObservation={logObservation}
-          />
-        ) : challengeTypes.length > 0 ? (
-          <ChallengeJoinPrompt
-            challengeTypes={challengeTypes}
-            onJoin={joinChallenge}
-          />
-        ) : null}
-
         {/* Timeline Placeholder */}
         {/* Medalyse Timeline - mobile: minimal chrome, desktop: card */}
         <div className="animate-fade-in">
@@ -244,6 +228,25 @@ const HealthBook = () => {
             </div>
           </div>
         </div>
+
+        {/* Challenge Engine Widget - Full Width Below Timeline */}
+        <div className="animate-fade-in">
+          {activeChallenge ? (
+            <ChallengeStatusWidget
+              challenge={activeChallenge}
+              observations={challengeObservations}
+              getDaysSmokeFree={getDaysSmokeFree}
+              getHealthRiskFade={getHealthRiskFade}
+              onLogObservation={logObservation}
+            />
+          ) : challengeTypes.length > 0 ? (
+            <ChallengeJoinPrompt
+              challengeTypes={challengeTypes}
+              onJoin={joinChallenge}
+            />
+          ) : null}
+        </div>
+
 
         {/* Activity, Achievements, Badges Section */}
         <div id="healthbook-stats" className="grid md:grid-cols-3 gap-4 animate-fade-in scroll-mt-4">
