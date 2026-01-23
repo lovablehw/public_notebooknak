@@ -211,19 +211,27 @@ export function useChallenges() {
     setObservations(data || []);
   }, [user]);
 
-  // Join a challenge
-  const joinChallenge = useCallback(async (challengeTypeId: string) => {
+  // Join a challenge with optional mode selection
+  const joinChallenge = useCallback(async (challengeTypeId: string, mode?: ChallengeMode) => {
     if (!user) return false;
     
     const challengeType = challengeTypes.find(ct => ct.id === challengeTypeId);
     if (!challengeType) return false;
+    
+    // Use provided mode or fallback to challenge type's default mode
+    const selectedMode = mode || challengeType.default_mode;
+    
+    // Determine quit_date if starting in quitting mode
+    const quitDate = selectedMode === "quitting" ? new Date().toISOString().split("T")[0] : null;
     
     const { error } = await supabase
       .from("user_challenges")
       .insert({
         user_id: user.id,
         challenge_type_id: challengeTypeId,
-        current_mode: challengeType.default_mode,
+        current_mode: selectedMode,
+        quit_date: quitDate,
+        current_streak_days: selectedMode === "quitting" ? 1 : 0,
       });
     
     if (error) {
@@ -236,9 +244,15 @@ export function useChallenges() {
       return false;
     }
     
+    const modeDescription = selectedMode === "quitting" 
+      ? "Azonnali leszokás módban" 
+      : selectedMode === "reduction" 
+        ? "Fokozatos csökkentés módban"
+        : "";
+    
     toast({
       title: "Sikeres csatlakozás!",
-      description: `Csatlakoztál a "${challengeType.name}" kihíváshoz.`,
+      description: `Csatlakoztál a "${challengeType.name}" kihíváshoz. ${modeDescription}`,
     });
     
     await fetchUserChallenges();

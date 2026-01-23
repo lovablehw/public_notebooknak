@@ -29,6 +29,9 @@ const categoryConfig: Record<string, { icon: LucideIcon; bgColor: string; border
   sleep: { icon: Moon, bgColor: "bg-indigo-100", borderColor: "border-indigo-400", iconColor: "text-indigo-600" },
   headache: { icon: Brain, bgColor: "bg-red-100", borderColor: "border-red-400", iconColor: "text-red-600" },
   pain: { icon: Activity, bgColor: "bg-rose-100", borderColor: "border-rose-400", iconColor: "text-rose-600" },
+  weight: { icon: Activity, bgColor: "bg-green-100", borderColor: "border-green-400", iconColor: "text-green-600" },
+  craving_level: { icon: Brain, bgColor: "bg-purple-100", borderColor: "border-purple-400", iconColor: "text-purple-600" },
+  cigarette_count: { icon: Activity, bgColor: "bg-gray-100", borderColor: "border-gray-400", iconColor: "text-gray-600" },
   note: { icon: StickyNote, bgColor: "bg-slate-100", borderColor: "border-slate-400", iconColor: "text-slate-600" },
 };
 
