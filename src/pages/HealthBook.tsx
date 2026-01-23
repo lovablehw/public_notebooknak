@@ -45,11 +45,16 @@ const HealthBook = () => {
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel, refetch: refetchObservations } = useObservations();
   const { 
     challengeTypes, 
-    activeChallenge, 
+    activeChallenge,
+    pausedChallenges,
     observations: challengeObservations,
     loading: challengesLoading,
     joinChallenge,
     logObservation,
+    pauseChallenge,
+    resumeChallenge,
+    cancelChallenge,
+    restartChallenge,
     getDaysSmokeFree,
     getHealthRiskFade,
     refetch: refetchChallenges,
@@ -253,21 +258,45 @@ const HealthBook = () => {
         </div>
 
         {/* Challenge Engine Widget - Full Width Below Timeline */}
-        <div className="animate-fade-in">
-          {activeChallenge ? (
+        <div className="animate-fade-in space-y-4">
+          {/* Active Challenge */}
+          {activeChallenge && (
             <ChallengeStatusWidget
               challenge={activeChallenge}
               observations={challengeObservations}
               getDaysSmokeFree={getDaysSmokeFree}
               getHealthRiskFade={getHealthRiskFade}
               onLogObservation={handleLogObservation}
+              onPauseChallenge={pauseChallenge}
+              onResumeChallenge={resumeChallenge}
+              onCancelChallenge={cancelChallenge}
+              onRestartChallenge={restartChallenge}
             />
-          ) : challengeTypes.length > 0 ? (
+          )}
+          
+          {/* Paused Challenges */}
+          {pausedChallenges.map(challenge => (
+            <ChallengeStatusWidget
+              key={challenge.id}
+              challenge={challenge}
+              observations={challengeObservations}
+              getDaysSmokeFree={getDaysSmokeFree}
+              getHealthRiskFade={getHealthRiskFade}
+              onLogObservation={handleLogObservation}
+              onPauseChallenge={pauseChallenge}
+              onResumeChallenge={resumeChallenge}
+              onCancelChallenge={cancelChallenge}
+              onRestartChallenge={restartChallenge}
+            />
+          ))}
+          
+          {/* Join Prompt - show if no active challenge */}
+          {!activeChallenge && challengeTypes.length > 0 && (
             <ChallengeJoinPrompt
               challengeTypes={challengeTypes}
               onJoin={joinChallenge}
             />
-          ) : null}
+          )}
         </div>
 
 

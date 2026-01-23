@@ -136,12 +136,12 @@ export function useChallenges() {
   const fetchUserChallenges = useCallback(async () => {
     if (!user) return;
     
-    // Fetch user challenges
+    // Fetch user challenges (active and paused)
     const { data: challenges, error: challengesError } = await supabase
       .from("user_challenges")
       .select("*")
       .eq("user_id", user.id)
-      .eq("status", "active");
+      .in("status", ["active", "paused"]);
     
     if (challengesError) {
       console.error("Error fetching user challenges:", challengesError);
@@ -396,20 +396,155 @@ export function useChallenges() {
     }
   }, [user, challengeTypes, fetchUserChallenges, fetchObservations]);
 
+  // Pause a challenge
+  const pauseChallenge = useCallback(async (userChallengeId: string) => {
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from("user_challenges")
+      .update({ status: "paused" as ChallengeStatus })
+      .eq("id", userChallengeId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error pausing challenge:", error);
+      toast({
+        title: "Hiba",
+        description: "Nem sikerült szüneteltetni a kihívást.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Kihívás szüneteltetve",
+      description: "A kihívás szünetel. Bármikor folytathatod.",
+    });
+
+    await fetchUserChallenges();
+    return true;
+  }, [user, toast, fetchUserChallenges]);
+
+  // Resume a paused challenge
+  const resumeChallenge = useCallback(async (userChallengeId: string) => {
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from("user_challenges")
+      .update({ status: "active" as ChallengeStatus })
+      .eq("id", userChallengeId)
+      .eq("user_id", user.id)
+      .eq("status", "paused");
+
+    if (error) {
+      console.error("Error resuming challenge:", error);
+      toast({
+        title: "Hiba",
+        description: "Nem sikerült folytatni a kihívást.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Kihívás folytatva",
+      description: "Üdv újra! Folytasd ott, ahol abbahagytad.",
+    });
+
+    await fetchUserChallenges();
+    return true;
+  }, [user, toast, fetchUserChallenges]);
+
+  // Cancel a challenge
+  const cancelChallenge = useCallback(async (userChallengeId: string) => {
+    if (!user) return false;
+
+    const { error } = await supabase
+      .from("user_challenges")
+      .update({ status: "cancelled" as ChallengeStatus })
+      .eq("id", userChallengeId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error cancelling challenge:", error);
+      toast({
+        title: "Hiba",
+        description: "Nem sikerült abbahagyni a kihívást.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Kihívás befejezve",
+      description: "A kihívás befejeződött. Bármikor újrakezdheted.",
+    });
+
+    await fetchUserChallenges();
+    return true;
+  }, [user, toast, fetchUserChallenges]);
+
+  // Restart a cancelled/completed challenge
+  const restartChallenge = useCallback(async (challengeTypeId: string, mode?: ChallengeMode) => {
+    if (!user) return false;
+
+    const challengeType = challengeTypes.find(ct => ct.id === challengeTypeId);
+    if (!challengeType) return false;
+
+    const selectedMode = mode || challengeType.default_mode;
+    const quitDate = selectedMode === "quitting" ? new Date().toISOString().split("T")[0] : null;
+
+    const { error } = await supabase
+      .from("user_challenges")
+      .insert({
+        user_id: user.id,
+        challenge_type_id: challengeTypeId,
+        current_mode: selectedMode,
+        quit_date: quitDate,
+        current_streak_days: selectedMode === "quitting" ? 1 : 0,
+      });
+
+    if (error) {
+      console.error("Error restarting challenge:", error);
+      toast({
+        title: "Hiba",
+        description: "Nem sikerült újrakezdeni a kihívást.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    toast({
+      title: "Kihívás újrakezdve!",
+      description: `Újrakezdted a "${challengeType.name}" kihívást. Sok sikert!`,
+    });
+
+    await fetchUserChallenges();
+    return true;
+  }, [user, challengeTypes, toast, fetchUserChallenges]);
+
   // Get active challenge for display
   const activeChallenge = userChallenges.find(c => c.status === "active");
+  
+  // Get paused challenges
+  const pausedChallenges = userChallenges.filter(c => c.status === "paused");
 
   return {
     // Data
     challengeTypes,
     userChallenges,
     activeChallenge,
+    pausedChallenges,
     observations,
     loading,
     // Actions
     joinChallenge,
     logObservation,
     checkMilestones,
+    pauseChallenge,
+    resumeChallenge,
+    cancelChallenge,
+    restartChallenge,
     refetch: useCallback(async () => {
       await Promise.all([fetchChallengeTypes(), fetchUserChallenges(), fetchObservations()]);
     }, [fetchChallengeTypes, fetchUserChallenges, fetchObservations]),
