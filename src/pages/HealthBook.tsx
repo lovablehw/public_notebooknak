@@ -340,46 +340,51 @@ const HealthBook = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Active and Paused Challenges Grid */}
+              {/* Active and Paused Challenges - Full Width Vertical Stack */}
               {(activeChallenges.length > 0 || pausedChallenges.length > 0) && (
-                <div className={`grid gap-4 ${
-                  activeChallenges.length + pausedChallenges.length === 1 
-                    ? 'grid-cols-1' 
-                    : activeChallenges.length + pausedChallenges.length === 2
-                      ? 'md:grid-cols-2'
-                      : 'md:grid-cols-2 lg:grid-cols-3'
-                }`}>
+                <div className="flex flex-col gap-4 w-full">
                   {/* Active Challenges */}
-                  {activeChallenges.map(challenge => (
-                    <ChallengeStatusWidget
-                      key={challenge.id}
-                      challenge={challenge}
-                      observations={challengeObservations}
-                      getDaysSmokeFree={getDaysSmokeFree}
-                      getHealthRiskFade={getHealthRiskFade}
-                      onLogObservation={handleLogObservation}
-                      onPauseChallenge={pauseChallenge}
-                      onResumeChallenge={resumeChallenge}
-                      onCancelChallenge={cancelChallenge}
-                      onRestartChallenge={restartChallenge}
-                    />
-                  ))}
+                  {activeChallenges.map(challenge => {
+                    // Filter observations for this specific challenge's user (data isolation)
+                    const challengeSpecificObservations = challengeObservations.filter(
+                      obs => obs.user_id === challenge.user_id
+                    );
+                    return (
+                      <ChallengeStatusWidget
+                        key={challenge.id}
+                        challenge={challenge}
+                        observations={challengeSpecificObservations}
+                        getDaysSmokeFree={getDaysSmokeFree}
+                        getHealthRiskFade={getHealthRiskFade}
+                        onLogObservation={handleLogObservation}
+                        onPauseChallenge={pauseChallenge}
+                        onResumeChallenge={resumeChallenge}
+                        onCancelChallenge={cancelChallenge}
+                        onRestartChallenge={restartChallenge}
+                      />
+                    );
+                  })}
                   
                   {/* Paused Challenges */}
-                  {pausedChallenges.map(challenge => (
-                    <ChallengeStatusWidget
-                      key={challenge.id}
-                      challenge={challenge}
-                      observations={challengeObservations}
-                      getDaysSmokeFree={getDaysSmokeFree}
-                      getHealthRiskFade={getHealthRiskFade}
-                      onLogObservation={handleLogObservation}
-                      onPauseChallenge={pauseChallenge}
-                      onResumeChallenge={resumeChallenge}
-                      onCancelChallenge={cancelChallenge}
-                      onRestartChallenge={restartChallenge}
-                    />
-                  ))}
+                  {pausedChallenges.map(challenge => {
+                    const challengeSpecificObservations = challengeObservations.filter(
+                      obs => obs.user_id === challenge.user_id
+                    );
+                    return (
+                      <ChallengeStatusWidget
+                        key={challenge.id}
+                        challenge={challenge}
+                        observations={challengeSpecificObservations}
+                        getDaysSmokeFree={getDaysSmokeFree}
+                        getHealthRiskFade={getHealthRiskFade}
+                        onLogObservation={handleLogObservation}
+                        onPauseChallenge={pauseChallenge}
+                        onResumeChallenge={resumeChallenge}
+                        onCancelChallenge={cancelChallenge}
+                        onRestartChallenge={restartChallenge}
+                      />
+                    );
+                  })}
                 </div>
               )}
               

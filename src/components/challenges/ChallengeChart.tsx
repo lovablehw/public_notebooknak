@@ -13,6 +13,7 @@ interface ChallengeChartProps {
   label: string;
   daysToShow?: number;
   showTrendLine?: boolean;
+  challengeId?: string; // For data isolation key
 }
 
 export function ChallengeChart({
@@ -21,6 +22,7 @@ export function ChallengeChart({
   label,
   daysToShow = 14,
   showTrendLine = true,
+  challengeId,
 }: ChallengeChartProps) {
   const chartData = useMemo(() => {
     // Filter observations for this category with numeric values
@@ -63,7 +65,7 @@ export function ChallengeChart({
     }
     
     return data;
-  }, [observations, category, daysToShow]);
+  }, [observations, category, daysToShow, challengeId]);
 
   // Calculate average for trend line
   const average = useMemo(() => {
