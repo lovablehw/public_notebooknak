@@ -12,11 +12,22 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useActivityLogger } from "@/hooks/useActivityLogger";
 
 /**
+ * Get the trusted parent origin for postMessage communication.
+ * Uses runtime config if available, falls back to current origin for security.
+ * In production, PARENT_ORIGIN should be explicitly configured in config.js.
+ */
+function getTrustedParentOrigin(): string {
+  return window.appConfig?.PARENT_ORIGIN || window.location.origin;
+}
+
+/**
  * Request parent window redirect via postMessage.
  * Used when the app is embedded in an iframe and needs to communicate with parent.
+ * Messages are only sent to the trusted parent origin to prevent information leakage.
  */
 function requestParentRedirect(targetUrl: string) {
-  window.parent.postMessage({ action: 'redirect', url: targetUrl }, '*');
+  const trustedOrigin = getTrustedParentOrigin();
+  window.parent.postMessage({ action: 'redirect', url: targetUrl }, trustedOrigin);
 }
 interface QuestionnaireWidgetProps {
   questionnaire: QuestionnaireConfig;
