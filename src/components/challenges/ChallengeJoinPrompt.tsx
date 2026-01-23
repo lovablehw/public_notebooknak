@@ -29,7 +29,7 @@ export function ChallengeJoinPrompt({
   }
 
   return (
-    <Card className="shadow-card border-0 animate-fade-in bg-gradient-to-br from-primary/5 to-primary/10">
+    <Card className="shadow-card border-0 animate-fade-in">
       <CardHeader>
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
