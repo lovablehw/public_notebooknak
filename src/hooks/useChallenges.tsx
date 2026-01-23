@@ -523,17 +523,30 @@ export function useChallenges() {
     return true;
   }, [user, challengeTypes, toast, fetchUserChallenges]);
 
-  // Get active challenge for display
-  const activeChallenge = userChallenges.find(c => c.status === "active");
+  // Get all active challenges (supports multiple simultaneous challenges)
+  const activeChallenges = userChallenges.filter(c => c.status === "active");
   
   // Get paused challenges
   const pausedChallenges = userChallenges.filter(c => c.status === "paused");
+  
+  // Get challenge type IDs that user has already joined (active or paused)
+  const joinedChallengeTypeIds = new Set(
+    userChallenges
+      .filter(c => c.status === "active" || c.status === "paused")
+      .map(c => c.challenge_type_id)
+  );
+  
+  // Get available challenge types that user hasn't joined yet
+  const availableChallengeTypes = challengeTypes.filter(
+    ct => !joinedChallengeTypeIds.has(ct.id)
+  );
 
   return {
     // Data
     challengeTypes,
+    availableChallengeTypes,
     userChallenges,
-    activeChallenge,
+    activeChallenges,
     pausedChallenges,
     observations,
     loading,

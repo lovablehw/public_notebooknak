@@ -44,8 +44,8 @@ const HealthBook = () => {
   } = useQuestionnaireConfig();
   const { observations, loading: observationsLoading, addObservation, getCategoryLabel, refetch: refetchObservations } = useObservations();
   const { 
-    challengeTypes, 
-    activeChallenge,
+    availableChallengeTypes, 
+    activeChallenges,
     pausedChallenges,
     observations: challengeObservations,
     loading: challengesLoading,
@@ -116,8 +116,8 @@ const HealthBook = () => {
     const success = await addObservation(date, category, value, note);
     if (success) {
       toast({ title: "Mentve", description: "A megfigyelésedet elmentettük." });
-      // Sync challenge data if there's an active challenge
-      if (activeChallenge) {
+      // Sync challenge data if there are active challenges
+      if (activeChallenges.length > 0) {
         await refetchChallenges();
       }
     } else {
@@ -259,10 +259,11 @@ const HealthBook = () => {
 
         {/* Challenge Engine Widget - Full Width Below Timeline */}
         <div className="animate-fade-in space-y-4">
-          {/* Active Challenge */}
-          {activeChallenge && (
+          {/* Active Challenges */}
+          {activeChallenges.map(challenge => (
             <ChallengeStatusWidget
-              challenge={activeChallenge}
+              key={challenge.id}
+              challenge={challenge}
               observations={challengeObservations}
               getDaysSmokeFree={getDaysSmokeFree}
               getHealthRiskFade={getHealthRiskFade}
@@ -272,7 +273,7 @@ const HealthBook = () => {
               onCancelChallenge={cancelChallenge}
               onRestartChallenge={restartChallenge}
             />
-          )}
+          ))}
           
           {/* Paused Challenges */}
           {pausedChallenges.map(challenge => (
@@ -290,10 +291,10 @@ const HealthBook = () => {
             />
           ))}
           
-          {/* Join Prompt - show if no active challenge */}
-          {!activeChallenge && challengeTypes.length > 0 && (
+          {/* Join Prompt - show available challenge types user hasn't joined */}
+          {availableChallengeTypes.length > 0 && (
             <ChallengeJoinPrompt
-              challengeTypes={challengeTypes}
+              challengeTypes={availableChallengeTypes}
               onJoin={joinChallenge}
             />
           )}
