@@ -16,7 +16,8 @@ import {
   ClipboardList,
   UsersRound,
   ShieldCheck,
-  MousePointer2
+  MousePointer2,
+  Flame
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ const baseNavItems = [
   { path: "/admin/hozzajarulasok", label: "Hozzájárulások", icon: FileCheck },
   { path: "/admin/pontok", label: "Pontok", icon: Star },
   { path: "/admin/pontszabalyok", label: "Pontszabályok", icon: Star },
+  { path: "/admin/kihivasok", label: "Kihívások", icon: Flame },
   { path: "/admin/kituntetesek", label: "Kitüntetések", icon: Trophy },
   { path: "/admin/hozzajarulasi-verziok", label: "Hozzájárulási verziók", icon: FileText },
   { path: "/admin/feltoltesek", label: "Feltöltések", icon: FileText },
