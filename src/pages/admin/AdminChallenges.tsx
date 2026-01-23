@@ -41,7 +41,15 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Save, X, Plus, Trash2, Target, Trophy, AlertTriangle, Flame, Award, HeartPulse, Wind, Activity, Skull } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Target, Trophy, AlertTriangle, Flame, Award, HeartPulse, Wind, Activity, Skull, ListChecks } from "lucide-react";
+
+interface ObservationCategory {
+  key: string;
+  label: string;
+  is_active: boolean;
+  input_type: "number" | "text" | "select";
+  options?: string[];
+}
 
 interface ChallengeType {
   id: string;
@@ -49,6 +57,7 @@ interface ChallengeType {
   description: string | null;
   icon: string;
   required_observation_types: string[];
+  observation_categories: ObservationCategory[] | null;
   default_mode: string;
   show_daily_counter: boolean;
   show_streak_counter: boolean;
@@ -209,7 +218,15 @@ export default function AdminChallenges() {
       if (milestonesRes.error) throw milestonesRes.error;
       if (risksRes.error) throw risksRes.error;
 
-      setChallengeTypes(typesRes.data as ChallengeType[]);
+      // Parse observation_categories from JSON
+      const parsedTypes = (typesRes.data || []).map(ct => ({
+        ...ct,
+        observation_categories: Array.isArray(ct.observation_categories) 
+          ? ct.observation_categories as unknown as ObservationCategory[]
+          : null
+      }));
+      
+      setChallengeTypes(parsedTypes as ChallengeType[]);
       setMilestones(milestonesRes.data as ChallengeMilestone[]);
       setHealthRisks(risksRes.data as ChallengeHealthRisk[]);
 
@@ -542,9 +559,13 @@ export default function AdminChallenges() {
               <Target className="h-4 w-4" />
               Típusok
             </TabsTrigger>
+            <TabsTrigger value="categories" className="gap-1">
+              <ListChecks className="h-4 w-4" />
+              Megfigyelés kategóriák
+            </TabsTrigger>
             <TabsTrigger value="milestones" className="gap-1">
               <Trophy className="h-4 w-4" />
-              Mérföldkövek (Jutalmak)
+              Mérföldkövek
             </TabsTrigger>
             <TabsTrigger value="risks" className="gap-1">
               <AlertTriangle className="h-4 w-4" />
@@ -627,6 +648,191 @@ export default function AdminChallenges() {
                 </TableBody>
               </Table>
             </div>
+          </TabsContent>
+
+          {/* Observation Categories Tab */}
+          <TabsContent value="categories" className="space-y-4">
+            {/* Challenge type selector */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Kihívás típus kiválasztása</CardTitle>
+                <CardDescription>Konfiguráld a megfigyelés kategóriákat (aktiválás, átnevezés) minden kihíváshoz</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {challengeTypes.map((ct) => (
+                    <Button
+                      key={ct.id}
+                      variant={selectedChallengeType === ct.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedChallengeType(ct.id)}
+                    >
+                      {ct.name}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {selectedType && (
+              <>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">{selectedType.name} - Megfigyelés kategóriák</h3>
+                    <p className="text-sm text-muted-foreground">Aktiváld/deaktiváld és nevezd át a kategóriákat, amelyeket a felhasználók rögzíthetnek</p>
+                  </div>
+                  {isServiceAdmin && (
+                    <Button 
+                      size="sm" 
+                      onClick={async () => {
+                        // Initialize observation_categories if empty
+                        const defaultCategories: ObservationCategory[] = OBSERVATION_TYPES.map(type => ({
+                          key: type.value,
+                          label: type.label,
+                          is_active: selectedType.required_observation_types.includes(type.value),
+                          input_type: ["cigarette_count", "craving_level", "weight", "energy", "sleep"].includes(type.value) ? "number" : "text",
+                        }));
+                        
+                        try {
+                          const { error } = await supabase
+                            .from("challenge_types")
+                            .update({ observation_categories: JSON.parse(JSON.stringify(defaultCategories)) })
+                            .eq("id", selectedType.id);
+                          
+                          if (error) throw error;
+                          toast({ title: "Kategóriák inicializálva" });
+                          fetchData();
+                        } catch (error) {
+                          console.error("Error initializing categories:", error);
+                          toast({ title: "Hiba", variant: "destructive" });
+                        }
+                      }}
+                      disabled={selectedType.observation_categories && selectedType.observation_categories.length > 0}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Kategóriák inicializálása
+                    </Button>
+                  )}
+                </div>
+
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Kulcs</TableHead>
+                        <TableHead>Megjelenített név</TableHead>
+                        <TableHead>Típus</TableHead>
+                        <TableHead className="text-center">Aktív</TableHead>
+                        <TableHead className="text-right">Műveletek</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedType.observation_categories && selectedType.observation_categories.length > 0 ? (
+                        selectedType.observation_categories.map((cat) => (
+                          <TableRow key={cat.key}>
+                            <TableCell>
+                              <Badge variant="secondary" className="font-mono text-xs">
+                                {cat.key}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">{cat.label}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                {cat.input_type === "number" ? "Szám" : cat.input_type === "select" ? "Választó" : "Szöveg"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Switch
+                                checked={cat.is_active}
+                                onCheckedChange={async (checked) => {
+                                  if (!isServiceAdmin) return;
+                                  
+                                  const updatedCategories = selectedType.observation_categories!.map(c => 
+                                    c.key === cat.key ? { ...c, is_active: checked } : c
+                                  );
+                                  
+                                  try {
+                                    const { error } = await supabase
+                                      .from("challenge_types")
+                                      .update({ observation_categories: JSON.parse(JSON.stringify(updatedCategories)) })
+                                      .eq("id", selectedType.id);
+                                    
+                                    if (error) throw error;
+                                    toast({ title: checked ? "Aktiválva" : "Deaktiválva" });
+                                    fetchData();
+                                  } catch (error) {
+                                    console.error("Error toggling category:", error);
+                                    toast({ title: "Hiba", variant: "destructive" });
+                                  }
+                                }}
+                                disabled={!isServiceAdmin}
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  const newLabel = prompt("Új megjelenített név:", cat.label);
+                                  if (newLabel && newLabel.trim() && newLabel !== cat.label) {
+                                    const updatedCategories = selectedType.observation_categories!.map(c => 
+                                      c.key === cat.key ? { ...c, label: newLabel.trim() } : c
+                                    );
+                                    
+                                    supabase
+                                      .from("challenge_types")
+                                      .update({ observation_categories: JSON.parse(JSON.stringify(updatedCategories)) })
+                                      .eq("id", selectedType.id)
+                                      .then(({ error }) => {
+                                        if (error) {
+                                          toast({ title: "Hiba", variant: "destructive" });
+                                        } else {
+                                          toast({ title: "Átnevezve" });
+                                          fetchData();
+                                        }
+                                      });
+                                  }
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                            Még nincsenek kategóriák konfigurálva. Kattints a "Kategóriák inicializálása" gombra!
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Info about required observation types */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Kötelező megfigyelés típusok</CardTitle>
+                    <CardDescription>
+                      Ezek a típusok a kihívás "required_observation_types" mezőjéből jönnek. A kategóriák csak a megjelenített nevet és aktivitást befolyásolják.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedType.required_observation_types.map((type) => (
+                        <Badge key={type} variant="default">
+                          {OBSERVATION_TYPE_LABELS[type] || type}
+                        </Badge>
+                      ))}
+                      {selectedType.required_observation_types.length === 0 && (
+                        <span className="text-sm text-muted-foreground">Nincs kötelező típus beállítva</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           {/* Milestones Tab */}
