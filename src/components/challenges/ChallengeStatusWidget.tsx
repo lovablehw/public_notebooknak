@@ -131,7 +131,7 @@ export function ChallengeStatusWidget({
 
   return (
     <Card className={cn(
-      "shadow-card border-0 animate-fade-in w-full",
+      "shadow-card border-0 animate-fade-in w-full max-w-full overflow-hidden",
       isPaused && "opacity-75"
     )}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -210,11 +210,11 @@ export function ChallengeStatusWidget({
               </AlertDialog>
 
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-1 min-w-0 px-2 text-center whitespace-nowrap">
                   {isExpanded ? (
-                    <>Bezárás <ChevronUp className="h-4 w-4" /></>
+                    <><span className="hidden sm:inline">Bezárás</span><ChevronUp className="h-4 w-4 flex-shrink-0" /></>
                   ) : (
-                    <>Részletek <ChevronDown className="h-4 w-4" /></>
+                    <><span className="hidden sm:inline">Részletek</span><ChevronDown className="h-4 w-4 flex-shrink-0" /></>
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -232,34 +232,34 @@ export function ChallengeStatusWidget({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 overflow-hidden">
           {/* Always Visible: Hero Metric + Quick Stats */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Hero Metric */}
-            <div className="flex-shrink-0 flex items-center gap-6">
-              <div className="text-center p-6 bg-primary/5 rounded-2xl border border-primary/10 min-w-[140px]">
-                <p className="text-5xl font-light text-primary">{mainMetric.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{mainMetric.label}</p>
+          <div className="flex flex-col gap-4 overflow-hidden">
+            {/* Hero Metric - centered */}
+            <div className="flex justify-center">
+              <div className="text-center p-4 sm:p-6 bg-primary/5 rounded-2xl border border-primary/10 min-w-[120px] max-w-[160px]">
+                <p className="text-4xl sm:text-5xl font-light text-primary truncate">{mainMetric.value}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">{mainMetric.label}</p>
               </div>
             </div>
 
-            {/* Quick Stats Row */}
-            <div className="flex-1 grid grid-cols-3 gap-4 content-center">
-              <div className="bg-muted/30 rounded-lg p-4 text-center">
-                <p className="text-2xl font-light text-foreground">{challenge.longest_streak_days}</p>
-                <p className="text-xs text-muted-foreground">Leghosszabb sorozat</p>
+            {/* Quick Stats Row - always 3 cols, constrained */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 text-center min-w-0 overflow-hidden">
+                <p className="text-lg sm:text-2xl font-light text-foreground truncate">{challenge.longest_streak_days}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate">Leghosszabb sorozat</p>
               </div>
-              <div className="bg-muted/30 rounded-lg p-4 text-center">
-                <p className="text-2xl font-light text-foreground">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 text-center min-w-0 overflow-hidden">
+                <p className="text-lg sm:text-2xl font-light text-foreground truncate">
                   {unlockedCount}/{totalMilestones}
                 </p>
-                <p className="text-xs text-muted-foreground">Mérföldkő</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate">Mérföldkő</p>
               </div>
-              <div className="bg-muted/30 rounded-lg p-4 text-center">
-                <p className="text-2xl font-light text-foreground">
+              <div className="bg-muted/30 rounded-lg p-2 sm:p-4 text-center min-w-0 overflow-hidden">
+                <p className="text-lg sm:text-2xl font-light text-foreground truncate">
                   {observations.length}
                 </p>
-                <p className="text-xs text-muted-foreground">Bejegyzés</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate">Bejegyzés</p>
               </div>
             </div>
           </div>
