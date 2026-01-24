@@ -69,17 +69,18 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
   return (
     <>
       <div className="space-y-4">
-        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2 justify-center">
           <AlertTriangle className="h-4 w-4" />
           Egészségügyi kockázatok
           {isQuitting && " csökkenése"}
         </h4>
         
-        {/* Horizontal icon layout - structured grid for consistent alignment */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 justify-items-center">
+        {/* Centered vertical stack layout for consistent alignment */}
+        <div className="flex flex-wrap justify-center gap-3">
           {healthRisks.map((risk) => {
             const fadePercent = isQuitting ? getHealthRiskFade(challenge, risk) : 0;
             const IconComponent = ICON_MAP[risk.icon] || AlertTriangle;
+            const riskInfo = HEALTH_RISK_DESCRIPTIONS[risk.name];
             
             const getColorClass = () => {
               if (!isQuitting) return "text-destructive";
@@ -89,17 +90,18 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
             };
             
             const getBgClass = () => {
-              if (!isQuitting) return "bg-destructive/10";
-              if (fadePercent > 50) return "bg-green-500/10";
-              if (fadePercent > 20) return "bg-yellow-500/10";
-              return "bg-destructive/10";
+              if (!isQuitting) return "bg-destructive/10 hover:bg-destructive/20";
+              if (fadePercent > 50) return "bg-green-500/10 hover:bg-green-500/20";
+              if (fadePercent > 20) return "bg-yellow-500/10 hover:bg-yellow-500/20";
+              return "bg-destructive/10 hover:bg-destructive/20";
             };
             
             return (
               <button
                 key={risk.id}
                 onClick={() => setSelectedRisk(risk)}
-                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer w-20 h-[88px] ${getBgClass()}`}
+                title={riskInfo?.title || risk.name}
+                className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-all hover:scale-105 cursor-pointer w-24 min-h-[88px] ${getBgClass()}`}
               >
                 <div className="relative flex items-center justify-center h-8 w-8">
                   <IconComponent 
@@ -113,7 +115,7 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
                     </div>
                   )}
                 </div>
-                <span className="text-[11px] font-medium text-center leading-tight line-clamp-2 max-w-full px-1">
+                <span className="text-[11px] font-medium text-center leading-tight line-clamp-2 w-full">
                   {risk.name}
                 </span>
               </button>

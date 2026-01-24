@@ -34,28 +34,27 @@ export function ChallengeChart({
       return [];
     }
     
-    // Get date range from first entry to today
+    // Get date range from first entry to today (X-axis starts exactly on first data entry)
     const firstEntryDate = parseISO(categoryObservations[0].observation_date);
     const endDate = new Date();
     
-    // Calculate days between first entry and today
+    // Calculate days between first entry and today - start exactly from first entry
     const daysDiff = Math.ceil((endDate.getTime() - firstEntryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const actualDaysToShow = Math.min(Math.max(daysDiff, 7), daysToShow); // At least 7 days, max daysToShow
+    const actualDaysToShow = Math.max(daysDiff, 1); // At least show the first day
     
-    // Create a map of date -> value
+    // Create a map of date -> value (use latest value if multiple entries same day)
     const valueMap = new Map<string, number>();
     categoryObservations.forEach(o => {
       const dateKey = o.observation_date;
-      // If multiple entries for same day, use the latest
-      if (!valueMap.has(dateKey)) {
-        valueMap.set(dateKey, o.numeric_value!);
-      }
+      // Always update to get the latest entry for the day
+      valueMap.set(dateKey, o.numeric_value!);
     });
     
-    // Generate data points starting from first entry date
+    // Generate data points starting exactly from first entry date
     const data: Array<{ date: string; value: number | null; displayDate: string }> = [];
     for (let i = 0; i < actualDaysToShow; i++) {
-      const date = subDays(endDate, actualDaysToShow - 1 - i);
+      const date = new Date(firstEntryDate);
+      date.setDate(firstEntryDate.getDate() + i);
       const dateKey = format(date, "yyyy-MM-dd");
       data.push({
         date: dateKey,
@@ -65,7 +64,7 @@ export function ChallengeChart({
     }
     
     return data;
-  }, [observations, category, daysToShow, challengeId]);
+  }, [observations, category, challengeId]);
 
   // Calculate average for trend line
   const average = useMemo(() => {

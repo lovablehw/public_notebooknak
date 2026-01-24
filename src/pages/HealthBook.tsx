@@ -340,9 +340,9 @@ const HealthBook = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Active and Paused Challenges - Full Width Vertical Stack */}
+              {/* Active and Paused Challenges - Responsive 2-column grid */}
               {(activeChallenges.length > 0 || pausedChallenges.length > 0) && (
-                <div className="flex flex-col gap-4 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                   {/* Active Challenges */}
                   {activeChallenges.map(challenge => {
                     // Filter observations for this specific challenge's user (data isolation)
