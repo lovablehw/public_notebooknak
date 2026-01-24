@@ -158,21 +158,21 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
                   type="button"
                   variant={resistedLighting === true ? "default" : "outline"}
                   size="sm"
-                  className="gap-2 w-full sm:flex-1 min-w-0"
+                  className="gap-2 w-full sm:flex-1"
                   onClick={() => setResistedLighting(true)}
                 >
                   <ThumbsUp className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Igen, ellenálltam</span>
+                  Igen, ellenálltam
                 </Button>
                 <Button
                   type="button"
                   variant={resistedLighting === false ? "destructive" : "outline"}
                   size="sm"
-                  className="gap-2 w-full sm:flex-1 min-w-0"
+                  className="gap-2 w-full sm:flex-1"
                   onClick={() => setResistedLighting(false)}
                 >
                   <ThumbsDown className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Nem sikerült</span>
+                  Nem sikerült
                 </Button>
               </div>
             </div>

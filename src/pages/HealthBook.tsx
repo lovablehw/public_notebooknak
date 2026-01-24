@@ -48,28 +48,27 @@ function JoinableChallengeCard({
   const IconComponent = ICON_MAP[challengeType.icon] || Target;
 
   return (
-    <>
-      <div className="bg-background rounded-lg border border-border p-4 hover:border-primary/50 transition-colors h-full min-h-[140px] flex flex-col">
-        <div className="flex items-start gap-3 flex-1">
-          <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
-            <IconComponent className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0 flex flex-col">
-            <h4 className="font-medium text-foreground">{challengeType.name}</h4>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 flex-1">
-              {challengeType.description}
-            </p>
-            <Button
-              size="sm"
-              className="mt-3 w-full"
-              onClick={() => setIsModalOpen(true)}
-            >
-              Csatlakozás
-            </Button>
-          </div>
+    <div className="bg-background rounded-lg border border-border p-4 hover:border-primary/50 transition-colors h-full min-h-[140px] flex flex-col">
+      <div className="flex items-start gap-3 flex-1">
+        <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+          <IconComponent className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0 flex flex-col">
+          <h4 className="font-medium text-foreground">{challengeType.name}</h4>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 flex-1">
+            {challengeType.description}
+          </p>
+          <Button
+            size="sm"
+            className="mt-3 w-full"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Csatlakozás
+          </Button>
         </div>
       </div>
 
+      {/* Modal renders via Portal, doesn't affect grid layout */}
       <ChallengeJoinModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -77,7 +76,7 @@ function JoinableChallengeCard({
         onJoin={onJoin}
         loading={false}
       />
-    </>
+    </div>
   );
 }
 
