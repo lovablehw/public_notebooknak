@@ -158,7 +158,7 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
                   type="button"
                   variant={resistedLighting === true ? "default" : "outline"}
                   size="sm"
-                  className="gap-2 w-full sm:flex-1"
+                  className="gap-2 w-full sm:flex-1 min-w-0 whitespace-normal h-auto py-2 leading-snug"
                   onClick={() => setResistedLighting(true)}
                 >
                   <ThumbsUp className="h-4 w-4 flex-shrink-0" />
@@ -168,7 +168,7 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
                   type="button"
                   variant={resistedLighting === false ? "destructive" : "outline"}
                   size="sm"
-                  className="gap-2 w-full sm:flex-1"
+                  className="gap-2 w-full sm:flex-1 min-w-0 whitespace-normal h-auto py-2 leading-snug"
                   onClick={() => setResistedLighting(false)}
                 >
                   <ThumbsDown className="h-4 w-4 flex-shrink-0" />
@@ -218,11 +218,11 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
                   >
                     +
                   </Button>
-                  {numericValue === 0 && (
-                    <span className="text-green-500 text-sm font-medium">
-                      🎉 Füstmentes nap!
-                    </span>
-                  )}
+                   {numericValue === 0 && (
+                     <span className="text-primary text-sm font-medium">
+                       Füstmentes nap!
+                     </span>
+                   )}
                 </div>
               </div>
             )}
