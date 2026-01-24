@@ -36,60 +36,44 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Trophy,
 };
 
-// Inline join prompt cards for challenges container
-function ChallengeJoinPromptCards({ 
-  challengeTypes, 
+// Individual joinable challenge card component - occupies exactly one grid cell
+function JoinableChallengeCard({ 
+  challengeType, 
   onJoin 
 }: { 
-  challengeTypes: ChallengeType[]; 
+  challengeType: ChallengeType; 
   onJoin: (challengeTypeId: string, mode: ChallengeMode) => Promise<boolean>;
 }) {
-  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  if (challengeTypes.length === 0) return null;
+  const IconComponent = ICON_MAP[challengeType.icon] || Target;
 
   return (
     <>
-      <div className={`grid gap-4 ${challengeTypes.length === 1 ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
-        {challengeTypes.map((challengeType) => {
-          const IconComponent = ICON_MAP[challengeType.icon] || Target;
-          
-          return (
-            <div
-              key={challengeType.id}
-              className="bg-background rounded-lg border border-border p-4 hover:border-primary/50 transition-colors"
+      <div className="bg-background rounded-lg border border-border p-4 hover:border-primary/50 transition-colors h-full min-h-[140px] flex flex-col">
+        <div className="flex items-start gap-3 flex-1">
+          <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
+            <IconComponent className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0 flex flex-col">
+            <h4 className="font-medium text-foreground">{challengeType.name}</h4>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2 flex-1">
+              {challengeType.description}
+            </p>
+            <Button
+              size="sm"
+              className="mt-3 w-full"
+              onClick={() => setIsModalOpen(true)}
             >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-full bg-primary/10 flex-shrink-0">
-                  <IconComponent className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-foreground">{challengeType.name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                    {challengeType.description}
-                  </p>
-                  <Button
-                    size="sm"
-                    className="mt-3 w-full"
-                    onClick={() => {
-                      setSelectedChallenge(challengeType);
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    Csatlakozás
-                  </Button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              Csatlakozás
+            </Button>
+          </div>
+        </div>
       </div>
 
       <ChallengeJoinModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        challengeType={selectedChallenge}
+        challengeType={challengeType}
         onJoin={onJoin}
         loading={false}
       />
@@ -339,65 +323,61 @@ const HealthBook = () => {
                 Kövesd nyomon az aktív kihívásaidat és csatlakozz újakhoz.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Active and Paused Challenges - Responsive 2-column grid */}
-              {(activeChallenges.length > 0 || pausedChallenges.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                  {/* Active Challenges */}
-                  {activeChallenges.map(challenge => {
-                    // Filter observations for this specific challenge's user (data isolation)
-                    const challengeSpecificObservations = challengeObservations.filter(
-                      obs => obs.user_id === challenge.user_id
-                    );
-                    return (
-                      <ChallengeStatusWidget
-                        key={challenge.id}
-                        challenge={challenge}
-                        observations={challengeSpecificObservations}
-                        getDaysSmokeFree={getDaysSmokeFree}
-                        getHealthRiskFade={getHealthRiskFade}
-                        onLogObservation={handleLogObservation}
-                        onPauseChallenge={pauseChallenge}
-                        onResumeChallenge={resumeChallenge}
-                        onCancelChallenge={cancelChallenge}
-                        onRestartChallenge={restartChallenge}
-                      />
-                    );
-                  })}
-                  
-                  {/* Paused Challenges */}
-                  {pausedChallenges.map(challenge => {
-                    const challengeSpecificObservations = challengeObservations.filter(
-                      obs => obs.user_id === challenge.user_id
-                    );
-                    return (
-                      <ChallengeStatusWidget
-                        key={challenge.id}
-                        challenge={challenge}
-                        observations={challengeSpecificObservations}
-                        getDaysSmokeFree={getDaysSmokeFree}
-                        getHealthRiskFade={getHealthRiskFade}
-                        onLogObservation={handleLogObservation}
-                        onPauseChallenge={pauseChallenge}
-                        onResumeChallenge={resumeChallenge}
-                        onCancelChallenge={cancelChallenge}
-                        onRestartChallenge={restartChallenge}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-              
-              {/* Join New Challenges Section */}
-              {availableChallengeTypes.length > 0 && (
-                <div className="pt-2 border-t border-border/50">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Csatlakozz új kihíváshoz</h4>
-                  <ChallengeJoinPromptCards
-                    challengeTypes={availableChallengeTypes}
+            <CardContent>
+              {/* Unified Challenge Grid - Active, Paused, and Joinable in one responsive grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                {/* Active Challenges */}
+                {activeChallenges.map(challenge => {
+                  // Filter observations for this specific challenge's user (data isolation)
+                  const challengeSpecificObservations = challengeObservations.filter(
+                    obs => obs.user_id === challenge.user_id
+                  );
+                  return (
+                    <ChallengeStatusWidget
+                      key={challenge.id}
+                      challenge={challenge}
+                      observations={challengeSpecificObservations}
+                      getDaysSmokeFree={getDaysSmokeFree}
+                      getHealthRiskFade={getHealthRiskFade}
+                      onLogObservation={handleLogObservation}
+                      onPauseChallenge={pauseChallenge}
+                      onResumeChallenge={resumeChallenge}
+                      onCancelChallenge={cancelChallenge}
+                      onRestartChallenge={restartChallenge}
+                    />
+                  );
+                })}
+                
+                {/* Paused Challenges */}
+                {pausedChallenges.map(challenge => {
+                  const challengeSpecificObservations = challengeObservations.filter(
+                    obs => obs.user_id === challenge.user_id
+                  );
+                  return (
+                    <ChallengeStatusWidget
+                      key={challenge.id}
+                      challenge={challenge}
+                      observations={challengeSpecificObservations}
+                      getDaysSmokeFree={getDaysSmokeFree}
+                      getHealthRiskFade={getHealthRiskFade}
+                      onLogObservation={handleLogObservation}
+                      onPauseChallenge={pauseChallenge}
+                      onResumeChallenge={resumeChallenge}
+                      onCancelChallenge={cancelChallenge}
+                      onRestartChallenge={restartChallenge}
+                    />
+                  );
+                })}
+
+                {/* Joinable Challenges - each as a single grid cell */}
+                {availableChallengeTypes.map((challengeType) => (
+                  <JoinableChallengeCard
+                    key={challengeType.id}
+                    challengeType={challengeType}
                     onJoin={joinChallenge}
                   />
-                </div>
-              )}
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
