@@ -289,6 +289,7 @@ export function ChallengeStatusWidget({
                   {requiredCategories.includes("cigarette_count") && (
                     <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
                       <ChallengeChart
+                        key={`cigarette_count-${challenge.id}`}
                         observations={observations}
                         category="cigarette_count"
                         label="Napi cigarettaszám"
@@ -300,6 +301,7 @@ export function ChallengeStatusWidget({
                   {requiredCategories.includes("craving_level") && (
                     <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
                       <ChallengeChart
+                        key={`craving_level-${challenge.id}`}
                         observations={observations}
                         category="craving_level"
                         label="Sóvárgás mértéke"
@@ -311,6 +313,7 @@ export function ChallengeStatusWidget({
                   {requiredCategories.includes("weight") && (
                     <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
                       <ChallengeChart
+                        key={`weight-${challenge.id}`}
                         observations={observations}
                         category="weight"
                         label="Súly (kg)"
