@@ -266,10 +266,10 @@ export function ChallengeStatusWidget({
 
           {/* Collapsible Content: Logger, Charts, Health Risks, Badges */}
           <CollapsibleContent className="space-y-6 pt-4 border-t border-border/30">
-            {/* Observation Logger - Full Width */}
-            <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+            {/* Observation Logger - Full Width with mobile-safe padding */}
+            <div className="bg-muted/20 rounded-lg p-3 sm:p-4 border border-border/50 max-w-full overflow-hidden">
               <div className="flex items-center gap-2 mb-4">
-                <PlusCircle className="h-5 w-5 text-primary" />
+                <PlusCircle className="h-5 w-5 text-primary flex-shrink-0" />
                 <h3 className="font-medium">Napi rögzítés</h3>
               </div>
               <ObservationLogger

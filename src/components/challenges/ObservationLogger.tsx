@@ -142,8 +142,8 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
 
       {/* Smoking-specific dual input */}
       {isSmokingChallenge && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="pt-4 space-y-4">
+        <Card className="border-primary/20 bg-primary/5 max-w-full overflow-hidden">
+          <CardContent className="pt-4 space-y-4 px-3 sm:px-6">
             <Label className="text-base font-medium flex items-center gap-2">
               <Cigarette className="h-5 w-5 text-primary" />
               Dohányzás naplózás
@@ -152,26 +152,27 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
             {/* Resisted lighting checkbox */}
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">Ellenálltál a rágyújtás vágyának?</p>
-              <div className="flex gap-4">
+              {/* Responsive button container - stack on mobile, side by side on larger screens */}
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <Button
                   type="button"
                   variant={resistedLighting === true ? "default" : "outline"}
                   size="sm"
-                  className="gap-2 flex-1"
+                  className="gap-2 w-full sm:flex-1 min-w-0"
                   onClick={() => setResistedLighting(true)}
                 >
-                  <ThumbsUp className="h-4 w-4" />
-                  Igen, ellenálltam
+                  <ThumbsUp className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Igen, ellenálltam</span>
                 </Button>
                 <Button
                   type="button"
                   variant={resistedLighting === false ? "destructive" : "outline"}
                   size="sm"
-                  className="gap-2 flex-1"
+                  className="gap-2 w-full sm:flex-1 min-w-0"
                   onClick={() => setResistedLighting(false)}
                 >
-                  <ThumbsDown className="h-4 w-4" />
-                  Nem sikerült
+                  <ThumbsDown className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Nem sikerült</span>
                 </Button>
               </div>
             </div>
