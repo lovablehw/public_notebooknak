@@ -899,6 +899,7 @@ export type Database = {
           masked_email: string
         }[]
       }
+      get_questionnaire_progress_stats: { Args: never; Returns: Json }
       get_user_questionnaires: {
         Args: never
         Returns: {
