@@ -20,7 +20,8 @@ export function ChallengeChart({
   observations,
   category,
   label,
-  daysToShow = 14,
+  // daysToShow is no longer used - X-axis always starts at first log entry
+  daysToShow: _daysToShow,
   showTrendLine = true,
   challengeId,
 }: ChallengeChartProps) {

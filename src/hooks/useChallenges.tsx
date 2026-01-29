@@ -526,22 +526,27 @@ export function useChallenges() {
     return true;
   }, [user, challengeTypes, toast, fetchUserChallenges]);
 
-  // Get all active challenges (supports multiple simultaneous challenges)
-  const activeChallenges = userChallenges.filter(c => c.status === "active");
+  // Get all active challenges - ONLY show if challenge_type.is_active is true
+  const activeChallenges = userChallenges.filter(
+    c => c.status === "active" && c.challenge_type?.is_active === true
+  );
   
-  // Get paused challenges
-  const pausedChallenges = userChallenges.filter(c => c.status === "paused");
+  // Get paused challenges - ONLY show if challenge_type.is_active is true
+  const pausedChallenges = userChallenges.filter(
+    c => c.status === "paused" && c.challenge_type?.is_active === true
+  );
   
   // Get challenge type IDs that user has already joined (active or paused)
+  // Only consider challenges with active challenge types
   const joinedChallengeTypeIds = new Set(
     userChallenges
-      .filter(c => c.status === "active" || c.status === "paused")
+      .filter(c => (c.status === "active" || c.status === "paused") && c.challenge_type?.is_active === true)
       .map(c => c.challenge_type_id)
   );
   
-  // Get available challenge types that user hasn't joined yet
+  // Get available challenge types that user hasn't joined yet (already filtered by is_active in fetchChallengeTypes)
   const availableChallengeTypes = challengeTypes.filter(
-    ct => !joinedChallengeTypeIds.has(ct.id)
+    ct => ct.is_active && !joinedChallengeTypeIds.has(ct.id)
   );
 
   return {
