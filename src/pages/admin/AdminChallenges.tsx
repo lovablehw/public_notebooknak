@@ -1407,7 +1407,7 @@ export default function AdminChallenges() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Kockázat szerkesztése</DialogTitle>
-              <DialogDescription>Konfiguráld a betegség nevét és a "fade" időtartamot</DialogDescription>
+              <DialogDescription>Konfiguráld a betegség nevét és az elhalványulás időtartamot</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -1442,7 +1442,7 @@ export default function AdminChallenges() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="risk-start">Fade kezdete (füstmentes nap)</Label>
+                  <Label htmlFor="risk-start">Elhalványulás kezdete</Label>
                   <Input
                     id="risk-start"
                     type="number"
@@ -1453,7 +1453,7 @@ export default function AdminChallenges() {
                   <p className="text-xs text-muted-foreground">Ennyi nap után kezd csökkenni a kockázat</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="risk-end">Fade vége (füstmentes nap)</Label>
+                  <Label htmlFor="risk-end">Elhalványulás vége</Label>
                   <Input
                     id="risk-end"
                     type="number"
