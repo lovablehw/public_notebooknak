@@ -4,12 +4,14 @@ import {
   UserObservation,
   ChallengeHealthRisk,
   ChallengeMode,
+  getCategoryConfig,
 } from "@/hooks/useChallenges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChallengeHeader } from "./ChallengeHeader";
 import { HealthRiskIndicators } from "./HealthRiskIndicators";
+import { GoalSummary } from "./GoalSummary";
 import { BadgeShelf } from "./BadgeShelf";
 import { ChallengeChart } from "./ChallengeChart";
 import { ObservationLogger } from "./ObservationLogger";
@@ -32,10 +34,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { 
-  Flame, Target, TrendingUp, PlusCircle, BarChart3, Award, ChevronDown, ChevronUp,
-  MoreVertical, Pause, Play, XCircle, RotateCcw
+  Target, TrendingUp, PlusCircle, BarChart3, Award, ChevronDown, ChevronUp,
+  MoreVertical, Pause, Play, XCircle,
+  Activity, Wind, Flame, Dumbbell, Heart, LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Icon mapping for dynamic challenge type icons
+const CHALLENGE_ICON_MAP: Record<string, LucideIcon> = {
+  Target,
+  Activity,
+  Wind,
+  Flame,
+  Dumbbell,
+  Heart,
+  TrendingUp,
+};
 
 interface ChallengeStatusWidgetProps {
   challenge: UserChallenge;
@@ -99,27 +113,53 @@ export function ChallengeStatusWidget({
     setShowCancelDialog(false);
   };
 
-  // Get the main metric for collapsed view
+  // Determine the dynamic challenge icon
+  const ChallengeIcon = CHALLENGE_ICON_MAP[challengeType?.icon || "Target"] || Target;
+  
+  // Check if this is a "smoking-like" challenge (has cigarette_count in required types)
+  const isSmokingChallenge = requiredCategories.includes("cigarette_count");
+  
+  // Get primary metric category (first numeric required category)
+  const primaryCategory = requiredCategories.find(cat => {
+    const config = getCategoryConfig(cat, challengeType);
+    return config.type === "numeric";
+  }) || requiredCategories[0];
+  
+  const primaryConfig = getCategoryConfig(primaryCategory || "", challengeType);
+
+  // Get the main metric for collapsed view - now dynamic
   const getMainMetric = () => {
+    // For quitting mode, show streak days
     if (challenge.current_mode === "quitting") {
+      const streakLabel = challengeType?.show_streak_counter 
+        ? "sikeres nap" 
+        : "nap a kihívásban";
       return {
         value: daysSmokeFree,
-        label: "füstmentes nap",
+        label: streakLabel,
         sublabel: "Gratulálunk a haladáshoz!",
       };
     }
-    // For reduction mode, show latest cigarette count or trend
-    const latestCigObs = observations
-      .filter(o => o.category === "cigarette_count")
-      .sort((a, b) => new Date(b.observation_date).getTime() - new Date(a.observation_date).getTime())[0];
     
-    if (latestCigObs?.numeric_value !== null && latestCigObs?.numeric_value !== undefined) {
-      return {
-        value: latestCigObs.numeric_value,
-        label: "cigaretta ma",
-        sublabel: "Folytasd a csökkentést!",
-      };
+    // For other modes, show latest observation from primary category
+    if (primaryCategory) {
+      const latestObs = observations
+        .filter(o => o.category === primaryCategory)
+        .sort((a, b) => new Date(b.observation_date).getTime() - new Date(a.observation_date).getTime())[0];
+      
+      if (latestObs?.numeric_value !== null && latestObs?.numeric_value !== undefined) {
+        const unit = primaryConfig.unit ? ` ${primaryConfig.unit}` : "";
+        return {
+          value: latestObs.numeric_value,
+          label: `${primaryConfig.label}${unit}`,
+          sublabel: challenge.current_mode === "reduction" 
+            ? "Folytasd a csökkentést!" 
+            : "Tartsd a tempót!",
+        };
+      }
     }
+    
+    // Fallback to streak/days
     return {
       value: challenge.current_streak_days,
       label: "nap a kihívásban",
@@ -128,6 +168,22 @@ export function ChallengeStatusWidget({
   };
 
   const mainMetric = getMainMetric();
+  
+  // Get dynamic mode description
+  const getModeDescription = () => {
+    if (isPaused) return "A kihívás szünetel - folytatáshoz kattints a menüre";
+    
+    switch (challenge.current_mode) {
+      case "quitting":
+        return challengeType?.description || "Azonnali kihívás módban - minden nap számít!";
+      case "reduction":
+        return "Csökkentési módban vagy - fokozatos haladás";
+      case "maintenance":
+        return "Fenntartási módban - tartsd meg az eredményeket!";
+      default:
+        return "Követési módban";
+    }
+  };
 
   return (
     <Card className={cn(
@@ -138,9 +194,9 @@ export function ChallengeStatusWidget({
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Flame className={cn("h-6 w-6", isPaused ? "text-muted-foreground" : "text-primary")} />
+              <ChallengeIcon className={cn("h-6 w-6", isPaused ? "text-muted-foreground" : "text-primary")} />
               <CardTitle className="text-xl font-medium">
-                Kihívás: {challengeType?.name}
+                {challengeType?.name || "Kihívás"}
               </CardTitle>
               {isPaused && (
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-warning bg-warning/10 px-2 py-1 rounded-full">
@@ -221,14 +277,7 @@ export function ChallengeStatusWidget({
             </div>
           </div>
           <CardDescription>
-            {isPaused 
-              ? "A kihívás szünetel - folytatáshoz kattints a menüre"
-              : challenge.current_mode === "quitting" 
-                ? "Leszokás módban vagy - minden nap számít!" 
-                : challenge.current_mode === "reduction" 
-                  ? "Csökkentési módban vagy - fokozatos haladás"
-                  : "Követési módban"
-            }
+            {getModeDescription()}
           </CardDescription>
         </CardHeader>
 
@@ -274,11 +323,12 @@ export function ChallengeStatusWidget({
               </div>
               <ObservationLogger
                 requiredCategories={requiredCategories}
+                challengeType={challengeType}
                 onLog={onLogObservation}
               />
             </div>
 
-            {/* Progress Charts - Full Width, Stacked */}
+            {/* Progress Charts - Full Width, Dynamic Categories */}
             {requiredCategories.length > 0 && (
               <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
                 <div className="flex items-center gap-2 mb-4">
@@ -286,52 +336,44 @@ export function ChallengeStatusWidget({
                   <h3 className="font-medium">Haladás</h3>
                 </div>
                 <div className="space-y-4">
-                  {requiredCategories.includes("cigarette_count") && (
-                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                      <ChallengeChart
-                        key={`cigarette_count-${challenge.id}`}
-                        observations={observations}
-                        category="cigarette_count"
-                        label="Napi cigarettaszám"
-                        daysToShow={14}
-                        challengeId={challenge.id}
-                      />
-                    </div>
-                  )}
-                  {requiredCategories.includes("craving_level") && (
-                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                      <ChallengeChart
-                        key={`craving_level-${challenge.id}`}
-                        observations={observations}
-                        category="craving_level"
-                        label="Sóvárgás mértéke"
-                        daysToShow={14}
-                        challengeId={challenge.id}
-                      />
-                    </div>
-                  )}
-                  {requiredCategories.includes("weight") && (
-                    <div className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
-                      <ChallengeChart
-                        key={`weight-${challenge.id}`}
-                        observations={observations}
-                        category="weight"
-                        label="Súly (kg)"
-                        daysToShow={30}
-                        challengeId={challenge.id}
-                      />
-                    </div>
-                  )}
+                  {requiredCategories.map(category => {
+                    const config = getCategoryConfig(category, challengeType);
+                    // Only show charts for numeric categories
+                    if (config.type !== "numeric" && config.type !== "scale") return null;
+                    
+                    const label = config.unit 
+                      ? `${config.label} (${config.unit})` 
+                      : config.label;
+                    
+                    return (
+                      <div key={category} className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                        <ChallengeChart
+                          observations={observations}
+                          category={category}
+                          label={label}
+                          daysToShow={category === "weight" ? 30 : 14}
+                          challengeId={challenge.id}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Health Risks - Full Width */}
-            {challengeType?.show_health_risks && (
+            {/* Health Risks OR Goal Summary - Conditional Based on challenge_type.show_health_risks */}
+            {challengeType?.show_health_risks ? (
               <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
                 <HealthRiskIndicators 
                   challenge={challenge}
                   getHealthRiskFade={getHealthRiskFade}
+                />
+              </div>
+            ) : (
+              <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+                <GoalSummary
+                  challenge={challenge}
+                  observations={observations}
                 />
               </div>
             )}

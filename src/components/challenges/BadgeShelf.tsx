@@ -39,7 +39,7 @@ export function BadgeShelf({ challenge, daysSmokeFree }: BadgeShelfProps) {
     <div className="space-y-4">
       <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
         <Trophy className="h-4 w-4" />
-        Egészségügyi mérföldkövek
+        Mérföldkövek
       </h4>
       
       {/* Next milestone highlight */}
@@ -82,7 +82,7 @@ export function BadgeShelf({ challenge, daysSmokeFree }: BadgeShelfProps) {
                 isUnlocked 
                   ? "bg-primary/10 border-primary/30" 
                   : canUnlock
-                    ? "bg-green-500/10 border-green-500/30 animate-pulse"
+                    ? "bg-accent/50 border-accent animate-pulse"
                     : "bg-muted/30 border-border/50"
               )}
             >
@@ -105,7 +105,7 @@ export function BadgeShelf({ challenge, daysSmokeFree }: BadgeShelfProps) {
                 isUnlocked 
                   ? "bg-primary/20" 
                   : canUnlock 
-                    ? "bg-green-500/20" 
+                    ? "bg-accent" 
                     : "bg-muted"
               )}>
                 <IconComponent className={cn(
@@ -113,7 +113,7 @@ export function BadgeShelf({ challenge, daysSmokeFree }: BadgeShelfProps) {
                   isUnlocked 
                     ? "text-primary" 
                     : canUnlock 
-                      ? "text-green-500" 
+                      ? "text-accent-foreground" 
                       : "text-muted-foreground"
                 )} />
               </div>
