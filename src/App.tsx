@@ -9,6 +9,7 @@ import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ScrollToAnchor } from "@/components/ScrollToAnchor";
 import { ScrollPersistence } from "@/components/ScrollPersistence";
 import { ActivityLoggerProvider } from "@/components/ActivityLoggerProvider";
+import { ClickTracker } from "@/components/telemetry/ClickTracker";
 import { BreakpointIndicator } from "@/components/debug/BreakpointIndicator";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
@@ -98,6 +99,7 @@ const App = () => (
             </Routes>
           </ActivityLoggerProvider>
           <CookieConsentBanner />
+          <ClickTracker />
           <BreakpointIndicator />
         </BrowserRouter>
       </TooltipProvider>
