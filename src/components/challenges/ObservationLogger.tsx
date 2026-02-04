@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { 
-  ChallengeObservationCategory, 
-  CHALLENGE_OBSERVATION_CATEGORIES 
+  ChallengeType,
+  getCategoryConfig,
+  DEFAULT_OBSERVATION_CATEGORIES,
 } from "@/hooks/useChallenges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +18,12 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Plus, Cigarette, Scale, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Loader2, Plus, Cigarette, Scale, ThumbsUp, ThumbsDown, Activity } from "lucide-react";
 import { format } from "date-fns";
 
 interface ObservationLoggerProps {
   requiredCategories: string[];
+  challengeType?: ChallengeType | null;
   onLog: (
     category: string,
     value: string,
@@ -31,7 +33,7 @@ interface ObservationLoggerProps {
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function ObservationLogger({ requiredCategories, onLog }: ObservationLoggerProps) {
+export function ObservationLogger({ requiredCategories, challengeType, onLog }: ObservationLoggerProps) {
   const [category, setCategory] = useState<string>(requiredCategories[0] || "cigarette_count");
   const [value, setValue] = useState<string>("");
   const [numericValue, setNumericValue] = useState<number>(0);
@@ -44,12 +46,21 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
   const [resistedLighting, setResistedLighting] = useState<boolean | null>(null);
   const [showCigaretteCount, setShowCigaretteCount] = useState(false);
 
+  // Check if this is a smoking challenge (has cigarette_count in required types)
   const isSmokingChallenge = requiredCategories.includes("cigarette_count");
 
-  // Get available categories (filter to required ones if specified)
-  const availableCategories = CHALLENGE_OBSERVATION_CATEGORIES.filter(
-    cat => requiredCategories.length === 0 || requiredCategories.includes(cat.value)
-  );
+  // Build available categories from dynamic config or defaults
+  const availableCategories = requiredCategories.map(catKey => {
+    const config = getCategoryConfig(catKey, challengeType);
+    return {
+      value: catKey,
+      label: config.label,
+      type: config.type as "numeric" | "scale" | "text",
+      unit: config.unit,
+      min: config.min,
+      max: config.max,
+    };
+  });
 
   const selectedCategory = availableCategories.find(c => c.value === category);
 
@@ -130,7 +141,8 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
                     <div className="flex items-center gap-2">
                       {cat.value === "cigarette_count" && <Cigarette className="h-4 w-4" />}
                       {cat.value === "weight" && <Scale className="h-4 w-4" />}
-                      {cat.label}
+                      {!["cigarette_count", "weight"].includes(cat.value) && <Activity className="h-4 w-4" />}
+                      {cat.label}{cat.unit ? ` (${cat.unit})` : ""}
                     </div>
                   </SelectItem>
                 ))}
@@ -235,7 +247,7 @@ export function ObservationLogger({ requiredCategories, onLog }: ObservationLogg
         <div className="space-y-2">
           <Label>
             {selectedCategory?.label || "Érték"}
-            {selectedCategory?.type === "numeric" && category === "weight" && " (kg)"}
+            {selectedCategory?.unit && ` (${selectedCategory.unit})`}
           </Label>
           
           {selectedCategory?.type === "numeric" && category !== "cigarette_count" && (

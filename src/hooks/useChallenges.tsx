@@ -4,12 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 
 // Types for the Challenge Engine
+// Dynamic observation category from JSONB metadata
+export interface ObservationCategoryConfig {
+  key: string;
+  label: string;
+  input_type: "number" | "text" | "scale";
+  is_active: boolean;
+  unit?: string;
+  min?: number;
+  max?: number;
+}
+
 export interface ChallengeType {
   id: string;
   name: string;
   description: string | null;
   icon: string;
   required_observation_types: string[];
+  observation_categories: ObservationCategoryConfig[];
   default_mode: ChallengeMode;
   show_daily_counter: boolean;
   show_streak_counter: boolean;
@@ -74,18 +86,56 @@ export interface UserObservation {
 export type ChallengeStatus = "active" | "completed" | "paused" | "cancelled";
 export type ChallengeMode = "tracking" | "reduction" | "quitting" | "maintenance";
 
-// Observation categories for challenges
-export const CHALLENGE_OBSERVATION_CATEGORIES = [
-  { value: "cigarette_count", label: "Napi cigaretta", type: "numeric" },
+// Default observation categories for challenges (fallback when not configured in DB)
+export const DEFAULT_OBSERVATION_CATEGORIES = [
+  { value: "cigarette_count", label: "Napi cigaretta", type: "numeric", unit: "db" },
   { value: "craving_level", label: "Sóvárgás mértéke", type: "scale", min: 1, max: 10 },
-  { value: "weight", label: "Súly (kg)", type: "numeric" },
-  { value: "mood", label: "Hangulatom", type: "scale", min: 1, max: 5 },
-  { value: "energy", label: "Energiaszintem", type: "scale", min: 1, max: 5 },
-  { value: "sleep", label: "Alvásom", type: "scale", min: 1, max: 5 },
+  { value: "weight", label: "Súly", type: "numeric", unit: "kg" },
+  { value: "mood", label: "Hangulat", type: "scale", min: 1, max: 5 },
+  { value: "energy", label: "Energiaszint", type: "scale", min: 1, max: 5 },
+  { value: "sleep", label: "Alvásminőség", type: "scale", min: 1, max: 5 },
   { value: "note", label: "Megjegyzés", type: "text" },
 ] as const;
 
-export type ChallengeObservationCategory = typeof CHALLENGE_OBSERVATION_CATEGORIES[number]["value"];
+// Legacy alias for backward compatibility
+export const CHALLENGE_OBSERVATION_CATEGORIES = DEFAULT_OBSERVATION_CATEGORIES;
+
+export type ChallengeObservationCategory = typeof DEFAULT_OBSERVATION_CATEGORIES[number]["value"];
+
+// Helper to get localized category config from challenge type or fallback to defaults
+export function getCategoryConfig(
+  category: string,
+  challengeType?: ChallengeType | null
+): { label: string; type: string; unit?: string; min?: number; max?: number } {
+  // First check dynamic config from challenge type
+  if (challengeType?.observation_categories?.length) {
+    const dynamicConfig = challengeType.observation_categories.find(c => c.key === category);
+    if (dynamicConfig && dynamicConfig.is_active) {
+      return {
+        label: dynamicConfig.label,
+        type: dynamicConfig.input_type === "number" ? "numeric" : dynamicConfig.input_type,
+        unit: dynamicConfig.unit,
+        min: dynamicConfig.min,
+        max: dynamicConfig.max,
+      };
+    }
+  }
+  
+  // Fallback to default categories
+  const defaultConfig = DEFAULT_OBSERVATION_CATEGORIES.find(c => c.value === category);
+  if (defaultConfig) {
+    return {
+      label: defaultConfig.label,
+      type: defaultConfig.type,
+      unit: "unit" in defaultConfig ? defaultConfig.unit : undefined,
+      min: "min" in defaultConfig ? defaultConfig.min : undefined,
+      max: "max" in defaultConfig ? defaultConfig.max : undefined,
+    };
+  }
+  
+  // Ultimate fallback
+  return { label: category, type: "text" };
+}
 
 interface LogObservationResult {
   success: boolean;
@@ -129,7 +179,13 @@ export function useChallenges() {
       return;
     }
     
-    setChallengeTypes(data || []);
+    // Map DB data to typed interface, casting observation_categories from JSON
+    const typedData: ChallengeType[] = (data || []).map(ct => ({
+      ...ct,
+      observation_categories: (ct.observation_categories as unknown as ObservationCategoryConfig[]) || [],
+    }));
+    
+    setChallengeTypes(typedData);
   }, []);
 
   // Fetch user challenges with related data
@@ -183,15 +239,23 @@ export function useChallenges() {
     
     const unlockedMilestoneIds = new Set(unlockedMilestones?.map(u => u.milestone_id) || []);
     
-    // Combine data - use joined challenge_types from query
-    const enrichedChallenges: UserChallenge[] = challenges.map(c => ({
-      ...c,
-      challenge_type: c.challenge_types as unknown as ChallengeType,
-      milestones: milestones?.filter(m => m.challenge_type_id === c.challenge_type_id) || [],
-      health_risks: healthRisks?.filter(hr => hr.challenge_type_id === c.challenge_type_id) || [],
-      unlocked_milestones: Array.from(unlockedMilestoneIds),
-    }));
-    
+    // Combine data - use joined challenge_types from query with proper typing
+    const enrichedChallenges: UserChallenge[] = challenges.map(c => {
+      const rawType = c.challenge_types as unknown as Record<string, unknown>;
+      const challengeType: ChallengeType | undefined = rawType ? {
+        ...rawType,
+        observation_categories: (rawType.observation_categories as ObservationCategoryConfig[]) || [],
+      } as ChallengeType : undefined;
+      
+      return {
+        ...c,
+        challenge_type: challengeType,
+        milestones: milestones?.filter(m => m.challenge_type_id === c.challenge_type_id) || [],
+        health_risks: healthRisks?.filter(hr => hr.challenge_type_id === c.challenge_type_id) || [],
+        unlocked_milestones: Array.from(unlockedMilestoneIds),
+      };
+    });
+
     setUserChallenges(enrichedChallenges);
   }, [user]);
 
@@ -574,6 +638,7 @@ export function useChallenges() {
     getLatestObservation,
     getDaysSmokeFree,
     getHealthRiskFade,
+    getCategoryConfig,
     OBSERVATION_CATEGORIES: CHALLENGE_OBSERVATION_CATEGORIES,
   };
 }

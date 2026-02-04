@@ -191,7 +191,7 @@ export function HealthRiskIndicators({ challenge, getHealthRiskFade }: HealthRis
               </div>
               <Progress value={getHealthRiskFade(challenge, selectedRisk)} className="h-2" />
               <p className="text-xs text-muted-foreground mt-2">
-                Teljes normalizálódás: {selectedRisk.fade_end_days} füstmentes nap után
+                Teljes normalizálódás: {selectedRisk.fade_end_days} sikeres nap után
               </p>
             </div>
           )}

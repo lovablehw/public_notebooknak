@@ -1,8 +1,9 @@
 import { UserChallenge, ChallengeMode } from "@/hooks/useChallenges";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Cigarette, Flame, Clock, TrendingDown, 
-  CheckCircle2, AlertCircle
+  Target, Flame, Clock, TrendingDown, 
+  CheckCircle2, AlertCircle, Activity, Wind, Dumbbell, Heart,
+  LucideIcon
 } from "lucide-react";
 
 interface ChallengeHeaderProps {
@@ -13,30 +14,50 @@ interface ChallengeHeaderProps {
 const MODE_LABELS: Record<ChallengeMode, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   tracking: { label: "Követés", variant: "outline" },
   reduction: { label: "Csökkentés", variant: "secondary" },
-  quitting: { label: "Leszokás", variant: "default" },
+  quitting: { label: "Azonnali", variant: "default" },
   maintenance: { label: "Fenntartás", variant: "outline" },
+};
+
+// Dynamic icon mapping
+const ICON_MAP: Record<string, LucideIcon> = {
+  Target,
+  Activity,
+  Wind,
+  Flame,
+  Dumbbell,
+  Heart,
+  TrendingDown,
 };
 
 export function ChallengeHeader({ challenge, daysSmokeFree }: ChallengeHeaderProps) {
   const modeInfo = MODE_LABELS[challenge.current_mode];
   const isQuitting = challenge.current_mode === "quitting";
+  const challengeType = challenge.challenge_type;
+  
+  // Get dynamic icon from challenge type
+  const IconComponent = ICON_MAP[challengeType?.icon || "Target"] || Target;
+  
+  // Dynamic streak label - avoid hardcoded "smoke-free"
+  const streakLabel = challengeType?.show_streak_counter 
+    ? `${daysSmokeFree} sikeres nap`
+    : `${daysSmokeFree} nap`;
   
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <div className={`p-3 rounded-full ${isQuitting ? "bg-green-500/10" : "bg-primary/10"}`}>
+        <div className={`p-3 rounded-full ${isQuitting ? "bg-primary/10" : "bg-muted/50"}`}>
           {isQuitting ? (
-            <CheckCircle2 className="h-6 w-6 text-green-500" />
+            <CheckCircle2 className="h-6 w-6 text-primary" />
           ) : (
-            <Cigarette className="h-6 w-6 text-primary" />
+            <IconComponent className="h-6 w-6 text-primary" />
           )}
         </div>
         <div>
           <h3 className="font-semibold text-lg text-foreground">
-            {challenge.challenge_type?.name || "Kihívás"}
+            {challengeType?.name || "Kihívás"}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {challenge.challenge_type?.description}
+            {challengeType?.description}
           </p>
         </div>
       </div>
@@ -49,9 +70,9 @@ export function ChallengeHeader({ challenge, daysSmokeFree }: ChallengeHeaderPro
         </Badge>
         
         {isQuitting && daysSmokeFree > 0 && (
-          <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
+          <Badge variant="default" className="gap-1 bg-primary hover:bg-primary/90">
             <Clock className="h-3 w-3" />
-            {daysSmokeFree} nap füstmentesen
+            {streakLabel}
           </Badge>
         )}
         
