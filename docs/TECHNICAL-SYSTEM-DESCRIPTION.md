@@ -1,9 +1,9 @@
 # HealthPass Wellbeing - Műszaki Rendszerleírás
 
-> **Verzió:** 2.0  
-> **Dátum:** 2026. január 20.  
+> **Verzió:** 2.1  
+> **Dátum:** 2026. február 4.  
 > **Platform:** Lovable Cloud (Supabase backend)  
-> **Projekt azonosító:** gxpctxtiwclorvksofru
+> **Projekt azonosító:** jqdrjpywgcfbdhscrixr
 
 ---
 
@@ -1220,9 +1220,9 @@ SELECT EXISTS (
 
 ```env
 # Supabase (automatikusan generált - NEM SZERKESZTENDŐ)
-VITE_SUPABASE_URL=https://gxpctxtiwclorvksofru.supabase.co
+VITE_SUPABASE_URL=https://jqdrjpywgcfbdhscrixr.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
-VITE_SUPABASE_PROJECT_ID=gxpctxtiwclorvksofru
+VITE_SUPABASE_PROJECT_ID=jqdrjpywgcfbdhscrixr
 
 # Admin konfiguráció
 VITE_ADMIN_EMAILS=admin@example.com
@@ -1368,6 +1368,7 @@ declare global {
 | `/admin/admins` | is_admin | Admin felhasználók |
 | `/admin/szerepkorok` | is_super_admin | Szerepkörök |
 | `/admin/gombok` | is_super_admin | Gomb konfigurációk |
+| `/admin/kihivasok` | is_service_admin | Kihívások kezelése |
 | `/admin/naplo` | is_admin | Audit napló |
 
 ### C. Adatbázis Triggerek
@@ -1378,9 +1379,88 @@ declare global {
 | `sync_button_config_after_questionnaire_insert` | questionnaires_config | INSERT | Automatikus button_config létrehozás |
 | `link_admin_user_id` | auth.users | INSERT | Admin email → user_id összekapcsolás |
 
+### D. Kihívás (Challenge) Rendszer
+
+A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzásról való leszokás):
+
+| Tábla | Leírás |
+|-------|--------|
+| `challenge_types` | Kihívás típusok definíciói |
+| `challenge_milestones` | Mérföldkövek (napok, jutalom pontok) |
+| `challenge_health_risks` | Egészségügyi kockázat indikátorok |
+| `user_challenges` | Felhasználói kihívás részvételek |
+| `user_milestone_unlocks` | Feloldott mérföldkövek |
+| `user_observations` | Megfigyelések (cigaretta szám, stb.) |
+
+**Kihívás módok:**
+- `tracking` - Követés mód (adatok gyűjtése)
+- `reduction` - Csökkentés mód
+- `quitting` - Leszokás mód (0 naplózva)
+- `maintenance` - Fenntartás mód
+
+**Kapcsolódó komponensek:**
+- `ChallengeStatusWidget` - Kihívás állapot widget
+- `ChallengeChart` - Haladás grafikon
+- `ObservationLogger` - Megfigyelés naplózó
+- `HealthRiskIndicators` - Kockázati indikátorok
+- `BadgeShelf` - Mérföldkő kitüntetések
+
+---
+
+## 13. Kód Audit Összefoglaló (2026-02-04)
+
+### 13.1 Architektúra Értékelés
+
+| Terület | Állapot | Megjegyzés |
+|---------|---------|------------|
+| Komponens struktúra | ✅ Jó | Tiszta szétválasztás: pages, hooks, components |
+| Admin jogosultságok | ⚠️ Kettős rendszer | `admin_roles` (modern RBAC) + `admin_users` (legacy) |
+| RLS Policies | ✅ Jó | Minden táblán engedélyezve, megfelelő védelem |
+| Gamifikáció | ✅ Jó | Pont rendszer, kitüntetések, frekvencia szabályok |
+| Kihívás rendszer | ✅ Jó | Komplett flow: mérföldkövek, megfigyelések, grafikon |
+
+### 13.2 Kettős Admin Rendszer
+
+**Jelenlegi állapot:** A platform két párhuzamos admin rendszert használ:
+
+1. **Modern RBAC (`admin_roles` tábla):**
+   - Szerepkörök: `super_admin`, `service_admin`
+   - RLS függvények: `is_super_admin()`, `is_service_admin()`
+   - Frontend hook: `useAdminRole()`
+
+2. **Legacy rendszer (`admin_users` tábla):**
+   - Egyszerű email-alapú ellenőrzés
+   - RLS függvény: `is_admin()`
+   - Frontend hook: `useAdmin()`
+   - UI megjelenítés (Admin pajzs ikon)
+
+**Fontos:** Teljes admin hozzáféréshez mindkét táblában szerepelnie kell a felhasználónak.
+
+### 13.3 Fájl Statisztikák
+
+| Kategória | Darab |
+|-----------|-------|
+| Oldalak (pages) | 18 + 15 admin |
+| Hookok | 20 |
+| UI komponensek (shadcn) | 50+ |
+| Egyedi komponensek | 15+ |
+| Adatbázis táblák | 24 |
+| RPC függvények | 14 |
+
+### 13.4 Technológiai Verzók
+
+| Csomag | Verzió |
+|--------|--------|
+| React | 19.x |
+| TypeScript | - |
+| Tailwind CSS | - |
+| TanStack Query | 5.x |
+| React Router | 6.x |
+| Supabase JS | 2.87.x |
+
 ---
 
 *Dokumentum vége*
 
-**Utolsó frissítés:** 2026. január 20.  
-**Verzió:** 2.0
+**Utolsó frissítés:** 2026. február 4.  
+**Verzió:** 2.1
