@@ -235,7 +235,7 @@ const HealthBook = () => {
   }
 
   return (
-    <div className="min-h-screen gradient-hero max-w-full overflow-x-hidden">
+    <div className="min-h-screen gradient-hero w-full overflow-x-hidden">
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Heart className="h-6 w-6 text-primary" />
@@ -322,9 +322,9 @@ const HealthBook = () => {
                 Kövesd nyomon az aktív kihívásaidat és csatlakozz újakhoz.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               {/* Unified Challenge Grid - Active, Paused, and Joinable in one responsive grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start overflow-hidden">
                 {/* Active Challenges */}
                 {activeChallenges.map(challenge => {
                   // Filter observations for this specific challenge's user (data isolation)

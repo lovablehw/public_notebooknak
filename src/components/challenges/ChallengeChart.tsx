@@ -85,13 +85,13 @@ export function ChallengeChart({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 min-w-0 w-full overflow-hidden">
       <h4 className="text-sm font-medium text-muted-foreground">{label}</h4>
-      <div className="h-[200px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[200px] w-full min-w-0">
+        <ResponsiveContainer width="100%" height={200}>
           <LineChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 8, left: -10, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis 
