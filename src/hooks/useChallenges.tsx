@@ -551,25 +551,46 @@ export function useChallenges() {
     return true;
   }, [user, toast, fetchUserChallenges]);
 
-  // Restart a cancelled/completed challenge
-  const restartChallenge = useCallback(async (challengeTypeId: string, mode?: ChallengeMode) => {
+  // Restart an active/paused challenge - resets everything including milestones
+  const restartChallenge = useCallback(async (userChallengeId: string, mode?: ChallengeMode) => {
     if (!user) return false;
 
-    const challengeType = challengeTypes.find(ct => ct.id === challengeTypeId);
+    // Find the current challenge to get its type
+    const currentChallenge = userChallenges.find(c => c.id === userChallengeId);
+    if (!currentChallenge) return false;
+
+    const challengeType = currentChallenge.challenge_type;
     if (!challengeType) return false;
 
     const selectedMode = mode || challengeType.default_mode;
     const quitDate = selectedMode === "quitting" ? new Date().toISOString().split("T")[0] : null;
 
+    // First, clear milestone unlocks for this challenge
+    const { error: milestoneError } = await supabase
+      .from("user_milestone_unlocks")
+      .delete()
+      .eq("user_challenge_id", userChallengeId)
+      .eq("user_id", user.id);
+
+    if (milestoneError) {
+      console.error("Error clearing milestones:", milestoneError);
+      // Continue anyway, milestone clearing is not critical
+    }
+
+    // Reset the challenge record
     const { error } = await supabase
       .from("user_challenges")
-      .insert({
-        user_id: user.id,
-        challenge_type_id: challengeTypeId,
+      .update({
+        started_at: new Date().toISOString(),
         current_mode: selectedMode,
         quit_date: quitDate,
         current_streak_days: selectedMode === "quitting" ? 1 : 0,
-      });
+        longest_streak_days: 0,
+        last_zero_logged_at: null,
+        status: "active" as ChallengeStatus,
+      })
+      .eq("id", userChallengeId)
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Error restarting challenge:", error);
@@ -588,7 +609,7 @@ export function useChallenges() {
 
     await fetchUserChallenges();
     return true;
-  }, [user, challengeTypes, toast, fetchUserChallenges]);
+  }, [user, userChallenges, toast, fetchUserChallenges]);
 
   // Get all active challenges - ONLY show if challenge_type.is_active is true
   const activeChallenges = userChallenges.filter(

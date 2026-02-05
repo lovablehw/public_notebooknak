@@ -15,27 +15,9 @@ import { GoalSummary } from "./GoalSummary";
 import { BadgeShelf } from "./BadgeShelf";
 import { ChallengeChart } from "./ChallengeChart";
 import { ObservationLogger } from "./ObservationLogger";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { 
   Target, TrendingUp, PlusCircle, BarChart3, Award, ChevronDown, ChevronUp,
-  MoreVertical, Pause, Play, XCircle,
+  Pause,
   Activity, Wind, Flame, Dumbbell, Heart, LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -66,7 +48,7 @@ interface ChallengeStatusWidgetProps {
   onPauseChallenge?: (userChallengeId: string) => Promise<boolean>;
   onResumeChallenge?: (userChallengeId: string) => Promise<boolean>;
   onCancelChallenge?: (userChallengeId: string) => Promise<boolean>;
-  onRestartChallenge?: (challengeTypeId: string, mode?: ChallengeMode) => Promise<boolean>;
+  onRestartChallenge?: (userChallengeId: string, mode?: ChallengeMode) => Promise<boolean>;
 }
 
 export function ChallengeStatusWidget({
@@ -81,8 +63,6 @@ export function ChallengeStatusWidget({
   onRestartChallenge,
 }: ChallengeStatusWidgetProps) {
   const [isExpanded, setIsExpanded] = useState(false); // Default collapsed for cleaner UI
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [isActionLoading, setIsActionLoading] = useState(false);
   
   const daysSmokeFree = getDaysSmokeFree(challenge);
   const challengeType = challenge.challenge_type;
@@ -91,26 +71,25 @@ export function ChallengeStatusWidget({
   const totalMilestones = challenge.milestones?.length || 0;
   const isPaused = challenge.status === "paused";
 
+  // Handlers for ChallengeHeader
   const handlePause = async () => {
-    if (!onPauseChallenge) return;
-    setIsActionLoading(true);
-    await onPauseChallenge(challenge.id);
-    setIsActionLoading(false);
+    if (!onPauseChallenge) return false;
+    return await onPauseChallenge(challenge.id);
   };
 
   const handleResume = async () => {
-    if (!onResumeChallenge) return;
-    setIsActionLoading(true);
-    await onResumeChallenge(challenge.id);
-    setIsActionLoading(false);
+    if (!onResumeChallenge) return false;
+    return await onResumeChallenge(challenge.id);
   };
 
   const handleCancel = async () => {
-    if (!onCancelChallenge) return;
-    setIsActionLoading(true);
-    await onCancelChallenge(challenge.id);
-    setIsActionLoading(false);
-    setShowCancelDialog(false);
+    if (!onCancelChallenge) return false;
+    return await onCancelChallenge(challenge.id);
+  };
+
+  const handleRestart = async () => {
+    if (!onRestartChallenge) return false;
+    return await onRestartChallenge(challenge.id);
   };
 
   // Determine the dynamic challenge icon
@@ -206,64 +185,15 @@ export function ChallengeStatusWidget({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Challenge Actions Menu */}
-              <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled={isActionLoading}>
-                      <MoreVertical className="h-4 w-4" />
-                      <span className="sr-only">Kihívás műveletek</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    {isPaused ? (
-                      <DropdownMenuItem 
-                        onClick={handleResume}
-                        className="gap-2"
-                      >
-                        <Play className="h-4 w-4" />
-                        Folytatás
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem 
-                        onClick={handlePause}
-                        className="gap-2"
-                      >
-                        <Pause className="h-4 w-4" />
-                        Szüneteltetés
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem 
-                        className="gap-2 text-destructive focus:text-destructive"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        Abbahagyás
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Kihívás abbahagyása</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Biztosan abba szeretnéd hagyni a "{challengeType?.name}" kihívást? 
-                      Az eddigi előrehaladásod megmarad, és bármikor újrakezdheted.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Mégsem</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleCancel}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Abbahagyom
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {/* ChallengeHeader now manages its own dropdown with all actions */}
+              <ChallengeHeader
+                challenge={challenge}
+                daysSmokeFree={daysSmokeFree}
+                onPause={handlePause}
+                onResume={handleResume}
+                onCancel={handleCancel}
+                onRestart={handleRestart}
+              />
 
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1 min-w-0 px-2 text-center whitespace-nowrap">

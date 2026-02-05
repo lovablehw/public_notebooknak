@@ -1,88 +1,117 @@
+import { useState } from "react";
 import { UserChallenge, ChallengeMode } from "@/hooks/useChallenges";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
-  Target, Flame, Clock, TrendingDown, 
-  CheckCircle2, AlertCircle, Activity, Wind, Dumbbell, Heart,
-  LucideIcon
+  MoreVertical, Pause, Play, RotateCcw, XCircle
 } from "lucide-react";
+import { ChallengeActionModal, ChallengeActionType } from "./ChallengeActionModal";
 
 interface ChallengeHeaderProps {
   challenge: UserChallenge;
   daysSmokeFree: number;
+  onPause?: () => Promise<boolean>;
+  onResume?: () => Promise<boolean>;
+  onCancel?: () => Promise<boolean>;
+  onRestart?: () => Promise<boolean>;
 }
 
-const MODE_LABELS: Record<ChallengeMode, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  tracking: { label: "Követés", variant: "outline" },
-  reduction: { label: "Csökkentés", variant: "secondary" },
-  quitting: { label: "Azonnali", variant: "default" },
-  maintenance: { label: "Fenntartás", variant: "outline" },
-};
+export function ChallengeHeader({ 
+  challenge, 
+  daysSmokeFree,
+  onPause,
+  onResume,
+  onCancel,
+  onRestart,
+}: ChallengeHeaderProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<ChallengeActionType>("cancel");
+  const [isLoading, setIsLoading] = useState(false);
 
-// Dynamic icon mapping
-const ICON_MAP: Record<string, LucideIcon> = {
-  Target,
-  Activity,
-  Wind,
-  Flame,
-  Dumbbell,
-  Heart,
-  TrendingDown,
-};
-
-export function ChallengeHeader({ challenge, daysSmokeFree }: ChallengeHeaderProps) {
-  const modeInfo = MODE_LABELS[challenge.current_mode];
-  const isQuitting = challenge.current_mode === "quitting";
+  const isPaused = challenge.status === "paused";
   const challengeType = challenge.challenge_type;
-  
-  // Get dynamic icon from challenge type
-  const IconComponent = ICON_MAP[challengeType?.icon || "Target"] || Target;
-  
-  // Dynamic streak label - avoid hardcoded "smoke-free"
-  const streakLabel = challengeType?.show_streak_counter 
-    ? `${daysSmokeFree} sikeres nap`
-    : `${daysSmokeFree} nap`;
+
+  const handleAction = (action: ChallengeActionType) => {
+    setModalAction(action);
+    setModalOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    let success = false;
+
+    switch (modalAction) {
+      case "cancel":
+        success = (await onCancel?.()) ?? false;
+        break;
+      case "restart":
+        success = (await onRestart?.()) ?? false;
+        break;
+      case "pause":
+        success = (await onPause?.()) ?? false;
+        break;
+      case "resume":
+        success = (await onResume?.()) ?? false;
+        break;
+    }
+
+    setIsLoading(false);
+    if (success) {
+      setModalOpen(false);
+    }
+  };
   
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className={`p-3 rounded-full ${isQuitting ? "bg-primary/10" : "bg-muted/50"}`}>
-          {isQuitting ? (
-            <CheckCircle2 className="h-6 w-6 text-primary" />
+    <>
+      {/* Kezelés (Manage) dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Kezelés</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48 bg-popover">
+          {isPaused ? (
+            <DropdownMenuItem onClick={() => handleAction("resume")} className="gap-2">
+              <Play className="h-4 w-4" />
+              Folytatás
+            </DropdownMenuItem>
           ) : (
-            <IconComponent className="h-6 w-6 text-primary" />
+            <DropdownMenuItem onClick={() => handleAction("pause")} className="gap-2">
+              <Pause className="h-4 w-4" />
+              Szüneteltetés
+            </DropdownMenuItem>
           )}
-        </div>
-        <div>
-          <h3 className="font-semibold text-lg text-foreground">
-            {challengeType?.name || "Kihívás"}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {challengeType?.description}
-          </p>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-3 flex-wrap">
-        <Badge variant={modeInfo.variant} className="gap-1">
-          {challenge.current_mode === "reduction" && <TrendingDown className="h-3 w-3" />}
-          {challenge.current_mode === "quitting" && <Flame className="h-3 w-3" />}
-          {modeInfo.label}
-        </Badge>
-        
-        {isQuitting && daysSmokeFree > 0 && (
-          <Badge variant="default" className="gap-1 bg-primary hover:bg-primary/90">
-            <Clock className="h-3 w-3" />
-            {streakLabel}
-          </Badge>
-        )}
-        
-        {challenge.longest_streak_days > 0 && challenge.longest_streak_days > daysSmokeFree && (
-          <Badge variant="outline" className="gap-1 text-muted-foreground">
-            <AlertCircle className="h-3 w-3" />
-            Rekord: {challenge.longest_streak_days} nap
-          </Badge>
-        )}
-      </div>
-    </div>
+          <DropdownMenuItem onClick={() => handleAction("restart")} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Újrakezdés
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            onClick={() => handleAction("cancel")} 
+            className="gap-2 text-destructive focus:text-destructive"
+          >
+            <XCircle className="h-4 w-4" />
+            Megszakítás
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ChallengeActionModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        actionType={modalAction}
+        challengeName={challengeType?.name || "Kihívás"}
+        onConfirm={handleConfirm}
+        isLoading={isLoading}
+      />
+    </>
   );
 }
