@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChallengeType, ChallengeMode } from "@/hooks/useChallenges";
 import {
   Dialog,
@@ -10,7 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Cigarette, Target, Trophy, Sparkles, TrendingDown, Ban,
+  Cigarette, Target, Trophy, Sparkles, TrendingDown, Ban, Droplets,
+  Footprints, Heart, Moon, Apple, Dumbbell,
   LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,36 +32,87 @@ interface ModeOption {
   benefits: string[];
 }
 
-const MODE_OPTIONS: ModeOption[] = [
-  {
-    mode: "quitting",
-    title: "Azonnali leszokás",
-    description: "Azonnal abbahagyom a dohányzást és számolom a füstmentes napokat.",
-    icon: Ban,
-    benefits: [
-      "Füstmentes napok számlálása",
-      "Egészségkockázat csökkenés követése",
-      "Mérföldkő jutalmak feloldása",
-    ],
-  },
-  {
-    mode: "reduction",
-    title: "Fokozatos csökkentés",
-    description: "Fokozatosan csökkentem a napi cigaretták számát a végső leszokásig.",
-    icon: TrendingDown,
-    benefits: [
-      "Napi cigarettaszám követése",
-      "Csökkentési trend grafikon",
-      "Átváltás leszokásra bármikor",
-    ],
-  },
-];
+// Dynamic mode options based on challenge type
+function getModeOptions(challengeType: ChallengeType): ModeOption[] {
+  const isSmokingChallenge = challengeType.show_health_risks || 
+    challengeType.required_observation_types?.includes('cigarette_count');
+  
+  // Get the primary category label for dynamic text
+  const primaryCategory = challengeType.required_observation_types?.[0] || 'activity';
+  const categoryConfig = challengeType.observation_categories?.find(
+    c => c.key === primaryCategory
+  );
+  const unitLabel = categoryConfig?.unit || 'egység';
+  const activityLabel = categoryConfig?.label || challengeType.name;
+  
+  if (isSmokingChallenge) {
+    // Smoking-specific options
+    return [
+      {
+        mode: "quitting",
+        title: "Azonnali leszokás",
+        description: "Azonnal abbahagyom a dohányzást és számolom a füstmentes napokat.",
+        icon: Ban,
+        benefits: [
+          "Füstmentes napok számlálása",
+          "Egészségkockázat csökkenés követése",
+          "Mérföldkő jutalmak feloldása",
+        ],
+      },
+      {
+        mode: "reduction",
+        title: "Fokozatos csökkentés",
+        description: "Fokozatosan csökkentem a napi cigaretták számát a végső leszokásig.",
+        icon: TrendingDown,
+        benefits: [
+          "Napi cigarettaszám követése",
+          "Csökkentési trend grafikon",
+          "Átváltás leszokásra bármikor",
+        ],
+      },
+    ];
+  }
+  
+  // Generic challenge options for non-smoking challenges
+  return [
+    {
+      mode: "tracking",
+      title: "Napi követés",
+      description: `Napi ${activityLabel.toLowerCase()} rögzítése és nyomon követése.`,
+      icon: Target,
+      benefits: [
+        `Napi ${unitLabel} számlálása`,
+        "Haladás nyomon követése",
+        "Mérföldkő jutalmak feloldása",
+      ],
+    },
+    {
+      mode: "maintenance",
+      title: "Célérték tartása",
+      description: `Tartsd fenn a kitűzött napi célértéket a ${activityLabel.toLowerCase()} terén.`,
+      icon: Trophy,
+      benefits: [
+        "Célérték elérés követése",
+        "Sikeres napok számlálása",
+        "Rendszeresség jutalmak",
+      ],
+    },
+  ];
+}
 
 // Map icon names to components
 const ICON_MAP: Record<string, LucideIcon> = {
   Cigarette,
   Target,
   Trophy,
+  Droplets,
+  Footprints,
+  Heart,
+  Moon,
+  Apple,
+  Dumbbell,
+  Ban,
+  TrendingDown,
 };
 
 export function ChallengeJoinModal({
@@ -72,6 +124,12 @@ export function ChallengeJoinModal({
 }: ChallengeJoinModalProps) {
   const [selectedMode, setSelectedMode] = useState<ChallengeMode | null>(null);
   const [isJoining, setIsJoining] = useState(false);
+
+  // Generate mode options based on challenge type
+  const modeOptions = useMemo(() => {
+    if (!challengeType) return [];
+    return getModeOptions(challengeType);
+  }, [challengeType]);
 
   const handleJoin = async () => {
     if (!challengeType || !selectedMode) return;
@@ -111,7 +169,7 @@ export function ChallengeJoinModal({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {MODE_OPTIONS.map((option) => {
+          {modeOptions.map((option) => {
             const OptionIcon = option.icon;
             const isSelected = selectedMode === option.mode;
             
