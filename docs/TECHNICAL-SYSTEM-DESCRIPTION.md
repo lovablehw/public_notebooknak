@@ -1,7 +1,7 @@
 # HealthPass Wellbeing - Műszaki Rendszerleírás
 
-> **Verzió:** 2.1  
-> **Dátum:** 2026. február 4.  
+> **Verzió:** 2.2  
+> **Dátum:** 2026. február 5.  
 > **Platform:** Lovable Cloud (Supabase backend)  
 > **Projekt azonosító:** jqdrjpywgcfbdhscrixr
 
@@ -1407,7 +1407,7 @@ A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzá
 
 ---
 
-## 13. Kód Audit Összefoglaló (2026-02-04)
+## 13. Kód Audit Összefoglaló (2026-02-05)
 
 ### 13.1 Architektúra Értékelés
 
@@ -1418,8 +1418,60 @@ A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzá
 | RLS Policies | ✅ Jó | Minden táblán engedélyezve, megfelelő védelem |
 | Gamifikáció | ✅ Jó | Pont rendszer, kitüntetések, frekvencia szabályok |
 | Kihívás rendszer | ✅ Jó | Komplett flow: mérföldkövek, megfigyelések, grafikon |
+| Audit napló | ✅ Jó | Centralizált, SECURITY DEFINER RPC-n keresztül |
 
-### 13.2 Kettős Admin Rendszer
+### 13.2 Biztonsági Audit Eredmények (2026-02-05)
+
+| Szint | Darab | Állapot |
+|-------|-------|---------|
+| Error | 0 | ✅ Nincs kritikus probléma |
+| Warning | 4 | ✅ Áttekintve, elfogadva (lásd alább) |
+| Info | 4 | ℹ️ Tájékoztató jellegű |
+
+**Warning szintű megállapítások és értékelésük:**
+
+| Megállapítás | Tábla | Értékelés | Indoklás |
+|--------------|-------|-----------|----------|
+| User Profile Data | `profiles` | ✅ Hamis pozitív | RLS helyesen konfigurálva: `auth.uid() = id` - csak saját profil látható |
+| Consent IP Tracking | `user_consents` | ✅ Tervezési döntés | GDPR compliance audit trail-hez szükséges, RLS védi |
+| Health Observations | `user_observations` | ✅ Elfogadva | `is_service_admin()` SECURITY DEFINER, admin hozzáférés szükséges |
+| Challenge Progress | `user_challenges` | ✅ Elfogadva | Service admin hozzáférés szükséges adminisztrációhoz |
+
+**Javított elemek:**
+
+| Javítás | Leírás | Dátum |
+|---------|--------|-------|
+| `audit_events` INSERT policy | Explicit `WITH CHECK (false)` policy hozzáadva a közvetlen INSERT-ek blokkolására | 2026-02-05 |
+
+### 13.3 Audit Napló Rendszer
+
+Az audit napló rendszer centralizált kontrollt valósít meg:
+
+```sql
+-- audit_events tábla: közvetlen INSERT tiltva RLS-sel
+CREATE POLICY "No direct insert to audit events"
+ON public.audit_events
+FOR INSERT
+WITH CHECK (false);
+
+-- Minden naplózás a log_audit_event() RPC-n keresztül történik
+-- Ez a SECURITY DEFINER függvény biztosítja:
+--   1. Csak hitelesített felhasználók naplózhatnak
+--   2. Admin típusú események (admin_*) csak adminoknak
+--   3. Input validáció (event_type, metadata méret)
+```
+
+**Naplózott esemény típusok:**
+
+| Típus | Forrás | Leírás |
+|-------|--------|--------|
+| `page_load` | Frontend hook | Oldal betöltés (cím, útvonal) |
+| `button_click` | Frontend hook | Gomb kattintás (gomb_azonosito, label) |
+| `auth_login` | Frontend hook | Bejelentkezés |
+| `auth_logout` | Frontend hook | Kijelentkezés |
+| `admin_*` | Admin műveletek | Csak adminoknak engedélyezett |
+
+### 13.4 Kettős Admin Rendszer
 
 **Jelenlegi állapot:** A platform két párhuzamos admin rendszert használ:
 
@@ -1436,18 +1488,18 @@ A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzá
 
 **Fontos:** Teljes admin hozzáféréshez mindkét táblában szerepelnie kell a felhasználónak.
 
-### 13.3 Fájl Statisztikák
+### 13.5 Fájl Statisztikák
 
 | Kategória | Darab |
 |-----------|-------|
 | Oldalak (pages) | 18 + 15 admin |
-| Hookok | 20 |
+| Hookok | 21 |
 | UI komponensek (shadcn) | 50+ |
 | Egyedi komponensek | 15+ |
 | Adatbázis táblák | 24 |
 | RPC függvények | 14 |
 
-### 13.4 Technológiai Verzók
+### 13.6 Technológiai Verziók
 
 | Csomag | Verzió |
 |--------|--------|
@@ -1462,5 +1514,5 @@ A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzá
 
 *Dokumentum vége*
 
-**Utolsó frissítés:** 2026. február 4.  
-**Verzió:** 2.1
+**Utolsó frissítés:** 2026. február 5.  
+**Verzió:** 2.2
