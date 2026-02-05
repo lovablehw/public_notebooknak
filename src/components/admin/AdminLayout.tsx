@@ -92,7 +92,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r bg-card min-h-[calc(100vh-65px)] p-4">
+        <aside className="w-64 shrink-0 border-r bg-card min-h-[calc(100vh-65px)] p-4 hidden lg:block">
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -117,7 +117,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 min-w-0 p-6 overflow-x-auto">
           <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
           {children}
         </main>
