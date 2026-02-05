@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAdminGuard } from "@/hooks/useAdmin";
 import { useAdminRole } from "@/hooks/useAdminRole";
@@ -17,9 +17,12 @@ import {
   UsersRound,
   ShieldCheck,
   MousePointer2,
-  Flame
+  Flame,
+  Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -53,6 +56,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   const { isAdmin, loading } = useAdminGuard();
   const { isSuperAdmin, loading: roleLoading } = useAdminRole();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Combine nav items based on role
   const navItems = isSuperAdmin 
@@ -71,12 +75,51 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     return null;
   }
 
+  const NavContent = () => (
+    <nav className="space-y-1">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = location.pathname === item.path;
+        return (
+          <Link
+            key={item.path}
+            to={item.path}
+            onClick={() => setMobileOpen(false)}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+              isActive 
+                ? "bg-primary text-primary-foreground" 
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            {/* Mobile menu trigger */}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Menü megnyitása</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64 p-4">
+                <div className="mb-4 font-semibold text-foreground">Admin menü</div>
+                <NavContent />
+              </SheetContent>
+            </Sheet>
+
             <Link 
               to="/healthbook" 
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -93,27 +136,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-64 shrink-0 border-r bg-card min-h-[calc(100vh-65px)] p-4 hidden lg:block">
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+          <NavContent />
         </aside>
 
         {/* Main content */}
