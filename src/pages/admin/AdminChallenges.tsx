@@ -676,7 +676,7 @@ export default function AdminChallenges() {
 
             {selectedType && (
               <>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
                     <h3 className="font-medium">{selectedType.name} - Megfigyelés kategóriák</h3>
                     <p className="text-sm text-muted-foreground">Aktiváld/deaktiváld és nevezd át a kategóriákat, amelyeket a felhasználók rögzíthetnek</p>
@@ -684,33 +684,51 @@ export default function AdminChallenges() {
                   {isServiceAdmin && (
                     <Button 
                       size="sm" 
+                      variant={selectedType.observation_categories && selectedType.observation_categories.length > 0 ? "outline" : "default"}
                       onClick={async () => {
-                        // Initialize observation_categories if empty
-                        const defaultCategories: ObservationCategory[] = OBSERVATION_TYPES.map(type => ({
-                          key: type.value,
-                          label: type.label,
-                          is_active: selectedType.required_observation_types.includes(type.value),
-                          input_type: ["cigarette_count", "craving_level", "weight", "energy", "sleep"].includes(type.value) ? "number" : "text",
-                        }));
+                        // Initialize or reset observation_categories
+                        const existingCategories = selectedType.observation_categories || [];
+                        const existingKeys = new Set(existingCategories.map(c => c.key));
+                        
+                        // Merge: keep existing categories with their current labels, add new ones from OBSERVATION_TYPES
+                        const mergedCategories: ObservationCategory[] = OBSERVATION_TYPES.map(type => {
+                          // Check if category already exists
+                          const existing = existingCategories.find(c => c.key === type.value);
+                          if (existing) {
+                            // Keep existing settings (label, is_active, etc.)
+                            return existing;
+                          }
+                          // Create new category with defaults
+                          return {
+                            key: type.value,
+                            label: type.label,
+                            is_active: selectedType.required_observation_types.includes(type.value),
+                            input_type: ["cigarette_count", "craving_level", "weight", "energy", "sleep"].includes(type.value) ? "number" as const : "text" as const,
+                          };
+                        });
                         
                         try {
                           const { error } = await supabase
                             .from("challenge_types")
-                            .update({ observation_categories: JSON.parse(JSON.stringify(defaultCategories)) })
+                            .update({ observation_categories: JSON.parse(JSON.stringify(mergedCategories)) })
                             .eq("id", selectedType.id);
                           
                           if (error) throw error;
-                          toast({ title: "Kategóriák inicializálva" });
+                          toast({ 
+                            title: existingCategories.length > 0 ? "Kategóriák frissítve" : "Kategóriák inicializálva",
+                            description: "Új kategóriák hozzáadva, meglévők megtartva."
+                          });
                           fetchData();
                         } catch (error) {
                           console.error("Error initializing categories:", error);
                           toast({ title: "Hiba", variant: "destructive" });
                         }
                       }}
-                      disabled={selectedType.observation_categories && selectedType.observation_categories.length > 0}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Kategóriák inicializálása
+                      {selectedType.observation_categories && selectedType.observation_categories.length > 0 
+                        ? "Új kategóriák hozzáadása" 
+                        : "Kategóriák inicializálása"}
                     </Button>
                   )}
                 </div>
