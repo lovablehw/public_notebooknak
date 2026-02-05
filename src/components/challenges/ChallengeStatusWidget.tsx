@@ -166,7 +166,7 @@ export function ChallengeStatusWidget({
 
   return (
     <Card className={cn(
-      "shadow-card border-0 animate-fade-in w-full max-w-full overflow-hidden",
+      "shadow-card border-0 animate-fade-in w-full min-w-0 overflow-hidden",
       isPaused && "opacity-75"
     )}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -211,13 +211,13 @@ export function ChallengeStatusWidget({
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6 overflow-hidden">
+        <CardContent className="space-y-6 overflow-hidden p-3 sm:p-4 lg:p-6">
           {/* Always Visible: Hero Metric + Quick Stats */}
-          <div className="flex flex-col gap-4 overflow-hidden">
+          <div className="flex flex-col gap-4 overflow-hidden min-w-0">
             {/* Hero Metric - centered */}
             <div className="flex justify-center">
-              <div className="text-center p-4 sm:p-6 bg-primary/5 rounded-2xl border border-primary/10 min-w-[120px] max-w-[160px]">
-                <p className="text-4xl sm:text-5xl font-light text-primary truncate">{mainMetric.value}</p>
+              <div className="text-center p-3 sm:p-4 bg-primary/5 rounded-2xl border border-primary/10 w-full max-w-[160px]">
+                <p className="text-3xl sm:text-4xl font-light text-primary truncate">{mainMetric.value}</p>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">{mainMetric.label}</p>
               </div>
             </div>
@@ -246,10 +246,10 @@ export function ChallengeStatusWidget({
           {/* Collapsible Content: Logger, Charts, Health Risks, Badges */}
           <CollapsibleContent className="space-y-6 pt-4 border-t border-border/30">
             {/* Observation Logger - Full Width with mobile-safe padding */}
-            <div className="bg-muted/20 rounded-lg p-3 sm:p-4 border border-border/50 max-w-full overflow-hidden">
+            <div className="bg-muted/20 rounded-lg p-3 sm:p-4 border border-border/50 w-full min-w-0 overflow-hidden">
               <div className="flex items-center gap-2 mb-4">
                 <PlusCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                <h3 className="font-medium">Napi rögzítés</h3>
+                <h3 className="font-medium truncate">Napi rögzítés</h3>
               </div>
               <ObservationLogger
                 requiredCategories={requiredCategories}
@@ -260,12 +260,12 @@ export function ChallengeStatusWidget({
 
             {/* Progress Charts - Full Width, Dynamic Categories */}
             {requiredCategories.length > 0 && (
-              <div className="bg-muted/20 rounded-lg p-4 border border-border/50">
+              <div className="bg-muted/20 rounded-lg p-3 sm:p-4 border border-border/50 min-w-0 overflow-hidden">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <h3 className="font-medium">Haladás</h3>
+                  <BarChart3 className="h-5 w-5 text-primary flex-shrink-0" />
+                  <h3 className="font-medium truncate">Haladás</h3>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0">
                   {requiredCategories.map(category => {
                     const config = getCategoryConfig(category, challengeType);
                     // Only show charts for numeric categories
@@ -276,7 +276,7 @@ export function ChallengeStatusWidget({
                       : config.label;
                     
                     return (
-                      <div key={category} className="bg-background rounded-lg p-4 border border-border/30 shadow-sm">
+                      <div key={category} className="bg-background rounded-lg p-3 sm:p-4 border border-border/30 shadow-sm min-w-0 overflow-hidden">
                         <ChallengeChart
                           observations={observations}
                           category={category}

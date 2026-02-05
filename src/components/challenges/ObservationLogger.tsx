@@ -154,8 +154,8 @@ export function ObservationLogger({ requiredCategories, challengeType, onLog }: 
 
       {/* Smoking-specific dual input */}
       {isSmokingChallenge && (
-        <Card className="border-primary/20 bg-primary/5 max-w-full overflow-hidden">
-          <CardContent className="pt-4 space-y-4 px-3 sm:px-6">
+        <Card className="border-primary/20 bg-primary/5 w-full overflow-hidden">
+          <CardContent className="pt-4 space-y-4 px-3 sm:px-4">
             <Label className="text-base font-medium flex items-center gap-2">
               <Cigarette className="h-5 w-5 text-primary" />
               Dohányzás naplózás
