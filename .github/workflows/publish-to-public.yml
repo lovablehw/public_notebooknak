@@ -1,6 +1,6 @@
-name: Publish to public repo (direct-push)
+name: Publish to public repo (GIT_ASKPASS auth)
 # Manual dispatch workflow that pushes a publish-<sha> branch to the public repo
-# and creates/updates a PR there. Uses direct push URL to ensure PAT is used.
+# and creates/updates a PR there. Uses GIT_ASKPASS to supply the PAT non-interactively.
 on:
   workflow_dispatch:
     inputs:
@@ -45,14 +45,17 @@ jobs:
           git config user.name "Publish Bot (actions)"
           git config user.email "actions@github.com"
 
-      - name: Push publish branch to public repo (direct URL with PAT)
+      - name: Push publish branch to public repo (GIT_ASKPASS)
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
-          TARGET_REPO: "lovablehw/healthpass"
+          TARGET_REPO: "lovablehw/public_notebooknak"
         run: |
           set -euo pipefail
+
           SOURCE_REF="${{ steps.refs.outputs.source_ref }}"
           PUBLISH_BRANCH="${{ steps.refs.outputs.publish_branch }}"
+          TARGET_REPO="${TARGET_REPO}"
+
           echo "Publishing $SOURCE_REF -> $PUBLISH_BRANCH to $TARGET_REPO"
 
           if [ -z "${PUBLIC_REPO_TOKEN:-}" ]; then
@@ -62,10 +65,20 @@ jobs:
             echo "PUBLIC_REPO_TOKEN is set (masked)"
           fi
 
-          # URL-encode token to avoid bad-hostname errors if token contains special chars
-          ENCODED_TOKEN=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1], safe=''))" "${PUBLIC_REPO_TOKEN}")
+          # Create a temporary GIT_ASKPASS script that prints the PAT as the password.
+          ASKPASS_FILE="$(mktemp)"
+          cat > "${ASKPASS_FILE}" <<'EOF'
+#!/bin/sh
+# This must only print the password/token (no extra output).
+printf "%s\n" "$PUBLIC_REPO_TOKEN"
+EOF
+          chmod +x "${ASKPASS_FILE}"
 
-          # Checkout the proper ref
+          # Ensure git won't try to prompt on terminal
+          export GIT_ASKPASS="${ASKPASS_FILE}"
+          export GIT_TERMINAL_PROMPT=0
+
+          # Checkout the requested ref
           git fetch --all
           if git show-ref --verify --quiet "refs/heads/$SOURCE_REF"; then
             git checkout "$SOURCE_REF"
@@ -75,16 +88,16 @@ jobs:
             echo "Source ref not found as branch or sha; using current HEAD"
           fi
 
-          # Prepare the direct HTTPS URL for the target repo (token is masked in logs)
-          PUSH_URL="https://x-access-token:${ENCODED_TOKEN}@github.com/${TARGET_REPO}.git"
+          # Test access using credential.username=x-access-token together with GIT_ASKPASS
+          echo "Testing access: git ls-remote (using GIT_ASKPASS)"
+          git -c credential.username=x-access-token ls-remote "https://github.com/${TARGET_REPO}.git" || true
 
-          echo "Testing access with git ls-remote to direct URL (masked)"
-          git ls-remote "${PUSH_URL}" || true
-
-          echo "Creating local publish branch and pushing directly to the URL"
+          echo "Creating local publish branch and pushing using GIT_ASKPASS"
           git checkout -B "$PUBLISH_BRANCH"
-          # Direct push to the URL ensures the PAT in the URL is used and no credential helper is involved
-          git push --force "${PUSH_URL}" "HEAD:refs/heads/${PUBLISH_BRANCH}"
+          git -c credential.username=x-access-token push --force "https://github.com/${TARGET_REPO}.git" "HEAD:refs/heads/${PUBLISH_BRANCH}"
+
+          # Cleanup
+          rm -f "${ASKPASS_FILE}"
 
       - name: Create or update PR in public repo
         uses: actions/github-script@v6
@@ -107,5 +120,5 @@ jobs:
               console.log(`Created PR #${pr.data.number}`);
             }
         env:
-          TARGET_REPO: "lovablehw/healthpass"
+          TARGET_REPO: "lovablehw/public_notebooknak"
           PUBLISH_BRANCH: ${{ steps.refs.outputs.publish_branch }}
