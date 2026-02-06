@@ -1,6 +1,6 @@
-name: Publish to public repo (GIT_ASKPASS auth - fixed)
+name: Publish to public repo (Robust PR Logic)
 # Manual dispatch workflow that pushes a publish-<sha> branch to the public repo
-# and creates/updates a PR there. Uses GIT_ASKPASS to supply the PAT non-interactively.
+# and creates/updates a PR there. Uses GIT_ASKPASS for auth.
 on:
   workflow_dispatch:
     inputs:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (full history, do not persist GITHUB_TOKEN)
+      - name: Checkout (full history)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -54,46 +54,33 @@ jobs:
 
           SOURCE_REF="${{ steps.refs.outputs.source_ref }}"
           PUBLISH_BRANCH="${{ steps.refs.outputs.publish_branch }}"
-          TARGET_REPO="${TARGET_REPO}"
-
+          
           echo "Publishing $SOURCE_REF -> $PUBLISH_BRANCH to $TARGET_REPO"
 
           if [ -z "${PUBLIC_REPO_TOKEN:-}" ]; then
             echo "::error::PUBLIC_REPO_TOKEN is empty — secret missing or name typo"
             exit 1
-          else
-            echo "PUBLIC_REPO_TOKEN is set (masked)"
           fi
 
-          # Create a temporary GIT_ASKPASS script that prints the PAT as the password.
           ASKPASS_FILE="$(mktemp)"
-          # Use printf (not a heredoc) to avoid YAML/heredoc parsing problems.
           printf '%s\n' '#!/bin/sh' 'printf "%s\n" "$PUBLIC_REPO_TOKEN"' > "${ASKPASS_FILE}"
           chmod +x "${ASKPASS_FILE}"
 
-          # Ensure git won't try to prompt on terminal
           export GIT_ASKPASS="${ASKPASS_FILE}"
           export GIT_TERMINAL_PROMPT=0
 
-          # Checkout the requested ref
           git fetch --all
           if git show-ref --verify --quiet "refs/heads/$SOURCE_REF"; then
             git checkout "$SOURCE_REF"
           elif git rev-parse --verify --quiet "$SOURCE_REF" >/dev/null; then
             git checkout -b "$PUBLISH_BRANCH" "$SOURCE_REF"
           else
-            echo "Source ref not found as branch or sha; using current HEAD"
+            echo "Source ref not found; using current HEAD"
           fi
 
-          # Test access using credential.username=x-access-token together with GIT_ASKPASS
-          echo "Testing access: git ls-remote (using GIT_ASKPASS)"
-          git -c credential.username=x-access-token ls-remote "https://github.com/${TARGET_REPO}.git" || true
-
-          echo "Creating local publish branch and pushing using GIT_ASKPASS"
           git checkout -B "$PUBLISH_BRANCH"
           git -c credential.username=x-access-token push --force "https://github.com/${TARGET_REPO}.git" "HEAD:refs/heads/${PUBLISH_BRANCH}"
 
-          # Cleanup
           rm -f "${ASKPASS_FILE}"
 
       - name: Create or update PR in public repo
@@ -102,20 +89,15 @@ jobs:
           github-token: ${{ secrets.PUBLIC_REPO_TOKEN }}
           script: |
             const [owner, repo] = process.env.TARGET_REPO.split('/');
-            const head = process.env.PUBLISH_BRANCH || '${{ steps.refs.outputs.publish_branch }}';
+            const head = process.env.PUBLISH_BRANCH;
             const base = '${{ steps.refs.outputs.target_branch }}';
             const shortSha = (process.env.GITHUB_SHA || '').substring(0,7);
             const title = `Publish from ${process.env.GITHUB_REPOSITORY}@${shortSha}`;
             const body = `Automated publish PR created from private repo ${process.env.GITHUB_REPOSITORY} commit ${process.env.GITHUB_SHA}.\n\nPlease review before merging.`;
-            const prs = await github.rest.pulls.list({ owner, repo, state: 'open', per_page: 100 });
-            const existing = prs.data.find(p => p.head.ref === head && p.base.ref === base);
-            if (existing) {
-              await github.rest.pulls.update({ owner, repo, pull_number: existing.number, title, body });
-              console.log(`Updated existing PR #${existing.number}`);
-            } else {
-              const pr = await github.rest.pulls.create({ owner, repo, title, head, base, body });
-              console.log(`Created PR #${pr.data.number}`);
-            }
-        env:
-          TARGET_REPO: "lovablehw/public_notebooknak"
-          PUBLISH_BRANCH: ${{ steps.refs.outputs.publish_branch }}
+
+            try {
+              // Verify the base branch exists before attempting PR
+              await github.rest.repos.getBranch({ owner, repo, branch: base });
+
+              const prs = await github.rest.pulls.list({ owner, repo, state: 'open', per_page: 100 });
+              const
