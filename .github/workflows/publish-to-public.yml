@@ -1,6 +1,6 @@
-name: Publish to public repo (debug)
+name: Publish to public repo (fixed auth)
 # Manual dispatch workflow that pushes a publish-<sha> branch to a public repo
-# and creates/updates a PR there. Includes extra debug info for auth failures.
+# and creates/updates a PR there. persist-credentials is disabled so the PAT is used.
 on:
   workflow_dispatch:
     inputs:
@@ -17,10 +17,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (full history)
+      - name: Checkout (full history, do not persist GITHUB_TOKEN)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false  # ← important: prevents GITHUB_TOKEN from being used for pushes
 
       - name: Determine source ref and publish branch
         id: refs
@@ -44,7 +45,7 @@ jobs:
           git config user.name "Publish Bot (actions)"
           git config user.email "actions@github.com"
 
-      - name: Push publish branch to public repo (debug)
+      - name: Push publish branch to public repo (uses PAT)
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
           TARGET_REPO: "lovablehw/public_notebooknak"
@@ -61,14 +62,12 @@ jobs:
           else
             echo "Source ref not found as branch or sha; using current HEAD"
           fi
-          # Ensure no stale remote
           git remote remove public || true
           # Add public remote using PAT (kept secret by Actions)
           git remote add public "https://x-access-token:${PUBLIC_REPO_TOKEN}@github.com/${TARGET_REPO}.git"
           echo "Remotes:"
           git remote -v
           echo "Testing access: git ls-remote public"
-          # allow ls-remote to fail but show its output for debugging
           git ls-remote public || true
           echo "Attempting push..."
           git checkout -B "$PUBLISH_BRANCH"
