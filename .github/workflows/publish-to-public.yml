@@ -1,7 +1,6 @@
-name: Publish to public repo (debug)
+name: Publish to public repo (direct-push)
 # Manual dispatch workflow that pushes a publish-<sha> branch to the public repo
-# and creates/updates a PR there. Includes debug checks and avoids GITHUB_TOKEN
-# interfering with PAT by setting persist-credentials: false.
+# and creates/updates a PR there. Uses direct push URL to ensure PAT is used.
 on:
   workflow_dispatch:
     inputs:
@@ -46,19 +45,16 @@ jobs:
           git config user.name "Publish Bot (actions)"
           git config user.email "actions@github.com"
 
-      - name: Push publish branch to public repo (debug)
+      - name: Push publish branch to public repo (direct URL with PAT)
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
           TARGET_REPO: "lovablehw/public_notebooknak"
         run: |
           set -euo pipefail
-
           SOURCE_REF="${{ steps.refs.outputs.source_ref }}"
           PUBLISH_BRANCH="${{ steps.refs.outputs.publish_branch }}"
-
           echo "Publishing $SOURCE_REF -> $PUBLISH_BRANCH to $TARGET_REPO"
 
-          # Quick check: ensure secret is present (masked)
           if [ -z "${PUBLIC_REPO_TOKEN:-}" ]; then
             echo "::error::PUBLIC_REPO_TOKEN is empty — secret missing or name typo"
             exit 1
@@ -69,9 +65,8 @@ jobs:
           # URL-encode token to avoid bad-hostname errors if token contains special chars
           ENCODED_TOKEN=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1], safe=''))" "${PUBLIC_REPO_TOKEN}")
 
+          # Checkout the proper ref
           git fetch --all
-
-          # checkout source ref (branch or SHA)
           if git show-ref --verify --quiet "refs/heads/$SOURCE_REF"; then
             git checkout "$SOURCE_REF"
           elif git rev-parse --verify --quiet "$SOURCE_REF" >/dev/null; then
@@ -80,21 +75,16 @@ jobs:
             echo "Source ref not found as branch or sha; using current HEAD"
           fi
 
-          # ensure no stale remote
-          git remote remove public || true
+          # Prepare the direct HTTPS URL for the target repo (token is masked in logs)
+          PUSH_URL="https://x-access-token:${ENCODED_TOKEN}@github.com/${TARGET_REPO}.git"
 
-          # add public remote using encoded PAT (the token will be masked in logs)
-          git remote add public "https://x-access-token:${ENCODED_TOKEN}@github.com/${TARGET_REPO}.git"
+          echo "Testing access with git ls-remote to direct URL (masked)"
+          git ls-remote "${PUSH_URL}" || true
 
-          echo "Remotes:"
-          git remote -v
-
-          echo "Testing access: git ls-remote public"
-          git ls-remote public || true
-
-          echo "Attempting push..."
+          echo "Creating local publish branch and pushing directly to the URL"
           git checkout -B "$PUBLISH_BRANCH"
-          git push --force public "HEAD:refs/heads/${PUBLISH_BRANCH}"
+          # Direct push to the URL ensures the PAT in the URL is used and no credential helper is involved
+          git push --force "${PUSH_URL}" "HEAD:refs/heads/${PUBLISH_BRANCH}"
 
       - name: Create or update PR in public repo
         uses: actions/github-script@v6
