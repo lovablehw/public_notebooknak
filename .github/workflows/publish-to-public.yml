@@ -1,4 +1,4 @@
-name: Publish to public repo (GIT_ASKPASS auth)
+name: Publish to public repo (GIT_ASKPASS auth - fixed)
 # Manual dispatch workflow that pushes a publish-<sha> branch to the public repo
 # and creates/updates a PR there. Uses GIT_ASKPASS to supply the PAT non-interactively.
 on:
@@ -67,11 +67,8 @@ jobs:
 
           # Create a temporary GIT_ASKPASS script that prints the PAT as the password.
           ASKPASS_FILE="$(mktemp)"
-          cat > "${ASKPASS_FILE}" <<'EOF'
-#!/bin/sh
-# This must only print the password/token (no extra output).
-printf "%s\n" "$PUBLIC_REPO_TOKEN"
-EOF
+          # Use printf (not a heredoc) to avoid YAML/heredoc parsing problems.
+          printf '%s\n' '#!/bin/sh' 'printf "%s\n" "$PUBLIC_REPO_TOKEN"' > "${ASKPASS_FILE}"
           chmod +x "${ASKPASS_FILE}"
 
           # Ensure git won't try to prompt on terminal
