@@ -48,7 +48,7 @@ jobs:
       - name: Push publish branch to public repo (direct URL with PAT)
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
-          TARGET_REPO: "lovablehw/public_notebooknak"
+          TARGET_REPO: "lovablehw/healthpass"
         run: |
           set -euo pipefail
           SOURCE_REF="${{ steps.refs.outputs.source_ref }}"
@@ -107,5 +107,5 @@ jobs:
               console.log(`Created PR #${pr.data.number}`);
             }
         env:
-          TARGET_REPO: "lovablehw/public_notebooknak"
+          TARGET_REPO: "lovablehw/healthpass"
           PUBLISH_BRANCH: ${{ steps.refs.outputs.publish_branch }}
