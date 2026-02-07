@@ -1,103 +1,87 @@
-name: Publish to public repo (Robust PR Logic)
-# Manual dispatch workflow that pushes a publish-<sha> branch to the public repo
-# and creates/updates a PR there. Uses GIT_ASKPASS for auth.
+name: Publish to public repo (Consolidated)
 on:
   workflow_dispatch:
     inputs:
-      source_ref:
-        description: 'Branch or commit to publish (defaults to current branch)'
-        required: false
       target_branch:
-        description: 'Target branch in public repo (defaults to main)'
+        description: 'Target branch in public repo (usually main)'
         required: false
         default: 'main'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout (full history)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Determine source ref and publish branch
+      - name: Determine Refs
         id: refs
         run: |
-          SOURCE_REF="${{ github.event.inputs.source_ref }}"
-          if [ -z "$SOURCE_REF" ]; then
-            if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
-              SOURCE_REF="${GITHUB_REF#refs/heads/}"
-            else
-              SOURCE_REF="${GITHUB_SHA}"
-            fi
-          fi
           SHORT_SHA=$(echo "${GITHUB_SHA}" | cut -c1-7)
-          PUBLISH_BRANCH="publish-${SHORT_SHA}"
-          echo "source_ref=$SOURCE_REF" >> $GITHUB_OUTPUT
-          echo "publish_branch=$PUBLISH_BRANCH" >> $GITHUB_OUTPUT
+          echo "publish_branch=publish-$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "target_branch=${{ github.event.inputs.target_branch }}" >> $GITHUB_OUTPUT
 
-      - name: Configure git user
-        run: |
-          git config user.name "Publish Bot (actions)"
-          git config user.email "actions@github.com"
-
-      - name: Push publish branch to public repo (GIT_ASKPASS)
+      - name: Push to Public Repo
         env:
           PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
           TARGET_REPO: "lovablehw/public_notebooknak"
         run: |
           set -euo pipefail
-
-          SOURCE_REF="${{ steps.refs.outputs.source_ref }}"
           PUBLISH_BRANCH="${{ steps.refs.outputs.publish_branch }}"
           
-          echo "Publishing $SOURCE_REF -> $PUBLISH_BRANCH to $TARGET_REPO"
-
-          if [ -z "${PUBLIC_REPO_TOKEN:-}" ]; then
-            echo "::error::PUBLIC_REPO_TOKEN is empty — secret missing or name typo"
-            exit 1
-          fi
-
+          # Setup non-interactive Auth
           ASKPASS_FILE="$(mktemp)"
-          printf '%s\n' '#!/bin/sh' 'printf "%s\n" "$PUBLIC_REPO_TOKEN"' > "${ASKPASS_FILE}"
+          printf '#!/bin/sh\nprintf "%%s\\n" "$PUBLIC_REPO_TOKEN"' > "${ASKPASS_FILE}"
           chmod +x "${ASKPASS_FILE}"
-
           export GIT_ASKPASS="${ASKPASS_FILE}"
-          export GIT_TERMINAL_PROMPT=0
 
-          git fetch --all
-          if git show-ref --verify --quiet "refs/heads/$SOURCE_REF"; then
-            git checkout "$SOURCE_REF"
-          elif git rev-parse --verify --quiet "$SOURCE_REF" >/dev/null; then
-            git checkout -b "$PUBLISH_BRANCH" "$SOURCE_REF"
-          else
-            echo "Source ref not found; using current HEAD"
-          fi
-
-          git checkout -B "$PUBLISH_BRANCH"
+          # Push the code as the new publish branch
           git -c credential.username=x-access-token push --force "https://github.com/${TARGET_REPO}.git" "HEAD:refs/heads/${PUBLISH_BRANCH}"
-
           rm -f "${ASKPASS_FILE}"
 
-      - name: Create or update PR in public repo
+      - name: PR or Initialize
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PUBLIC_REPO_TOKEN }}
           script: |
-            const [owner, repo] = process.env.TARGET_REPO.split('/');
-            const head = process.env.PUBLISH_BRANCH;
-            const base = '${{ steps.refs.outputs.target_branch }}';
-            const shortSha = (process.env.GITHUB_SHA || '').substring(0,7);
-            const title = `Publish from ${process.env.GITHUB_REPOSITORY}@${shortSha}`;
-            const body = `Automated publish PR created from private repo ${process.env.GITHUB_REPOSITORY} commit ${process.env.GITHUB_SHA}.\n\nPlease review before merging.`;
-
+            const [owner, repo] = "lovablehw/public_notebooknak".split('/');
+            const head = "${{ steps.refs.outputs.publish_branch }}";
+            const base = "${{ steps.refs.outputs.target_branch }}";
+            
             try {
-              // Verify the base branch exists before attempting PR
+              // 1. Try to fetch the 'base' (main). If this fails, we go to the catch block.
               await github.rest.repos.getBranch({ owner, repo, branch: base });
-
-              const prs = await github.rest.pulls.list({ owner, repo, state: 'open', per_page: 100 });
-              const
+              
+              // 2. If 'main' exists, check for an existing open PR
+              const { data: prs } = await github.rest.pulls.list({ owner, repo, state: 'open' });
+              const existing = prs.data.find(p => p.head.ref === head && p.base.ref === base);
+              
+              if (existing) {
+                await github.rest.pulls.update({ owner, repo, pull_number: existing.number, title: `Update from Private Repo` });
+                console.log(`Updated PR #${existing.number}`);
+              } else {
+                const pr = await github.rest.pulls.create({ 
+                  owner, repo, base, head, 
+                  title: `Publish from Private Repo`,
+                  body: `Syncing code to ${base}.` 
+                });
+                console.log(`Created PR #${pr.data.number}`);
+              }
+            } catch (e) {
+              if (e.status === 404) {
+                // 3. If 'main' doesn't exist, create it using the code we just pushed
+                console.log(`Target branch "${base}" not found. Initializing repo...`);
+                const { data: refData } = await github.rest.git.getRef({ owner, repo, ref: `heads/${head}` });
+                await github.rest.git.createRef({
+                  owner, repo,
+                  ref: `refs/heads/${base}`,
+                  sha: refData.object.sha
+                });
+                console.log(`Successfully initialized "${base}" branch.`);
+              } else {
+                throw e;
+              }
+            }
