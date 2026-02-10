@@ -11,6 +11,7 @@ import { ScrollPersistence } from "@/components/ScrollPersistence";
 import { ActivityLoggerProvider } from "@/components/ActivityLoggerProvider";
 import { ClickTracker } from "@/components/telemetry/ClickTracker";
 import { BreakpointIndicator } from "@/components/debug/BreakpointIndicator";
+import { HwHost } from "@/components/web-components/HwHost.tsx";
 import Landing from "./pages/Landing";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -53,6 +54,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <HwHost />
           <ScrollToAnchor />
           <ScrollPersistence />
           <ActivityLoggerProvider>

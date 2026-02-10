@@ -182,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       provider: 'keycloak',
       options: {
         redirectTo: redirectUri,
+        scopes: 'openid',
       },
     });
     

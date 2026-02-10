@@ -284,10 +284,13 @@ const HealthBook = () => {
               </CardHeader>
               <CardContent>
                 <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
-                  <div className="text-center text-muted-foreground p-8">
-                    <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">A Medalyse idővonal komponens helye</p>
-                  </div>
+                  <hw-grid-component
+                    style={{ height: '-webkit-fill-available' }}
+                    viewId={1000047877}
+                    queryId={1000043372}
+                    queryName={"TIMELINE2"}
+                    layoutId={9647}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -301,10 +304,13 @@ const HealthBook = () => {
                 <span className="text-sm font-medium">Idővonal</span>
               </div>
               <div id="medalyse-timeline-container-mobile" data-component="timeline" className="min-h-[50vh] w-full bg-muted/20 rounded border border-dashed border-border flex items-center justify-center">
-                <div className="text-center text-muted-foreground px-4">
-                  <Calendar className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">A Medalyse idővonal komponens helye</p>
-                </div>
+                <hw-grid-component
+                  style={{ height: '-webkit-fill-available' }}
+                  viewId={1000047877}
+                  queryId={1000043372}
+                  queryName={"TIMELINE2"}
+                  layoutId={9647}
+                />
               </div>
             </div>
           </div>
