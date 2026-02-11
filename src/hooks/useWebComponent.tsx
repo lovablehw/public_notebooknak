@@ -13,7 +13,7 @@ export function useWebComponent(anchorId: string) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["web-component-box", anchorId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("web_component_boxes")
         .select("*")
         .eq("anchor_id", anchorId)
