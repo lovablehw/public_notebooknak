@@ -120,7 +120,7 @@ const COPY = {
 
 const Landing = () => {
   return (
-    <div className="min-h-screen gradient-hero">
+    <div className="min-h-screen gradient-hero w-full overflow-x-hidden max-w-full">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">

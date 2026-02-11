@@ -284,9 +284,9 @@ const HealthBook = () => {
                 <CardDescription>Itt jelenik meg a kitöltések és feltöltések idővonala.</CardDescription>
               </CardHeader>
               <CardContent>
-                <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center">
+                <div id="medalyse-timeline-container" data-component="timeline" className="min-h-[200px] w-full bg-muted/30 rounded-lg border border-dashed border-border flex items-center justify-center overflow-x-auto">
                   <hw-grid-component
-                    style={{ height: '-webkit-fill-available' }}
+                    style={{ height: '-webkit-fill-available', width: '100%' }}
                     viewId={1000047877}
                     queryId={1000043372}
                     queryName={"TIMELINE2"}
@@ -304,9 +304,9 @@ const HealthBook = () => {
                 <Calendar className="h-4 w-4" />
                 <span className="text-sm font-medium">Idővonal</span>
               </div>
-              <div id="medalyse-timeline-container-mobile" data-component="timeline" className="min-h-[50vh] w-full bg-muted/20 rounded border border-dashed border-border flex items-center justify-center">
+              <div id="medalyse-timeline-container-mobile" data-component="timeline" className="min-h-[50vh] w-full bg-muted/20 rounded border border-dashed border-border flex items-center justify-center overflow-x-auto">
                 <hw-grid-component
-                  style={{ height: '-webkit-fill-available' }}
+                  style={{ height: '-webkit-fill-available', width: '100%' }}
                   viewId={1000047877}
                   queryId={1000043372}
                   queryName={"TIMELINE2"}

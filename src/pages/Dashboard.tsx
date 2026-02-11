@@ -111,7 +111,7 @@ const Dashboard = () => {
     : user?.email?.split("@")[0] || "Barátom";
 
   return (
-    <div className="min-h-screen gradient-hero">
+    <div className="min-h-screen gradient-hero w-full overflow-x-hidden max-w-full">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
+      <main className="container mx-auto px-4 py-8 space-y-8 overflow-x-hidden max-w-full">
         {/* Welcome Section */}
         <div className="animate-fade-in">
           <h1 className="text-3xl font-light text-foreground mb-2">
