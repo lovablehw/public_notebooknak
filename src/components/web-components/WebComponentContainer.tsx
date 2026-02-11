@@ -37,7 +37,7 @@ export function WebComponentContainer({ name, anchorId, icon: Icon = FlaskConica
             </div>
           ) : (
             <div
-              className="prose prose-sm max-w-none dark:prose-invert"
+              className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent!) }}
             />
           )}
