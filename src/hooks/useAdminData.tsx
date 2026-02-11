@@ -170,19 +170,23 @@ export function useAdminConsentVersions() {
   });
 }
 
-// Audit events
+// Audit events (uses masked RPC to protect email privacy for non-super-admins)
 export function useAdminAuditEvents(limit = 100) {
   return useQuery({
     queryKey: ["admin", "audit-events", limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("audit_events")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(limit);
+        .rpc("get_audit_events_masked", { p_limit: limit });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((row: any) => ({
+        id: row.id,
+        event_type: row.event_type,
+        actor_user_id: row.actor_user_id,
+        actor_email: row.masked_email,
+        metadata: row.metadata,
+        created_at: row.created_at,
+      }));
     },
   });
 }
@@ -208,7 +212,7 @@ export function useAdminDashboardStats() {
         supabase.from("achievements").select("id, name"),
         supabase.from("user_achievements").select("achievement_id"),
         supabase.from("consent_versions").select("version").order("effective_date", { ascending: false }).limit(1),
-        supabase.from("audit_events").select("*").order("created_at", { ascending: false }).limit(10),
+        supabase.rpc("get_audit_events_masked", { p_limit: 10 }),
       ]);
 
       // Calculate complete vs incomplete consents

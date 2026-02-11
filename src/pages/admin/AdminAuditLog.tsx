@@ -259,8 +259,8 @@ export default function AdminAuditLog() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {event.actor_email ? (
-                        <span className="text-sm" title="Az email cím biztonsági okokból részlegesen rejtett">{maskEmail(event.actor_email)}</span>
+                    {event.actor_email ? (
+                        <span className="text-sm" title="Az email cím biztonsági okokból részlegesen rejtett">{event.actor_email}</span>
                       ) : event.actor_user_id ? (
                         <span className="font-mono text-xs text-muted-foreground">
                           {event.actor_user_id.slice(0, 8)}...

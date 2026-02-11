@@ -959,6 +959,17 @@ export type Database = {
           masked_email: string
         }[]
       }
+      get_audit_events_masked: {
+        Args: { p_limit?: number }
+        Returns: {
+          actor_user_id: string
+          created_at: string
+          event_type: string
+          id: string
+          masked_email: string
+          metadata: Json
+        }[]
+      }
       get_questionnaire_progress_stats: { Args: never; Returns: Json }
       get_user_questionnaires: {
         Args: never
