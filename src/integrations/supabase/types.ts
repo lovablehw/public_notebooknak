@@ -479,6 +479,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rpc_rate_limits: {
+        Row: {
+          called_at: string
+          function_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          called_at?: string
+          function_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          called_at?: string
+          function_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       upload_rewards: {
         Row: {
           created_at: string
@@ -920,6 +941,15 @@ export type Database = {
         Returns: Json
       }
       check_is_admin: { Args: never; Returns: boolean }
+      check_rate_limit: {
+        Args: {
+          p_function_name: string
+          p_max_calls?: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_admin_list_masked: {
         Args: never
         Returns: {
