@@ -102,7 +102,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden max-w-full">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -134,14 +134,14 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex overflow-x-hidden max-w-full">
         {/* Sidebar */}
         <aside className="w-64 shrink-0 border-r bg-card min-h-[calc(100vh-65px)] p-4 hidden lg:block">
           <NavContent />
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 p-6 overflow-x-auto">
+        <main className="flex-1 min-w-0 p-6 overflow-x-auto max-w-full">
           <h2 className="text-2xl font-bold text-foreground mb-6">{title}</h2>
           {children}
         </main>
