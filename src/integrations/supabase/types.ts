@@ -861,6 +861,36 @@ export type Database = {
           },
         ]
       }
+      web_component_boxes: {
+        Row: {
+          anchor_id: string
+          created_at: string
+          html_content: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          anchor_id: string
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          anchor_id?: string
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

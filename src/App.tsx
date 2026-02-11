@@ -44,6 +44,7 @@ import AdminUserGroups from "./pages/admin/AdminUserGroups";
 import AdminRoles from "./pages/admin/AdminRoles";
 import AdminButtonConfigs from "./pages/admin/AdminButtonConfigs";
 import AdminChallenges from "./pages/admin/AdminChallenges";
+import AdminWebComponents from "./pages/admin/AdminWebComponents";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="/admin/szerepkorok" element={<RequireConsent><AdminRoles /></RequireConsent>} />
               <Route path="/admin/gombok" element={<RequireConsent><AdminButtonConfigs /></RequireConsent>} />
               <Route path="/admin/kihivasok" element={<RequireConsent><AdminChallenges /></RequireConsent>} />
+              <Route path="/admin/web-komponensek" element={<RequireConsent><AdminWebComponents /></RequireConsent>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

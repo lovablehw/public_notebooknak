@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { hu } from "date-fns/locale";
 import { ChallengeType, ChallengeMode } from "@/hooks/useChallenges";
 import { ChallengeJoinModal } from "@/components/challenges/ChallengeJoinModal";
+import { WebComponentContainer } from "@/components/web-components/WebComponentContainer";
 
 // Icon map for challenge types
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -387,6 +388,14 @@ const HealthBook = () => {
           </Card>
         )}
 
+
+        {/* Web Component: Kitüntetett Beteg Labor eredmények */}
+        <WebComponentContainer
+          name="Kitüntetett Beteg Labor eredmények"
+          anchorId="patient_prominent_labor_results"
+          icon={FlaskConical}
+          description="Itt láthatóak a betegnek azon labor eredményei amik az adott időszakban eltértek a normálistól"
+        />
 
         {/* Activity, Achievements, Badges Section */}
         <div id="healthbook-stats" className="grid md:grid-cols-3 gap-4 animate-fade-in scroll-mt-4">
