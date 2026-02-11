@@ -50,6 +50,7 @@ const baseNavItems = [
 // Super admin only nav items
 const superAdminOnlyItems = [
   { path: "/admin/gombok", label: "Gomb Karbantartó", icon: MousePointer2 },
+  { path: "/admin/web-komponensek", label: "Web Komponensek", icon: LayoutDashboard },
 ];
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
