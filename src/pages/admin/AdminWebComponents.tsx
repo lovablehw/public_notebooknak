@@ -34,7 +34,7 @@ export default function AdminWebComponents() {
   const { data: boxes = [], isLoading } = useQuery({
     queryKey: ["admin-web-component-boxes"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("web_component_boxes")
         .select("*")
         .order("created_at", { ascending: false });
@@ -45,7 +45,7 @@ export default function AdminWebComponents() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("web_component_boxes")
         .update({ is_active })
         .eq("id", id);
@@ -61,13 +61,13 @@ export default function AdminWebComponents() {
   const saveMutation = useMutation({
     mutationFn: async (data: { id?: string; name: string; anchor_id: string; html_content: string; is_active: boolean }) => {
       if (data.id) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("web_component_boxes")
           .update({ name: data.name, anchor_id: data.anchor_id, html_content: data.html_content, is_active: data.is_active })
           .eq("id", data.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from("web_component_boxes")
           .insert({ name: data.name, anchor_id: data.anchor_id, html_content: data.html_content, is_active: data.is_active });
         if (error) throw error;
@@ -85,7 +85,7 @@ export default function AdminWebComponents() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("web_component_boxes").delete().eq("id", id);
+      const { error } = await (supabase as any).from("web_component_boxes").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
