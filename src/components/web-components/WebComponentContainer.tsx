@@ -3,6 +3,47 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, FlaskConical, LucideIcon } from "lucide-react";
 import DOMPurify from "dompurify";
 
+// Whitelist all hw-* custom elements and their attributes
+const HW_TAGS = [
+  'hw-host',
+  'hw-grid-component',
+  'hw-survey-component',
+  'hw-chatbot-component',
+  'hw-info-widget-component',
+  'hw-graph-component',
+  'hw-timeline-component',
+  'hw-document-component',
+  'hw-stepper-component',
+  'hw-html-component',
+  'hw-url-component',
+  'hw-form-component',
+  'hw-tree-grid-component',
+  'hw-calendar-component',
+  'hw-dynamic-component',
+  'hw-map-component',
+  'hw-sankey-component',
+  'hw-mermaid-component',
+];
+
+const HW_ATTRS = [
+  'viewid', 'queryid', 'queryname', 'reportname', 'layoutid',
+  'apiurl', 'appname', 'clientid', 'externalid', 'styles',
+  'darkmode', 'documentserverurl', 'assets',
+  'ng-version', 'style', 'class', 'id',
+];
+
+DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+  if (data.tagName && data.tagName.startsWith('hw-')) {
+    data.allowedTags[data.tagName] = true;
+  }
+});
+
+DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+  if (node.tagName && node.tagName.toLowerCase().startsWith('hw-')) {
+    data.forceKeepAttr = true;
+  }
+});
+
 interface WebComponentContainerProps {
   name: string;
   anchorId: string;
@@ -38,7 +79,17 @@ export function WebComponentContainer({ name, anchorId, icon: Icon = FlaskConica
           ) : (
             <div
               className="prose prose-sm max-w-none dark:prose-invert overflow-x-auto"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent!) }}
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(htmlContent!, {
+                  ADD_TAGS: HW_TAGS,
+                  ADD_ATTR: HW_ATTRS,
+                  CUSTOM_ELEMENT_HANDLING: {
+                    tagNameCheck: /^hw-/,
+                    attributeNameCheck: /./,
+                    allowCustomizedBuiltInElements: false,
+                  },
+                })
+              }}
             />
           )}
         </div>
