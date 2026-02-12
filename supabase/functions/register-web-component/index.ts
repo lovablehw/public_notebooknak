@@ -35,10 +35,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: isAdmin } = await supabase.rpc("has_admin_role", {
-      _user_id: user.id,
-      _role: "service_admin",
-    });
+    // Check if user has super_admin or service_admin role
+    const { data: roles } = await supabase
+      .from("admin_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["super_admin", "service_admin"]);
+
+    const isAdmin = roles && roles.length > 0;
 
     if (!isAdmin) {
       return new Response(JSON.stringify({ success: false, error: "Insufficient permissions" }), {
