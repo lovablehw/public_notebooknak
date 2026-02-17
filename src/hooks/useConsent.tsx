@@ -84,6 +84,14 @@ export function useConsent() {
     }
 
     try {
+      // Delete any previously withdrawn consent for this version
+      await supabase
+        .from("user_consents")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("consent_version_id", latestVersion.id)
+        .not("withdrawn_at", "is", null);
+
       const { error } = await supabase.from("user_consents").insert({
         user_id: user.id,
         consent_version_id: latestVersion.id,
