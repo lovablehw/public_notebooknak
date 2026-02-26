@@ -1,6 +1,6 @@
 # HealthPass Wellbeing - Műszaki Rendszerleírás
 
-> **Verzió:** 2.3  
+> **Verzió:** 2.4  
 > **Dátum:** 2026. február 26.
 > **Platform:** Lovable Cloud (Supabase backend)  
 > **Projekt azonosító:** jqdrjpywgcfbdhscrixr
@@ -166,32 +166,115 @@ A HealthPass Wellbeing egy közösségi jóllét és dohányzás-prevenciós pla
 
 ## 3. Hitelesítési és Jogosultsági Rendszer
 
-### 3.1 Hitelesítési Folyamat
+### 3.1 Hitelesítési Folyamat (SSO-only mód)
+
+Az alkalmazás alapértelmezetten **kizárólag Keycloak SSO** hitelesítést használ. A hagyományos email/jelszó alapú bejelentkezés kódszinten megőrzött, de az `isLegacyAuthEnabled = false` feature flag-gel inaktívra állított.
+
+**Fájl:** `src/pages/Login.tsx`
+
+#### Felhasználói Folyamat
+
+```
+Landing (/):
+  └─ "Fiók létrehozása / Bejelentkezés" gomb → /login
+
+Login (/login):
+  ├─ "Bejelentkezés / Regisztráció" gomb
+  │   └─ Age Gate Modal megjelenítése
+  │       ├─ ☑ "Elmúltam 18 éves" checkbox
+  │       └─ "Tovább" gomb (csak ha checkbox pipálva)
+  │           ├─ sessionStorage.setItem('age_verified', 'true')
+  │           └─ signInWithKeycloak() → Keycloak OIDC redirect
+  │
+  ├─ "Rendszergazdai belépés" link (rejtett, muted stílusú)
+  │   └─ Kattintásra: email/jelszó form megjelenítése
+  │       ├─ signInWithPassword() → közvetlen Supabase Auth
+  │       └─ "Vissza" link → SSO nézet visszaállítása
+  │
+  └─ Keycloak visszatérés után (onAuthStateChange SIGNED_IN):
+      ├─ useAuth: sessionStorage 'age_verified' ellenőrzése
+      │   └─ Ha true: log_audit_event RPC hívás, sessionStorage törlése
+      ├─ needsConsent → /consent (új felhasználó)
+      └─ !needsConsent → /healthbook (meglévő felhasználó)
+```
+
+#### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     participant U as Felhasználó
-    participant F as Frontend
+    participant F as Frontend (Login.tsx)
+    participant SS as sessionStorage
     participant A as Supabase Auth
     participant K as Keycloak (On-Prem)
     participant DB as PostgreSQL
 
-    U->>F: Bejelentkezés kérés
-    alt Email/Password
-        F->>A: signInWithPassword()
-        A->>DB: auth.users ellenőrzés
-        A-->>F: Session token
-    else Keycloak SSO
-        F->>A: signInWithOAuth('keycloak')
-        A->>K: OIDC redirect
-        K-->>A: ID token
-        A-->>F: Session token
+    U->>F: "Bejelentkezés / Regisztráció" kattintás
+    F->>F: Age Gate Modal megjelenítése
+    U->>F: ☑ "Elmúltam 18 éves" + "Tovább"
+    F->>SS: setItem('age_verified', 'true')
+    F->>A: signInWithOAuth('keycloak')
+    A->>K: OIDC redirect
+    K-->>A: ID token
+    A-->>F: Session token (SIGNED_IN event)
+    F->>SS: getItem('age_verified') → 'true'
+    F->>DB: rpc('log_audit_event', {age_verification})
+    F->>SS: removeItem('age_verified')
+    F->>DB: Consent ellenőrzés
+    alt Új felhasználó
+        F-->>U: /consent átirányítás
+    else Meglévő felhasználó
+        F-->>U: /healthbook átirányítás
     end
-    F->>DB: Profiles lekérdezés
-    F-->>U: Dashboard átirányítás
 ```
 
-### 3.2 AuthProvider Implementáció
+### 3.2 Age Gate (Korhatár-ellenőrzés)
+
+**Kötelező 18+ életkor-ellenőrzés** az SSO folyamat előtt.
+
+| Elem | Leírás |
+|------|--------|
+| **Komponens** | `AlertDialog` (Radix UI) a Login oldalon |
+| **Cím** | "Korhatár ellenőrzés" |
+| **Szöveg** | "A szolgáltatás használatához igazolnod kell, hogy elmúltál 18 éves." |
+| **Checkbox** | "Elmúltam 18 éves" — `ageConfirmed` state |
+| **Gomb** | "Tovább" — disabled amíg checkbox nem pipált |
+
+**Audit naplózás stratégia:**
+
+A `log_audit_event` RPC hívás `auth.uid()`-t igényel, ezért az age verification naplózás nem történhet meg a Keycloak átirányítás előtt. Megoldás:
+
+1. **Age Gate jóváhagyáskor:** `sessionStorage.setItem('age_verified', 'true')`
+2. **Keycloak visszatérés után** (`onAuthStateChange` → `SIGNED_IN` event a `useAuth` hookban):
+   - Ellenőrzi `sessionStorage.getItem('age_verified')`
+   - Ha `'true'`: `supabase.rpc('log_audit_event', { p_event_type: 'age_verification', p_metadata: { age_verified: true, verified_at: <ISO timestamp> } })`
+   - Törli a sessionStorage flaget
+
+### 3.3 Rejtett Adminisztrátori Belépés
+
+A rendszergazdák számára egy **diszkrét bypass** érhető el a Login oldalon, amely visszaállítja a hagyományos email/jelszó alapú bejelentkezési űrlapot.
+
+| Tulajdonság | Érték |
+|-------------|-------|
+| **Megjelenés** | `text-xs text-muted-foreground/60` — minimális vizuális hangsúly |
+| **Felirat** | "Rendszergazdai belépés" |
+| **Állapotváltozó** | `showAdminLogin: boolean` (alapértelmezett: `false`) |
+| **Visszalépés** | "Vissza" link → `showAdminLogin = false` |
+
+**Biztonsági megjegyzés:** Ez a bypass kizárólag a felületi megjelenítést váltja; az email/jelszó hitelesítés továbbra is a Supabase Auth-on keresztül történik, azonos RLS és jogosultsági szabályokkal.
+
+### 3.4 Feature Flag: `isLegacyAuthEnabled`
+
+| Érték | Viselkedés |
+|-------|-----------|
+| `false` (alapértelmezett) | SSO-only mód: Age Gate + Keycloak, rejtett admin login |
+| `true` | Teljes legacy mód: email/jelszó form + Keycloak gomb + regisztrációs link |
+
+**Érintett fájlok:**
+- `src/pages/Login.tsx` — kondicionális renderelés
+- `src/pages/Register.tsx` — `false` esetén automatikus átirányítás `/login`-ra
+
+### 3.5 AuthProvider Implementáció
 
 **Fájl:** `src/hooks/useAuth.tsx`
 
@@ -209,6 +292,20 @@ interface AuthContextType {
 }
 ```
 
+**Post-auth Age Verification Audit (SIGNED_IN handler):**
+```typescript
+if (event === 'SIGNED_IN') {
+  const ageVerified = sessionStorage.getItem('age_verified');
+  if (ageVerified === 'true') {
+    sessionStorage.removeItem('age_verified');
+    supabase.rpc('log_audit_event', {
+      p_event_type: 'age_verification',
+      p_metadata: { age_verified: true, verified_at: new Date().toISOString() },
+    });
+  }
+}
+```
+
 **Regisztráció során létrehozott profil:**
 - `display_name`: Email @ előtti rész
 - `age_range`: "Nincs megadva"
@@ -218,7 +315,7 @@ interface AuthContextType {
 - Trigger: `add_user_to_default_group()`
 - Minden új felhasználó az `all_users` csoportba kerül
 
-### 3.3 Beleegyezés Kapu (Consent Gate)
+### 3.6 Beleegyezés Kapu (Consent Gate)
 
 **Fájl:** `src/components/RequireConsent.tsx`
 
@@ -230,7 +327,7 @@ Védett útvonalak előtt ellenőrzi:
 
 Ha bármelyik feltétel nem teljesül → `/consent` átirányítás
 
-### 3.4 Admin Szerepkör Hierarchia
+### 3.7 Admin Szerepkör Hierarchia
 
 ```
 ┌─────────────────────────────────────────┐
@@ -1594,6 +1691,15 @@ Teljes sötét mód támogatás van implementálva a `.dark` CSS osztállyal, ad
 
 ## 15. Változásnapló
 
+### v2.4 (2026-02-26)
+
+- **SSO-only autentikáció:** Keycloak OIDC az egyetlen alapértelmezett bejelentkezési mód; legacy email/jelszó `isLegacyAuthEnabled` feature flag mögött megőrizve
+- **Age Gate modal:** Kötelező 18+ életkor-ellenőrzés az SSO folyamat előtt, `AlertDialog` komponenssel
+- **sessionStorage-alapú audit naplózás:** Age verification szándék tárolása `sessionStorage`-ban, naplózás a sikeres `SIGNED_IN` event után `log_audit_event` RPC-vel
+- **Rejtett adminisztrátori belépés:** Diszkrét "Rendszergazdai belépés" link a Login oldalon, amely felfedi az email/jelszó űrlapot (`showAdminLogin` state)
+- **Landing oldal egyszerűsítés:** Egyetlen "Fiók létrehozása / Bejelentkezés" CTA gomb
+- **Register átirányítás:** `/register` útvonal automatikusan `/login`-ra irányít SSO módban
+
 ### v2.3 (2026-02-26)
 
 - **Design rendszer frissítés:** Egységes design tokenek implementálása a projekt specifikáció szerint
@@ -1614,4 +1720,4 @@ Teljes sötét mód támogatás van implementálva a `.dark` CSS osztállyal, ad
 *Dokumentum vége*
 
 **Utolsó frissítés:** 2026. február 26.  
-**Verzió:** 2.3
+**Verzió:** 2.4
