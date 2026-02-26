@@ -143,16 +143,11 @@ const Landing = () => {
           <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto text-balance">
             {COPY.hero.subheadline}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link to="/login">
-              <Button size="lg" className="w-full sm:w-auto px-8">
-                {COPY.hero.primaryCta}
+              <Button size="lg" className="px-8">
+                Fiók létrehozása / Bejelentkezés
                 <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto px-8">
-                {COPY.hero.secondaryCta}
               </Button>
             </Link>
           </div>
