@@ -11,6 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { PasswordStrengthIndicator, isPasswordValid } from "@/components/PasswordStrengthIndicator";
 
+/**
+ * Feature flag: set to true to restore the legacy email/password registration form.
+ * When false, users are redirected to /login where the unified SSO flow handles both
+ * login and registration.
+ */
+const isLegacyAuthEnabled = false;
+
 // Validation schemas with Hungarian error messages
 const emailSchema = z.string().trim().email("Kérjük, adj meg egy érvényes e-mail címet");
 
@@ -32,11 +39,22 @@ const Register = () => {
   const passwordIsValid = useMemo(() => isPasswordValid(password), [password]);
 
   useEffect(() => {
+    // When legacy auth is disabled, redirect to unified login page
+    if (!isLegacyAuthEnabled) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     if (user) {
       // User is already logged in, redirect to consent
       navigate("/consent");
     }
   }, [user, navigate]);
+
+  // When legacy auth is disabled, render nothing (redirect happens in useEffect)
+  if (!isLegacyAuthEnabled) {
+    return null;
+  }
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};

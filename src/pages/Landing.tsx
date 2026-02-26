@@ -144,7 +144,7 @@ const Landing = () => {
             {COPY.hero.subheadline}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register">
+            <Link to="/login">
               <Button size="lg" className="w-full sm:w-auto px-8">
                 {COPY.hero.primaryCta}
                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -221,7 +221,7 @@ const Landing = () => {
             ))}
           </div>
           <div className="text-center">
-            <Link to="/register">
+            <Link to="/login">
               <Button size="lg" className="px-10">
                 {COPY.whyJoin.cta}
                 <ChevronRight className="ml-2 h-4 w-4" />

@@ -70,6 +70,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Clear any auth errors on successful sign in
         if (event === 'SIGNED_IN') {
           setAuthError(null);
+          
+          // Post-auth age verification audit logging
+          const ageVerified = sessionStorage.getItem('age_verified');
+          if (ageVerified === 'true') {
+            sessionStorage.removeItem('age_verified');
+            // Fire-and-forget: log the age verification event now that we have auth.uid()
+            supabase.rpc('log_audit_event', {
+              p_event_type: 'age_verification',
+              p_metadata: { age_verified: true, verified_at: new Date().toISOString() },
+            }).then(({ error }) => {
+              if (error) {
+                console.error('Failed to log age_verification audit event:', error);
+              }
+            });
+          }
         }
       }
     );

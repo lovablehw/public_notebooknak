@@ -5,12 +5,28 @@ import { useConsent } from "@/hooks/useConsent";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Heart, ArrowLeft, Loader2, Eye, EyeOff, KeyRound, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { z } from "zod";
+
+/**
+ * Feature flag: set to true to restore legacy email/password login forms.
+ * When false, only the SSO (Keycloak) flow is available behind an age gate.
+ */
+const isLegacyAuthEnabled = false;
 
 // Validation schemas with Hungarian error messages
 const emailSchema = z.string().trim().email("Kérjük, adj meg egy érvényes e-mail címet");
@@ -22,6 +38,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [keycloakLoading, setKeycloakLoading] = useState(false);
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -104,7 +122,12 @@ const Login = () => {
     }
   };
 
-
+  /** Age gate confirmed → store flag for post-auth audit, start SSO */
+  const handleAgeGateConfirm = () => {
+    sessionStorage.setItem("age_verified", "true");
+    setShowAgeGate(false);
+    handleKeycloakLogin();
+  };
 
   return (
     <div className="min-h-screen gradient-hero flex flex-col">
@@ -138,95 +161,152 @@ const Login = () => {
               </Alert>
             )}
 
-            {/* Keycloak SSO Button */}
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="w-full mb-4 border-primary/20 hover:bg-primary/5"
-              onClick={handleKeycloakLogin}
-              disabled={keycloakLoading || loading}
-            >
-              {keycloakLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <KeyRound className="mr-2 h-4 w-4" />
-              )}
-              Bejelentkezés Keycloak fiókkal
-            </Button>
-
-
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+            {/* ========== SSO-only flow (default) ========== */}
+            {!isLegacyAuthEnabled && (
+              <div className="space-y-4">
+                <Button
+                  type="button"
+                  className="w-full"
+                  size="lg"
+                  onClick={() => {
+                    setAgeConfirmed(false);
+                    setShowAgeGate(true);
+                  }}
+                  disabled={keycloakLoading}
+                >
+                  {keycloakLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <KeyRound className="mr-2 h-4 w-4" />
+                  )}
+                  Bejelentkezés / Regisztráció
+                </Button>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">vagy</span>
-              </div>
-            </div>
+            )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail cím</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="te@pelda.hu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className={errors.email ? "border-destructive" : ""}
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
-              </div>
+            {/* ========== Legacy email/password flow ========== */}
+            {isLegacyAuthEnabled && (
+              <>
+                {/* Keycloak SSO Button */}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full mb-4 border-primary/20 hover:bg-primary/5"
+                  onClick={handleKeycloakLogin}
+                  disabled={keycloakLoading || loading}
+                >
+                  {keycloakLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <KeyRound className="mr-2 h-4 w-4" />
+                  )}
+                  Bejelentkezés Keycloak fiókkal
+                </Button>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Jelszó</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={errors.password ? "border-destructive pr-10" : "pr-10"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">vagy</span>
+                  </div>
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
-              </div>
 
-              <Button type="submit" className="w-full" disabled={loading || keycloakLoading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Bejelentkezés
-              </Button>
-            </form>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail cím</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="te@pelda.hu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={errors.email ? "border-destructive" : ""}
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
+                  </div>
 
-            <div className="mt-4 text-center">
-              <Link to="/jelszo-visszaallitas" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Elfelejtetted a jelszavad?
-              </Link>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Jelszó</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={errors.password ? "border-destructive pr-10" : "pr-10"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password}</p>
+                    )}
+                  </div>
 
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Nincs még fiókod?{" "}
-              <Link to="/register" className="text-primary hover:underline font-medium">
-                Fiók létrehozása
-              </Link>
-            </div>
+                  <Button type="submit" className="w-full" disabled={loading || keycloakLoading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Bejelentkezés
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <Link to="/jelszo-visszaallitas" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Elfelejtetted a jelszavad?
+                  </Link>
+                </div>
+
+                <div className="mt-4 text-center text-sm text-muted-foreground">
+                  Nincs még fiókod?{" "}
+                  <Link to="/register" className="text-primary hover:underline font-medium">
+                    Fiók létrehozása
+                  </Link>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </main>
+
+      {/* ========== Age Gate Modal ========== */}
+      <AlertDialog open={showAgeGate} onOpenChange={setShowAgeGate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Korhatár ellenőrzés</AlertDialogTitle>
+            <AlertDialogDescription>
+              A szolgáltatás használatához igazolnod kell, hogy elmúltál 18 éves.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="flex items-start gap-3 py-2">
+            <Checkbox
+              id="ageConfirm"
+              checked={ageConfirmed}
+              onCheckedChange={(checked) => setAgeConfirmed(checked === true)}
+            />
+            <label htmlFor="ageConfirm" className="text-sm font-medium cursor-pointer leading-none pt-0.5">
+              Elmúltam 18 éves.
+            </label>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Mégse</AlertDialogCancel>
+            <Button onClick={handleAgeGateConfirm} disabled={!ageConfirmed || keycloakLoading}>
+              {keycloakLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Tovább
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
