@@ -1,7 +1,7 @@
 # HealthPass Wellbeing - Műszaki Rendszerleírás
 
-> **Verzió:** 2.2  
-> **Dátum:** 2026. február 5.  
+> **Verzió:** 2.3  
+> **Dátum:** 2026. február 26.
 > **Platform:** Lovable Cloud (Supabase backend)  
 > **Projekt azonosító:** jqdrjpywgcfbdhscrixr
 
@@ -21,6 +21,9 @@
 10. [Biztonsági Megfontolások](#10-biztonsági-megfontolások)
 11. [Telepítési Konfiguráció](#11-telepítési-konfiguráció)
 12. [Hook Referencia](#12-hook-referencia)
+13. [Kód Audit Összefoglaló](#13-kód-audit-összefoglaló-2026-02-05)
+14. [Design Rendszer](#14-design-rendszer-v23)
+15. [Változásnapló](#15-változásnapló)
 
 ---
 
@@ -54,7 +57,7 @@ A HealthPass Wellbeing egy közösségi jóllét és dohányzás-prevenciós pla
 | **Stílusok** | Tailwind CSS, shadcn/ui | - |
 | **Állapotkezelés** | TanStack Query, React Context | 5.x |
 | **Backend** | Supabase (PostgreSQL, GoTrue Auth) | - |
-| **Hitelesítés** | Supabase Auth + Keycloak OIDC (on-prem) | - |
+| **Hitelesítés** | Supabase Auth + Keycloak OIDC (on-prem) + Lovable Cloud Auth | - |
 | **Routing** | React Router DOM | 6.x |
 | **Űrlapkezelés** | React Hook Form + Zod | 7.x |
 
@@ -1101,7 +1104,22 @@ const handleCompletion = useCallback((completedId: string) => {
 }, [questionnaireId, onComplete]);
 ```
 
-### 9.2 Keycloak OIDC (On-Premises)
+### 9.2 Lovable Cloud Auth
+
+**Fájl:** `src/integrations/lovable/index.ts`
+
+A platform támogatja a Lovable Cloud Auth integrációt (Google/Apple OAuth), amely a `@lovable.dev/cloud-auth-js` csomagot használja. Ez a bejelentkezési módszer jelenleg **nem aktív** a felhasználói felületen, de az infrastruktúra rendelkezésre áll jövőbeli használatra.
+
+```typescript
+import { lovable } from "@/integrations/lovable/index";
+
+// Használat (jelenleg nem aktív):
+const { error } = await lovable.auth.signInWithOAuth("google", {
+  redirect_uri: window.location.origin,
+});
+```
+
+### 9.3 Keycloak OIDC (On-Premises)
 
 **Konfiguráció:** `window.appConfig.KEYCLOAK_REDIRECT_URI`
 
@@ -1126,7 +1144,7 @@ const signInWithKeycloak = async () => {
 };
 ```
 
-### 9.3 Cookie Consent
+### 9.4 Cookie Consent
 
 **Tárolás:** `localStorage.cookieConsent`
 
@@ -1419,6 +1437,7 @@ A platform támogatja az egészséggel kapcsolatos kihívásokat (pl. dohányzá
 | Gamifikáció | ✅ Jó | Pont rendszer, kitüntetések, frekvencia szabályok |
 | Kihívás rendszer | ✅ Jó | Komplett flow: mérföldkövek, megfigyelések, grafikon |
 | Audit napló | ✅ Jó | Centralizált, SECURITY DEFINER RPC-n keresztül |
+| Design rendszer | ✅ Jó | Egységes design tokenek, szemantikus CSS változók |
 
 ### 13.2 Biztonsági Audit Eredmények (2026-02-05)
 
@@ -1509,10 +1528,90 @@ WITH CHECK (false);
 | TanStack Query | 5.x |
 | React Router | 6.x |
 | Supabase JS | 2.87.x |
+| @lovable.dev/cloud-auth-js | 0.0.3 |
+
+---
+
+## 14. Design Rendszer (v2.3)
+
+### 14.1 Design Token Definíciók
+
+**Fájl:** `src/index.css`
+
+A platform egységes, szemantikus design tokeneket használ HSL formátumban:
+
+| Token | Érték | Hex | Leírás |
+|-------|-------|-----|--------|
+| `--primary` | `216 65% 11%` | `#0A192F` | Elsődleges szín (mély tengerészkék) |
+| `--background` | `240 20% 98%` | `#FAFAFC` | Háttér felület |
+| `--card` | `240 17% 99%` | `#FDFDFE` | Emelt felület |
+| `--accent` | `177 85% 39%` | `#0FB9B1` | Kiemelő szín (türkiz) |
+| `--border` | `222 38% 92%` | `#E5E9F2` | Szegélyek |
+| `--foreground` | `221 39% 11%` | `#111827` | Elsődleges szöveg |
+| `--muted-foreground` | `218 13% 65%` | `#9AA3B2` | Halványított szöveg |
+| `--success` | `150 52% 38%` | `#2F9461` | Siker szín |
+| `--destructive` | `0 60% 51%` | `#CD3636` | Hiba szín |
+| `--warning` | `35 80% 57%` | `#E9A23B` | Figyelmeztetés szín |
+
+### 14.2 Tipográfia
+
+| Szerep | Betűtípus | Súlyok |
+|--------|-----------|--------|
+| Címsorok (h1-h6) | **Montserrat** | 500-800 |
+| Body / UI elemek | **Roboto** | 300-700 |
+
+**Tailwind konfiguráció (`tailwind.config.ts`):**
+```typescript
+fontFamily: {
+  sans: ["Roboto", "sans-serif"],
+  heading: ["Montserrat", "sans-serif"],
+}
+```
+
+**Globális CSS alkalmazás:**
+```css
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Montserrat", sans-serif;
+}
+```
+
+### 14.3 Egyedi CSS Segédosztályok
+
+| Osztály | Leírás |
+|---------|--------|
+| `.gradient-hero` | Háttér gradiens (`--gradient-hero`) |
+| `.gradient-card` | Kártya gradiens (`--gradient-card`) |
+| `.shadow-soft` | Lágy árnyék |
+| `.shadow-card` | Kártya árnyék |
+| `.animate-fade-in` | Fade-in animáció |
+| `.animate-scale-in` | Scale-in animáció |
+
+### 14.4 Sötét Mód
+
+Teljes sötét mód támogatás van implementálva a `.dark` CSS osztállyal, adaptált színváltozókkal a jobb olvashatóság érdekében.
+
+---
+
+## 15. Változásnapló
+
+### v2.3 (2026-02-26)
+
+- **Design rendszer frissítés:** Egységes design tokenek implementálása a projekt specifikáció szerint
+  - Tipográfia: Montserrat (címsorok) + Roboto (body) Google Fonts integrációval
+  - Szín paletta: Deep navy primary, teal accent, strukturált felületi hierarchia
+  - HSL formátumú CSS változók sötét mód támogatással
+- **Lovable Cloud Auth integráció:** `@lovable.dev/cloud-auth-js` csomag hozzáadása Google/Apple OAuth támogatáshoz (infrastruktúra kész, felületen nem aktív)
+- **SEO és metaadatok:** Magyar nyelvű OpenGraph és meta tag-ek, favicon frissítés
+
+### v2.2 (2026-02-05)
+
+- Kód audit összefoglaló és biztonsági értékelés
+- Kihívás rendszer dokumentálása
+- Audit napló rendszer részletezése
 
 ---
 
 *Dokumentum vége*
 
-**Utolsó frissítés:** 2026. február 5.  
-**Verzió:** 2.2
+**Utolsó frissítés:** 2026. február 26.  
+**Verzió:** 2.3
