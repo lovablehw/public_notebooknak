@@ -40,6 +40,7 @@ const Login = () => {
   const [keycloakLoading, setKeycloakLoading] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -162,7 +163,7 @@ const Login = () => {
             )}
 
             {/* ========== SSO-only flow (default) ========== */}
-            {!isLegacyAuthEnabled && (
+            {!isLegacyAuthEnabled && !showAdminLogin && (
               <div className="space-y-4">
                 <Button
                   type="button"
@@ -181,7 +182,86 @@ const Login = () => {
                   )}
                   Bejelentkezés / Regisztráció
                 </Button>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminLogin(true)}
+                    className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  >
+                    Rendszergazdai belépés
+                  </button>
+                </div>
               </div>
+            )}
+
+            {/* ========== Admin / Legacy email-password flow ========== */}
+            {!isLegacyAuthEnabled && showAdminLogin && (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-muted-foreground">Rendszergazdai belépés</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminLogin(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Vissza
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail cím</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="te@pelda.hu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={errors.email ? "border-destructive" : ""}
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Jelszó</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className={errors.password ? "border-destructive pr-10" : "pr-10"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? "Jelszó elrejtése" : "Jelszó megjelenítése"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Bejelentkezés
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <Link to="/jelszo-visszaallitas" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                    Elfelejtetted a jelszavad?
+                  </Link>
+                </div>
+              </>
             )}
 
             {/* ========== Legacy email/password flow ========== */}
