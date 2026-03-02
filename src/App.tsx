@@ -45,6 +45,7 @@ import AdminRoles from "./pages/admin/AdminRoles";
 import AdminButtonConfigs from "./pages/admin/AdminButtonConfigs";
 import AdminChallenges from "./pages/admin/AdminChallenges";
 import AdminWebComponents from "./pages/admin/AdminWebComponents";
+import Survey from "./pages/Survey";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/settings" element={<RequireConsent><Settings /></RequireConsent>} />
               <Route path="/reset" element={<RequireConsent><ResetSession /></RequireConsent>} />
               <Route path="/kerdoiv/:id" element={<RequireConsent><QuestionnairePage /></RequireConsent>} />
+              <Route path="/survey" element={<RequireConsent><Survey /></RequireConsent>} />
               
               {/* Admin routes - require auth + consent */}
               <Route path="/admin" element={<RequireConsent><AdminDashboard /></RequireConsent>} />
