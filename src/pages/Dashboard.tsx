@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Heart, LogOut, Loader2, Settings, Gift, BookOpen, Shield } from "lucide-react";
+import { Heart, LogOut, Loader2, Settings, Gift, BookOpen, Shield, ClipboardList } from "lucide-react";
 
 import { QuestionnaireGrid } from "@/components/dashboard/QuestionnaireGrid";
 import { BadgeDisplay, BadgeStats } from "@/components/dashboard/BadgeDisplay";
@@ -122,6 +122,10 @@ const Dashboard = () => {
           <Button variant="ghost" size="sm" onClick={() => navigate("/healthbook")} className="gap-1">
             <BookOpen className="h-4 w-4" />
             <span className="hidden sm:inline">Egészségkönyvem</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate("/survey")} className="gap-1">
+            <ClipboardList className="h-4 w-4" />
+            <span className="hidden sm:inline">Kérdőív</span>
           </Button>
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="gap-1">
