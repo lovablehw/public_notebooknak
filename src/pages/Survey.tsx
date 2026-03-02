@@ -5,7 +5,7 @@ import { useConsent } from "@/hooks/useConsent";
 import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Heart, LogOut, Loader2, Settings, Shield, ClipboardList } from "lucide-react";
+import { Heart, LogOut, Loader2, Settings, Shield, ClipboardList, BookOpen, ArrowLeft } from "lucide-react";
 
 const Survey = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -42,6 +42,10 @@ const Survey = () => {
           <span className="font-semibold text-foreground">HealthPass Wellbeing Szolgáltatások</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/healthbook")} className="gap-1">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Egészségkönyvem</span>
+          </Button>
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="gap-1">
               <Shield className="h-4 w-4" />
